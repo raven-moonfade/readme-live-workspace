@@ -586,10 +586,16 @@
 
     var raw = String(els.roomInput.value || '').trim();
     var platform = state.platform === 'douyin' ? 'douyin' : 'bilibili';
-    var id = /^\d{1,18}$/.test(raw) ? parseInt(raw, 10) : NaN;
+    var inputValue = raw;
+    if (platform === 'douyin') {
+      var urlMatch = raw.match(/https?:\/\/[^\s<>"']+/i);
+      if (urlMatch) inputValue = urlMatch[0].replace(/[),，。]+$/, '');
+    }
+    if (inputValue !== raw) els.roomInput.value = inputValue;
+    var id = /^\d{1,18}$/.test(inputValue) ? parseInt(inputValue, 10) : NaN;
     var douyinInput = platform === 'douyin' && (
-      /^\d{6,20}$/.test(raw) ||
-      /^https?:\/\/(?:live|v|www)\.douyin\.com\//i.test(raw)
+      /^\d{6,20}$/.test(inputValue) ||
+      /^https?:\/\/(?:live|v|www)\.douyin\.com\//i.test(inputValue)
     );
     if (platform === 'bilibili' && (!isFinite(id) || id <= 0)) {
       var msg = (/^\d+$/.test(raw) && !(parseInt(raw, 10) > 0))
@@ -614,19 +620,19 @@
     state.errorTitle = '';
     state.cancelIntentUntil = 0;             // 新一次连接 = 新的意图
     state.cancelCleanup = false;
-    state.roomKey = raw;
+    state.roomKey = inputValue;
     state.roomId = platform === 'bilibili' ? id : 0;
     state.optimisticUntil = Date.now() + 3000;
     state.connectInFlight = true;
     state.connectDeadline = Date.now() + 15000;
     var seq = ++state.connectSeq;            // N1：本次连接的世代号
     setConnection('connecting');
-    setLog((platform === 'douyin' ? '正在连接抖音直播间 ' : '正在连接直播间 ') + raw + ' …');
+    setLog((platform === 'douyin' ? '正在连接抖音直播间 ' : '正在连接直播间 ') + inputValue + ' …');
     document.dispatchEvent(new CustomEvent('mutai:session-intent', {
-      detail: { room_id: state.roomId, room_key: raw, platform: platform }
+      detail: { room_id: state.roomId, room_key: inputValue, platform: platform }
     }));
 
-    call('connect', [raw, platform], null).then(function (res) {
+    call('connect', [inputValue, platform], null).then(function (res) {
       if (seq !== state.connectSeq) return;  // N1：已取消/已断开/已换房号的过期回调直接丢弃
       if (res && typeof res === 'object' && res.ok === false) {
         state.optimisticUntil = 0;

@@ -200,6 +200,8 @@ def test_room_input() -> None:
         "无 scheme URL",
     )
     check(parse_room_input("https://v.douyin.com/abc")["web_rid"] == "", "短链接保留给异步解析")
+    share = parse_room_input("https://v.douyin.com/abc/ 2@9.com :9pm")
+    check(share["url"] == "https://v.douyin.com/abc/", "分享文案中提取短链接", share)
     check(parse_room_input("")["web_rid"] == "", "空输入")
     check(parse_room_input("not a room")["web_rid"] == "", "非法输入")
 

@@ -41,7 +41,7 @@ from .danmaku import (
     STATE_ERROR,
     DanmakuConnection,
 )
-from .douyin import DouyinConnection
+from .douyin import DouyinConnection, parse_room_input
 from .history_trend import TREND_GRANULARITIES
 from .platforms import money_comparable as platform_money_comparable
 from .platforms import normalize_platform, platform_profiles
@@ -2333,9 +2333,11 @@ class DanmakuTTSService:
             public_room_id = rid
             room_key = str(rid)
         else:
-            source_room = str(room_id or "").strip()
-            if not source_room:
+            raw_room = str(room_id or "").strip()
+            if not raw_room:
                 return {"ok": False, "error": "请输入抖音直播间号或链接"}
+            parsed = parse_room_input(raw_room)
+            source_room = parsed.get("web_rid") or parsed.get("url") or raw_room
             public_room_id = 0
             room_key = source_room
         # 只有参数校验通过后才切换消息源，避免非法输入污染当前连接。

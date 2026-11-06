@@ -221,17 +221,26 @@ async def ensure_ttwid(session: aiohttp.ClientSession, value: str = "", cookie: 
     return ttwid
 
 
-async def resolve_web_rid(session: aiohttp.ClientSession, value: Any) -> str:
+async def resolve_web_rid(
+    session: aiohttp.ClientSession,
+    value: Any,
+    *,
+    cookie: str = "",
+    ttwid: str = "",
+) -> str:
     parsed = parse_room_input(value)
     if parsed["web_rid"]:
         return parsed["web_rid"]
     url = parsed.get("url") or ""
     if not url:
         return ""
+    headers = dict(REQUEST_HEADERS)
+    if cookie or ttwid:
+        headers["Cookie"] = merge_cookie_header(ttwid, cookie)
     try:
         async with session.get(
             url,
-            headers=REQUEST_HEADERS,
+            headers=headers,
             allow_redirects=True,
             max_redirects=5,
             timeout=aiohttp.ClientTimeout(total=15),
@@ -318,7 +327,20 @@ async def fetch_room_info(
         return result
     status_code = payload.get("status_code") if isinstance(payload, dict) else None
     if not isinstance(payload, dict) or str(status_code) not in ("None", "0", ""):
-        result["error"] = "抖音房间接口返回异常"
+        detail = ""
+        if isinstance(payload, dict):
+            data_node = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+            detail = str(
+                data_node.get("message")
+                or data_node.get("prompts")
+                or payload.get("message")
+                or ""
+            ).strip()
+        result["fatal"] = True
+        result["error"] = "抖音房间接口返回异常" + (
+            "：%s" % detail if detail else
+            ("（status_code=%s）" % status_code if status_code is not None else "")
+        )
         return result
     data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
     rooms = data.get("data") if isinstance(data.get("data"), list) else []
@@ -426,8 +448,16 @@ class DouyinConnection:
                     trust_env=True,
                 )
             self._ttwid = await ensure_ttwid(self._session, self._ttwid, self._cookie)
-            self._web_rid = await resolve_web_rid(self._session, room)
+            self._web_rid = await resolve_web_rid(
+                self._session, room, cookie=self._cookie, ttwid=self._ttwid
+            )
             if not self._web_rid:
+                parsed_input = parse_room_input(room)
+                if parsed_input.get("url"):
+                    raise RuntimeError(
+                        "抖音短链接无法解析为直播间，请重新复制直播间链接，"
+                        "或直接输入 live.douyin.com/<房间号>"
+                    )
                 raise RuntimeError("需要抖音直播间号或 live.douyin.com 链接")
             try:
                 self._room_id = int(self._web_rid)
