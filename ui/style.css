@@ -880,6 +880,27 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .switch-text { font-size: 13px; color: var(--text); }
 
+.settings-master-switch {
+  margin: 0 0 2px;
+  padding: 8px 10px;
+  border: 1px solid rgba(var(--ink-rgb), .08);
+  background: rgba(var(--ink-rgb), .025);
+}
+
+.settings-master-switch .switch-text { font-weight: 700; }
+
+.settings-master-hint {
+  margin: 6px 2px 14px;
+  line-height: 1.55;
+}
+
+.settings-master-hint.is-off { color: var(--warn); }
+
+#settingsVoiceCard.is-tts-off .slider-grid,
+#settingsVoiceCard.is-tts-off .field:not(:has(.switch-input)) {
+  opacity: .55;
+}
+
 .switch-input {
   position: absolute;
   width: 1px;

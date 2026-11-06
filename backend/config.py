@@ -192,6 +192,7 @@ DEFAULT_LEGACY_CONFIG: Dict[str, Any] = {
     "platform": "bilibili",
     "sessdata": "",
     "tts": {
+        "enabled": True,
         "voice": "zh-CN-XiaoxiaoNeural",
         "rate": "+0%",
         "pitch": "+0Hz",
@@ -1548,6 +1549,12 @@ def _clean_legacy_top_patch(patch: Dict[str, Any], rejected: List[str]) -> Dict[
     src = patch.get("tts")
     if isinstance(src, dict):
         tts: Dict[str, Any] = {}
+        if "enabled" in src:
+            value = _bool(src["enabled"])
+            if value is _KEEP:
+                rejected.append("tts.enabled")
+            else:
+                tts["enabled"] = value
         if "voice" in src:
             value = _text(src["voice"], 128)
             if value is _KEEP or not value.strip():

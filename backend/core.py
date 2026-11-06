@@ -72,6 +72,7 @@ FILTER_REASONS = frozenset(
         "no_text",
         "empty_template",
         "voice_lang_mismatch",
+        "tts_disabled",
         "mock_display_only",
     )
 )
@@ -1103,6 +1104,11 @@ class DanmakuTTSService:
                 store = getattr(self, "session_store", None)
                 if store is not None:
                     store.record_message(session_id, kind, float(event.get("ts") or time.time()), uid, meta)
+
+            # 全局朗读开关：关闭后消息仍上屏/进监看/记历史，只是不进入 TTS。
+            if not bool((cfg.get("tts") or {}).get("enabled", True)):
+                self._drop_event(event, "tts_disabled")
+                return event
 
             # 调试注入：只上屏/进浮窗，不朗读
             if not speak:
@@ -2458,6 +2464,11 @@ class DanmakuTTSService:
             self._call(self._apply_config_async(data), timeout=5.0)
         except Exception:  # noqa: BLE001
             logger.debug("配置生效回调失败（忽略）", exc_info=True)
+        if isinstance(patch.get("tts"), dict) and patch["tts"].get("enabled") is False:
+            try:
+                self._call(self._stop_all_tts_async(), timeout=4.0)
+            except Exception:  # noqa: BLE001
+                logger.debug("关闭朗读时停止队列失败（忽略）", exc_info=True)
         return {"ok": True, "config": data, "rejected": rejected}
 
     async def _apply_config_async(self, data: Dict[str, Any]) -> None:
@@ -2472,6 +2483,20 @@ class DanmakuTTSService:
             self._drop_event(item["event"], "queue_full")
             item["event"]["spoken"] = False
         self._set_pending(len(self._tts_queue))
+
+    async def _stop_all_tts_async(self) -> None:
+        """全局朗读关闭：清空待合成队列并立即停止当前播放。"""
+        while self._tts_queue:
+            item = self._tts_queue.popleft()
+            event = item.get("event")
+            if isinstance(event, dict):
+                self._drop_event(event, "tts_disabled")
+                event["spoken"] = False
+        self._set_pending(0)
+        try:
+            self._player.stop_now(wait=0.5, reason="tts_disabled")
+        except Exception:  # noqa: BLE001
+            logger.debug("停止播放器失败（忽略）", exc_info=True)
 
     def list_voices(self) -> List[Dict[str, Any]]:
         """返回音色列表（edge_tts.list_voices 结果，缓存到 logs/voices.json）。"""
@@ -2508,6 +2533,8 @@ class DanmakuTTSService:
         """试听：用指定参数合成并立即播放（插队），返回缓存条目信息。"""
         if not isinstance(text, str) or not text.strip():
             return {"ok": False, "error": "文本为空"}
+        if not bool((self.config.snapshot().get("tts") or {}).get("enabled", True)):
+            return {"ok": False, "error": "朗读已关闭，请先打开全局朗读开关"}
         try:
             return self._call(
                 self._preview_async(text, voice, rate, pitch, volume), timeout=SYNTH_TIMEOUT + 10.0
@@ -2568,6 +2595,8 @@ class DanmakuTTSService:
         """重播某条已朗读弹幕的缓存音频（插队立即播放）。"""
         if not isinstance(entry_id, str) or not entry_id.strip():
             return {"ok": False, "error": "entry_id 无效"}
+        if not bool((self.config.snapshot().get("tts") or {}).get("enabled", True)):
+            return {"ok": False, "error": "朗读已关闭，请先打开全局朗读开关"}
         safe = os.path.basename(entry_id.strip())
         path = os.path.join(self.cache_dir, "%s.mp3" % safe)
         if not os.path.isfile(path):

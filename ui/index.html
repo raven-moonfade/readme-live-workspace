@@ -319,6 +319,13 @@
           </button>
         </div>
         <div class="card-body">
+          <label class="switch-row settings-master-switch">
+            <span class="switch-text">启用朗读</span>
+            <input class="switch-input" type="checkbox" data-path="tts.enabled" checked>
+            <span class="switch-track"><span class="switch-knob"></span></span>
+          </label>
+          <p id="ttsMasterHint" class="field-hint settings-master-hint">关闭后所有消息只上屏、不合成、不播放；当前朗读会立即停止。</p>
+
           <div class="field">
             <div class="field-row">
               <label class="field-label" for="voiceSelect">音色</label>

@@ -375,6 +375,7 @@
       var row = platformRows[i];
       row.hidden = row.getAttribute('data-platform-only') !== (state.platform === 'douyin' ? 'douyin' : 'bilibili');
     }
+    setTtsMasterUi(getPath(c, 'tts.enabled') !== false);
 
     // 数字输入
     var nums = document.querySelectorAll('input[data-num]');
@@ -413,6 +414,33 @@
       setOverlayButtonActive(overlayEnabled);
     }
   }
+
+  function setTtsMasterUi(enabled) {
+    var on = enabled !== false;
+    var ids = [
+      'voiceSelect', 'voiceRefreshBtn', 'rateSlider', 'pitchSlider',
+      'volumeSlider', 'previewText', 'previewBtn'
+    ];
+    for (var i = 0; i < ids.length; i++) {
+      var node = document.getElementById(ids[i]);
+      if (node) node.disabled = !on;
+    }
+    var hint = document.getElementById('ttsMasterHint');
+    if (hint) {
+      hint.textContent = on
+        ? '关闭后所有消息只上屏、不合成、不播放；当前朗读会立即停止。'
+        : '朗读已关闭：消息继续上屏与记录，但不会合成或播放。';
+      hint.classList.toggle('is-off', !on);
+    }
+    var card = document.getElementById('settingsVoiceCard');
+    if (card) card.classList.toggle('is-tts-off', !on);
+    var master = document.querySelector('.switch-input[data-path="tts.enabled"]');
+    if (master && master.checked !== on) master.checked = on;
+  }
+
+  document.addEventListener('mutai:tts-toggle', function (event) {
+    setTtsMasterUi(!event || !event.detail || event.detail.enabled !== false);
+  });
 
   function sendPatch(patch) {
     state.config = deepMerge(state.config || defaultConfig(), patch);

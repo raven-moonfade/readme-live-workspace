@@ -383,6 +383,7 @@
       return { key: "failed", label: "失败", tone: "err" };
     }
     if (reason === "mock_display_only") return { key: "skipped", label: "仅上屏", tone: "muted" };
+    if (reason === "tts_disabled") return { key: "skipped", label: "朗读已关闭", tone: "muted" };
     if (reason) return { key: "skipped", label: "已跳过", tone: "muted" };
     return { key: "not_read", label: "未朗读", tone: "muted" };
   }

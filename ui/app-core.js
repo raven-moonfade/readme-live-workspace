@@ -40,7 +40,7 @@
   var DEFAULT_CONFIG = {
     room_id: 0,
     platform: 'bilibili',
-    tts: { voice: 'zh-CN-XiaoxiaoNeural', rate: '+0%', pitch: '+0Hz', volume: '+0%' },
+    tts: { enabled: true, voice: 'zh-CN-XiaoxiaoNeural', rate: '+0%', pitch: '+0Hz', volume: '+0%' },
     read: {
       danmaku: true, gift: true, super_chat: true, guard: true, enter: false, like: false, social: true,
       gift_min_price: 0, include_user: true,
@@ -159,6 +159,7 @@
     no_text: '无有效文本',
     empty_template: '空模板',
     voice_lang_mismatch: '音色语言不匹配',
+    tts_disabled: '全局朗读已关闭',
     mock_display_only: '未开启朗读',
     queue_full: '队列已满',
     unsupported: '不支持类型'
@@ -1004,7 +1005,12 @@
           var label = labelNode ? labelNode.textContent : input.dataset.path;
           markDirty();
           sendPatch(setPath(input.dataset.path, on));
-          setLog((on ? '已开启读取：' : '已关闭读取：') + label);
+          if (input.dataset.path === 'tts.enabled') {
+            document.dispatchEvent(new CustomEvent('mutai:tts-toggle', { detail: { enabled: on } }));
+            setLog(on ? '已开启全局朗读' : '已关闭全局朗读：消息继续上屏，不再发声');
+          } else {
+            setLog((on ? '已开启读取：' : '已关闭读取：') + label);
+          }
         });
       })(switches[i]);
     }

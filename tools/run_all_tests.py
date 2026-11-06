@@ -23,8 +23,8 @@ from typing import List, Tuple
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_WORK_DIR = PROJECT_ROOT / "tests" / "ui"
-EXPECTED_UI_TESTS = 12
-EXPECTED_BACKEND_TESTS = 43
+EXPECTED_UI_TESTS = 13
+EXPECTED_BACKEND_TESTS = 44
 CONFIG_NAMES = ("config.json", "config.legacy.json", "config.cleanup.bak", "config.save.txn")
 DEFAULT_PW_ROOT = PROJECT_ROOT / "node_modules"
 
