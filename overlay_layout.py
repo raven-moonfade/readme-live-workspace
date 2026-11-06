@@ -6,9 +6,9 @@ from __future__ import annotations
 import math
 from typing import Any, Mapping, Sequence
 
-PIN_LANES = ("gift", "sc", "guard")
-LANE_PRIORITY = ("sc", "gift", "guard")
-LANE_EVICTION_ORDER = ("guard", "gift", "sc")
+PIN_LANES = ("gift", "sc", "guard", "danmaku", "enter", "like", "social")
+LANE_PRIORITY = ("sc", "gift", "guard", "social", "like", "enter", "danmaku")
+LANE_EVICTION_ORDER = ("danmaku", "enter", "like", "social", "guard", "gift", "sc")
 
 
 def lane_height(heights: Sequence[float], gap: float) -> float:
@@ -55,7 +55,7 @@ def next_scroll_action(
     """Return none / drop_oldest / compress_latest / drop_latest."""
     if count <= 0:
         return "none"
-    if count > max_lines:
+    if max_lines > 0 and count > max_lines:
         return "drop_oldest"
     if total_height <= available_height + 0.5:
         return "none"
@@ -95,7 +95,7 @@ def _local_plan_lanes(
         except (TypeError, ValueError):
             maximum = 0
         entries = list(items.get(lane, []))
-        shown = entries[-maximum:] if enabled and maximum > 0 else []
+        shown = entries[-maximum:] if enabled and maximum > 0 else (entries if enabled else [])
         visible[lane] = shown
         heights = []
         for value in (item_heights_by_lane or {}).get(lane, []):

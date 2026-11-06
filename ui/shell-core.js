@@ -10,12 +10,14 @@
     { key: "gift", label: "礼物", color: "var(--warn)" },
     { key: "super_chat", label: "SC", color: "var(--err)" },
     { key: "guard", label: "舰长", color: "var(--accent-ink)" },
-    { key: "enter", label: "入场", color: "var(--ok)" }
+    { key: "enter", label: "入场", color: "var(--ok)" },
+    { key: "like", label: "点赞", color: "var(--warn)" },
+    { key: "social", label: "关注", color: "var(--accent)" }
   ];
 
   function newMetrics() {
     return {
-      counts: { danmaku: 0, gift: 0, super_chat: 0, guard: 0, enter: 0 },
+      counts: { danmaku: 0, gift: 0, super_chat: 0, guard: 0, enter: 0, like: 0, social: 0 },
       values: { giftCny: 0, giftSilver: 0, giftUnknown: 0, superChatCny: 0 },
       users: new Set(),
       minuteBuckets: new Map(),

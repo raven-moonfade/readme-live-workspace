@@ -102,7 +102,10 @@ def run() -> None:
     check(result["fixed_height"] == 306, "默认样例固定区 306px")
     check(result["gap_px"] == 6, "默认样例选择 gap 6（淘汰次数优先）")
     check(
-        result["lane_heights"] == {"gift": 156, "sc": 102, "guard": 48},
+        result["lane_heights"] == {
+            "gift": 156, "sc": 102, "guard": 48,
+            "danmaku": 0, "enter": 0, "like": 0, "social": 0,
+        },
         "默认样例 lane 高度",
         repr(result["lane_heights"]),
     )
@@ -166,7 +169,10 @@ def run() -> None:
     tall = plan_lanes(620, default_pins(), items({"gift": 6, "sc": 6, "guard": 6}), font_size=48)
     check(tall["item_px"] == 83, "大字模式 item_px=83")
     check(
-        tall["capacity_rows"] == {"gift": 1, "sc": 1, "guard": 1},
+        tall["capacity_rows"] == {
+            "gift": 1, "sc": 1, "guard": 1,
+            "danmaku": 0, "enter": 0, "like": 0, "social": 0,
+        },
         "大字默认预算每 lane 1 行",
         repr(tall["capacity_rows"]),
     )
@@ -230,12 +236,18 @@ def run() -> None:
         item_px_by_lane={"gift": 100, "sc": 40, "guard": 60},
     )
     check(
-        mixed["item_px_by_lane"] == {"gift": 100, "sc": 40, "guard": 60},
+        mixed["item_px_by_lane"] == {
+            "gift": 100, "sc": 40, "guard": 60,
+            "danmaku": 48, "enter": 48, "like": 48, "social": 48,
+        },
         "支持 per-lane item height",
         mixed["item_px_by_lane"],
     )
     check(
-        mixed["lane_heights"] == {"gift": 100, "sc": 40, "guard": 60},
+        mixed["lane_heights"] == {
+            "gift": 100, "sc": 40, "guard": 60,
+            "danmaku": 0, "enter": 0, "like": 0, "social": 0,
+        },
         "per-lane 高度独立计算",
         mixed["lane_heights"],
     )
@@ -246,7 +258,10 @@ def run() -> None:
         item_px_by_lane={"gift": 100, "sc": 220, "guard": 220},
     )
     check(
-        empty_lane["lane_heights"] == {"gift": 100, "sc": 0, "guard": 0},
+        empty_lane["lane_heights"] == {
+            "gift": 100, "sc": 0, "guard": 0,
+            "danmaku": 0, "enter": 0, "like": 0, "social": 0,
+        },
         "空 lane 不被其他 lane 的大字体拖累",
         empty_lane["lane_heights"],
     )

@@ -16,6 +16,8 @@ TYPE_COLORS: dict[str, str] = {
     "super_chat": "#ff6f91",
     "guard": "#a98bff",
     "enter": "#53d6c5",
+    "like": "#ff8fb1",
+    "social": "#7ddcff",
 }
 TYPE_NAMES = {
     "danmaku": "弹幕",
@@ -23,8 +25,18 @@ TYPE_NAMES = {
     "super_chat": "醒目留言",
     "guard": "上舰",
     "enter": "入场",
+    "like": "点赞",
+    "social": "关注",
 }
-LANE_LABELS = {"gift": "礼物", "sc": "醒目留言", "guard": "舰长"}
+LANE_LABELS = {
+    "gift": "礼物",
+    "sc": "醒目留言",
+    "guard": "舰长",
+    "danmaku": "弹幕",
+    "enter": "入场",
+    "like": "点赞",
+    "social": "关注",
+}
 
 
 def str_value(value: Any, fallback: str = "", limit: int = 1000) -> str:

@@ -52,15 +52,16 @@ logger = logging.getLogger("danmaku_tts")
 
 EVENT_BUFFER_SIZE = 1000      # 事件环形缓冲：最多保留最近 1000 条
 CACHE_MAX_FILES = 200         # 音频缓存上限（超出删最旧）
+AUDIO_REPLAY_KEEP = 40        # 播放完成后保留最近 N 条供重播，其余立即清理
 SYNTH_TIMEOUT = 60.0          # 单条合成超时（秒）
 VOICE_FETCH_TIMEOUT = 45.0    # 拉取音色列表超时（秒）
 PREVIEW_MAX_CHARS = 200       # 试听文本上限
-OVERLAY_MESSAGE_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter")
+OVERLAY_MESSAGE_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
 LOG_EVENT_LEVEL = logging.WARNING
 LOG_EVENT_MAX_CHARS = 400
 _LOGGER_NAMES = ("danmaku_tts", "blivedm")
 _UNSET = object()
-SESSION_MESSAGE_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter")
+SESSION_MESSAGE_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
 FILTER_REASONS = frozenset(
     (
         "disabled",
@@ -339,6 +340,8 @@ class DanmakuTTSService:
         self.logs_dir = os.path.join(self.base_dir, "logs")
         os.makedirs(self.cache_dir, exist_ok=True)
         os.makedirs(self.logs_dir, exist_ok=True)
+        self._cache_lock = threading.Lock()
+        self._recent_audio: List[str] = []
 
         # ---- 事件缓冲 / 状态快照（先建，日志处理器会引用） ----
         self._events: "collections.deque[Dict[str, Any]]" = collections.deque(maxlen=EVENT_BUFFER_SIZE)
@@ -1123,6 +1126,8 @@ class DanmakuTTSService:
                 "gift_name": meta.get("gift_name") or text,
                 "num": meta.get("num") or 1,
                 "guard_name": meta.get("guard_name") or "舰队",
+                "like_count": meta.get("like_count") or 1,
+                "social_action": meta.get("social_action") or "关注了直播间",
             }
             template = templates.get(kind, "{user}{text}")
             if kind == "enter":
@@ -1144,6 +1149,8 @@ class DanmakuTTSService:
                 return event
 
             event["spoken"] = True
+            if isinstance(event.get("meta"), dict):
+                event["meta"]["tts_text"] = spoken_text
             self._enqueue_tts(
                 {
                     "id": event["id"],
@@ -1191,7 +1198,7 @@ class DanmakuTTSService:
             if value < threshold:
                 return False, "gift_min_price"
             return True, None
-        if kind in ("danmaku", "super_chat", "guard", "enter"):
+        if kind in ("danmaku", "super_chat", "guard", "enter", "like", "social"):
             if not read_cfg.get(kind, True):
                 return False, "disabled"
             return True, None
@@ -1363,11 +1370,16 @@ class DanmakuTTSService:
             if isinstance(event, dict) and event.get("spoken") is not False:
                 self._mark_post_drop(event, reason, force=True)
                 logger.info("断开清队：seq=%s 未播放，已标记为未朗读", event.get("seq"))
+            self._retire_audio(str(entry.get("path") or ""))
+            return
+        if kind in ("played", "interrupted"):
+            self._retire_audio(str(entry.get("path") or ""))
             return
         if kind != "error":
             return
         error = str(payload.get("error") or "播放失败")
         event = entry.get("event")
+        self._retire_audio(str(entry.get("path") or ""))
         if isinstance(event, dict):
             self._mark_post_drop(event, "play_failed")
         self._emit_event(
@@ -1393,6 +1405,13 @@ class DanmakuTTSService:
                 return
             entries.sort()
             protected = self._player.pending_paths()
+            recent = getattr(self, "_recent_audio", [])
+            lock = getattr(self, "_cache_lock", None)
+            if lock is not None:
+                with lock:
+                    protected.update(os.path.normcase(path) for path in recent)
+            else:
+                protected.update(os.path.normcase(path) for path in recent)
             for _mtime, path in entries[: len(entries) - CACHE_MAX_FILES]:
                 if os.path.normcase(path) in protected:
                     continue
@@ -1402,6 +1421,30 @@ class DanmakuTTSService:
                     continue
         except Exception:  # noqa: BLE001
             logger.exception("清理音频缓存失败")
+
+    def _retire_audio(self, path: str) -> None:
+        """播放结束/被打断/失败后，把音频移出“最近可重播”窗口并清理更早文件。"""
+        if not path:
+            return
+        norm = os.path.normcase(path)
+        doomed: List[str] = []
+        with self._cache_lock:
+            self._recent_audio = [item for item in self._recent_audio if os.path.normcase(item) != norm]
+            self._recent_audio.append(path)
+            overflow = len(self._recent_audio) - AUDIO_REPLAY_KEEP
+            if overflow > 0:
+                doomed = self._recent_audio[:overflow]
+                del self._recent_audio[:overflow]
+        if not doomed:
+            return
+        protected = self._player.pending_paths()
+        for old in doomed:
+            if os.path.normcase(old) in protected:
+                continue
+            try:
+                os.remove(old)
+            except OSError:
+                continue
 
     # ------------------------------------------------------------ 对外接口
     def get_state(self) -> Dict[str, Any]:
@@ -1951,7 +1994,7 @@ class DanmakuTTSService:
         return {"cursor": latest, "items": items}
 
     # ------------------------------------------------------------ 监看窗口
-    _MONITOR_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter")
+    _MONITOR_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
 
     def monitor_snapshot(self, limit: int = 300) -> Dict[str, Any]:
         """返回最近 N 条消息（含最新 spoken 状态），供监看窗口整表刷新。"""
@@ -2014,6 +2057,8 @@ class DanmakuTTSService:
         "super_chat": ["这条弹幕一定要读啊！", "主播唱歌吧，求求了", "加油，一直支持你"],
         "guard": [("总督", 1), ("提督", 2), ("舰长", 3)],
         "enter": ["进入直播间"],
+        "like": ["点赞了直播间", "为主播点了赞"],
+        "social": ["关注了直播间", "分享了直播间"],
     }
     _MOCK_USERS = [
         "夜色微凉", "柠檬气泡水", "三月的风", "咸鱼想翻身", "阿哲",
@@ -2029,7 +2074,7 @@ class DanmakuTTSService:
         """
         try:
             kind = str(kind or "danmaku")
-            if kind not in ("danmaku", "gift", "super_chat", "guard", "enter"):
+            if kind not in SESSION_MESSAGE_TYPES:
                 return {"ok": False, "error": "不支持的消息类型：%s" % kind}
             seq_hint = self._mock_seq = getattr(self, "_mock_seq", 0) + 1
             uname = str(user or "").strip() or self._MOCK_USERS[seq_hint % len(self._MOCK_USERS)]
@@ -2062,6 +2107,12 @@ class DanmakuTTSService:
                 body = body or ("开通了 %s" % payload_meta.get("guard_name"))
             elif kind == "enter":
                 body = body or "进入直播间"
+            elif kind == "like":
+                body = body or self._MOCK_SAMPLES["like"][seq_hint % len(self._MOCK_SAMPLES["like"])]
+                payload_meta.setdefault("like_count", 1 + (seq_hint % 20))
+            elif kind == "social":
+                body = body or self._MOCK_SAMPLES["social"][seq_hint % len(self._MOCK_SAMPLES["social"])]
+                payload_meta.setdefault("social_action", "关注了直播间")
             else:
                 body = body or self._MOCK_SAMPLES["danmaku"][seq_hint % len(self._MOCK_SAMPLES["danmaku"])]
 
@@ -2105,7 +2156,7 @@ class DanmakuTTSService:
             n = max(1, min(int(count), 200))
         except (TypeError, ValueError):
             n = 10
-        kinds = ("danmaku", "gift", "super_chat", "guard", "enter")
+        kinds = SESSION_MESSAGE_TYPES
         injected = 0
         spoken = 0
         filters: Dict[str, int] = {}
@@ -2187,7 +2238,7 @@ class DanmakuTTSService:
                 await asyncio.sleep(interval)
                 cfg = self.config.get("mock", default={}) or {}
                 types_cfg = cfg.get("types") or {}
-                kinds = [k for k in ("danmaku", "gift", "super_chat", "guard", "enter") if types_cfg.get(k)]
+                kinds = [k for k in SESSION_MESSAGE_TYPES if types_cfg.get(k)]
                 if not kinds:
                     continue
                 try:
@@ -2520,10 +2571,56 @@ class DanmakuTTSService:
         safe = os.path.basename(entry_id.strip())
         path = os.path.join(self.cache_dir, "%s.mp3" % safe)
         if not os.path.isfile(path):
-            return {"ok": False, "error": "缓存不存在或已被清理", "entry_id": safe}
+            text = self._replay_text(safe)
+            if not text:
+                return {"ok": False, "error": "缓存不存在或已被清理", "entry_id": safe}
+            loop = getattr(self, "_loop", None)
+            if loop is None or loop.is_closed():
+                return {"ok": False, "error": "重播合成不可用（事件循环未启动）", "entry_id": safe}
+            try:
+                future = asyncio.run_coroutine_threadsafe(
+                    self._synthesize_replay(path, text), loop
+                )
+                result = future.result(SYNTH_TIMEOUT + 5.0)
+            except Exception as exc:  # noqa: BLE001
+                return {"ok": False, "error": "重播合成失败：%s" % exc, "entry_id": safe}
+            if not result.get("ok"):
+                return {
+                    "ok": False,
+                    "error": "重播合成失败：%s" % (result.get("error") or "未知原因"),
+                    "entry_id": safe,
+                }
         if not self._player.play_now(path, {"id": safe, "kind": "replay"}, interrupt=True):
             return {"ok": False, "error": "播放器不可用", "entry_id": safe}
         return {"ok": True, "entry_id": safe, "path": path, "size": os.path.getsize(path)}
+
+    def _replay_text(self, entry_id: str) -> str:
+        with self._events_lock:
+            for event in reversed(self._events):
+                if str(event.get("id") or "") != entry_id:
+                    continue
+                meta = event.get("meta") if isinstance(event.get("meta"), dict) else {}
+                text = str(meta.get("tts_text") or event.get("text") or "").strip()
+                if text:
+                    return text
+        return ""
+
+    async def _synthesize_replay(self, path: str, text: str) -> Dict[str, Any]:
+        cfg = self.config.snapshot().get("tts") or {}
+        try:
+            return await asyncio.wait_for(
+                tts_mod.synthesize(
+                    text,
+                    cfg.get("voice") or "zh-CN-XiaoxiaoNeural",
+                    cfg.get("rate") or "+0%",
+                    cfg.get("pitch") or "+0Hz",
+                    cfg.get("volume") or "+0%",
+                    path,
+                ),
+                timeout=SYNTH_TIMEOUT,
+            )
+        except asyncio.TimeoutError:
+            return {"ok": False, "error": "合成超时"}
 
     def shutdown(self) -> None:
         """停止全部后台线程并落盘日志（可重复调用）。"""

@@ -218,8 +218,16 @@ def _system_reduced_motion() -> bool:
         pass
     return False
 
-OVERLAY_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter")
-LANE_TYPES = {"gift": "gift", "sc": "super_chat", "guard": "guard"}
+OVERLAY_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
+LANE_TYPES = {
+    "gift": "gift",
+    "sc": "super_chat",
+    "guard": "guard",
+    "danmaku": "danmaku",
+    "enter": "enter",
+    "like": "like",
+    "social": "social",
+}
 STYLE_KEYS = (
     "font_size",
     "font_weight",
@@ -250,6 +258,30 @@ DEFAULT_PINS: dict[str, dict[str, Any]] = {
         "max": 2,
     },
     "guard": {
+        "enabled": False,
+        "position": "bottom",
+        "duration_ms": 6000,
+        "max": 2,
+    },
+    "danmaku": {
+        "enabled": False,
+        "position": "bottom",
+        "duration_ms": 8000,
+        "max": 3,
+    },
+    "enter": {
+        "enabled": False,
+        "position": "bottom",
+        "duration_ms": 6000,
+        "max": 2,
+    },
+    "like": {
+        "enabled": False,
+        "position": "bottom",
+        "duration_ms": 6000,
+        "max": 2,
+    },
+    "social": {
         "enabled": False,
         "position": "bottom",
         "duration_ms": 6000,
@@ -296,6 +328,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "super_chat": True,
         "guard": True,
         "enter": False,
+        "like": True,
+        "social": True,
     },
     "click_through": True,
     "always_on_top": True,
@@ -1153,7 +1187,13 @@ class OverlayWindow(QWidget):
         self._fallback_timer.setSingleShot(True)
         self._fallback_timer.timeout.connect(self._load_fallback_config)
 
-        self._base_flags = Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool
+        # 不能用 Qt.Tool：带 WS_EX_TOOLWINDOW 的窗口不会出现在 OBS 的窗口捕获列表里。
+        # 保留无边框 + 置顶 + 鼠标穿透，改用普通顶层窗口以便直播软件识别。
+        self._base_flags = (
+            Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowDoesNotAcceptFocus
+            | Qt.WindowType.NoDropShadowWindowHint
+        )
         self.setWindowFlags(self._base_flags | Qt.WindowType.WindowStaysOnTopHint)
         self.setWindowTitle(APP_TITLE)
         app = QApplication.instance()
@@ -1162,6 +1202,7 @@ class OverlayWindow(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
         self.setAutoFillBackground(False)
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -1564,6 +1605,8 @@ class OverlayWindow(QWidget):
             if not types.get(message.kind, True) and not message.leaving:
                 self._start_leave(message)
         max_lines = int(self._effective.get("max_lines", 8))
+        if max_lines <= 0:
+            return
         active = [message for message in self._messages if not message.leaving]
         if len(active) > max_lines:
             for message in active[: len(active) - max_lines]:
@@ -1684,7 +1727,7 @@ class OverlayWindow(QWidget):
         return True
 
     def _sync_pinned_config(self, previous_effective: dict[str, Any]) -> bool:
-        """按三条 lane 的启用/位置/数量修剪现有固定项。"""
+        """按各 lane 的启用/位置/数量修剪现有固定项。"""
         current = self._effective
         types = current.get("types") or {}
         old_pins = previous_effective.get("pins") or {}
@@ -1698,12 +1741,12 @@ class OverlayWindow(QWidget):
             kind = LANE_TYPES[lane]
             lane_enabled = bool(policy.get("enabled")) and bool(types.get(kind, True))
             max_items = max(0, int(policy.get("max", 0) or 0))
-            if not lane_enabled or max_items <= 0:
+            if not lane_enabled:
                 if self._pins.get(lane):
-                    self._clear_lane(lane, "配置关闭或 max=0")
+                    self._clear_lane(lane, "配置关闭")
                     layout_changed = True
                 continue
-            if len(self._pins.get(lane, [])) > max_items:
+            if max_items > 0 and len(self._pins.get(lane, [])) > max_items:
                 self._trim_lane(lane, max_items, "上限缩小")
                 layout_changed = True
             if old_policy.get("position") != policy.get("position") and self._pins.get(lane):
@@ -1711,10 +1754,14 @@ class OverlayWindow(QWidget):
 
         if pin_changed:
             LOG.info(
-                "lane 配置：gift=%s sc=%s guard=%s counts=%s",
+                "lane 配置：gift=%s sc=%s guard=%s danmaku=%s enter=%s like=%s social=%s counts=%s",
                 new_pins.get("gift"),
                 new_pins.get("sc"),
                 new_pins.get("guard"),
+                new_pins.get("danmaku"),
+                new_pins.get("enter"),
+                new_pins.get("like"),
+                new_pins.get("social"),
                 {lane: len(self._pins.get(lane, [])) for lane in PIN_LANES},
             )
         if layout_changed:
@@ -1852,7 +1899,7 @@ class OverlayWindow(QWidget):
             duration = 15000
         now = time.perf_counter()
         message.pinned_at = now
-        message.expires_at = now + max(0.5, duration / 1000.0)
+        message.expires_at = None if duration <= 0 else now + max(0.5, duration / 1000.0)
         if not self._lane_timer.isActive():
             self._lane_timer.start()
 
@@ -1866,6 +1913,8 @@ class OverlayWindow(QWidget):
         for lane in PIN_LANES:
             for message in self._pins.get(lane, []):
                 if message.leaving:
+                    continue
+                if message.expires_at is None:
                     continue
                 if paused:
                     # 浮窗隐藏/关闭时暂停 TTL，恢复后继续剩余时长。
@@ -1912,10 +1961,10 @@ class OverlayWindow(QWidget):
 
     def _trim_lane(self, lane: str, max_items: int, reason: str) -> None:
         items = self._pins.get(lane, [])
-        while len(items) > max(0, max_items):
-            self._remove_lane_item(items[0], reason)
         if max_items <= 0:
-            self._clear_lane(lane, reason)
+            return
+        while len(items) > max_items:
+            self._remove_lane_item(items[0], reason)
 
     def _clear_lane(self, lane: str, reason: str) -> None:
         items = self._pins.get(lane, [])
@@ -1969,7 +2018,7 @@ class OverlayWindow(QWidget):
             maximum = int(policy.get("max", 0) or 0)
         except (TypeError, ValueError):
             maximum = 0
-        if maximum <= 0:
+        if maximum < 0:
             return "drop"
         return "pin"
 
@@ -1981,9 +2030,9 @@ class OverlayWindow(QWidget):
         lane = self._lane_for_message(message)
         policy = self._pin_policy(lane)
         try:
-            maximum = max(1, int(policy.get("max", 1) or 1))
+            maximum = max(0, int(policy.get("max", 0) or 0))
         except (TypeError, ValueError):
-            maximum = 1
+            maximum = 0
         price = _float_value(message.meta.get("price"), 0.0)
         key = self._pin_key_for(message)
         for ghost in list(self._pin_fading):
@@ -2032,7 +2081,8 @@ class OverlayWindow(QWidget):
 
         clone = self._pin_clone(message, lane)
         self._pins[lane].append(clone)
-        self._trim_lane(lane, maximum, "FIFO 超出上限")
+        if maximum > 0:
+            self._trim_lane(lane, maximum, "FIFO 超出上限")
         self._arm_pin_timer(clone)
         self._last_pin_layout_sig = None
         LOG.info(
@@ -2129,7 +2179,7 @@ class OverlayWindow(QWidget):
                 ):
                     message.entering = False
         max_lines = int(self._effective.get("max_lines", 8))
-        if len(scroll_messages) > max_lines:
+        if max_lines > 0 and len(scroll_messages) > max_lines:
             # 突发一大段消息时只保留最新的一屏，避免大量旧消息排队造成延迟。
             scroll_messages = scroll_messages[-max_lines:]
             for message in list(self._messages):
@@ -2137,7 +2187,7 @@ class OverlayWindow(QWidget):
                     self._start_leave(message)
         for message in scroll_messages:
             active = [item for item in self._messages if not item.leaving]
-            while len(active) >= max_lines:
+            while max_lines > 0 and len(active) >= max_lines:
                 oldest = active.pop(0)
                 oldest.suppress_draw = True
                 self._drop_scroll_now(oldest)
@@ -2668,6 +2718,8 @@ class OverlayWindow(QWidget):
         if message.leaving:
             return
         duration = max(0, int(self._effective.get("dwell_ms", 12000)))
+        if duration <= 0:
+            return
         timer = QTimer(self)
         timer.setSingleShot(True)
         timer.timeout.connect(lambda m=message: self._dwell_expired(m))

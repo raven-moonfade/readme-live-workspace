@@ -487,7 +487,7 @@ async function probeTopbarGeometry(page) {
     hostCards: document.querySelectorAll('#settingsControlsHost .side > .card').length,
     voices: document.querySelectorAll('#voiceSelect').length,
     sourceVisible: !document.querySelector('#settingsControlsHost > .side').hidden,
-    account: document.getElementById('settingsAccountState').textContent,
+    account: document.getElementById('settingsBiliAccountState').textContent,
     securityHidden: document.getElementById('settingsCredentialSecurity').hidden,
     railState: document.getElementById('railSessionState').textContent,
     pane: document.querySelector('.settings-layout')?.getAttribute('data-settings-pane'),
@@ -565,6 +565,9 @@ async function probeTopbarGeometry(page) {
     shell.state.snapshot = snap;
     shell.renderData();
     document.dispatchEvent(new CustomEvent('mutai:monitor-state'));
+    if (window.MutaiApp && window.MutaiApp.helpers && window.MutaiApp.helpers.renderAccount) {
+      window.MutaiApp.helpers.renderAccount(snap.account);
+    }
     const result = {
       revenueLabel: document.getElementById('wsDataRevenueLabel').textContent,
       revenue: document.getElementById('wsDataRevenue').textContent,
@@ -573,12 +576,15 @@ async function probeTopbarGeometry(page) {
       giftDetail: document.getElementById('wsDataGiftValue').textContent,
       scDetail: document.getElementById('wsDataScValue').textContent,
       typeNote: document.getElementById('wsTypeNote').textContent,
-      settingsAccount: document.getElementById('settingsAccountState').textContent,
+      settingsAccount: document.getElementById('settingsDouyinAccountState').textContent,
       settingsAccountTitle: document.getElementById('settingsAccountTitle').textContent
     };
     shell.state.snapshot = previous;
     shell.renderData();
     document.dispatchEvent(new CustomEvent('mutai:monitor-state'));
+    if (window.MutaiApp && window.MutaiApp.helpers && window.MutaiApp.helpers.renderAccount) {
+      window.MutaiApp.helpers.renderAccount((previous && previous.account) || {});
+    }
     return result;
   });
   await page.click('[data-settings-pane="voice"]');
@@ -1184,7 +1190,7 @@ async function probeTopbarGeometry(page) {
     workbenchCloseFocus: workbenchCloseFocus.view === 'danmaku' &&
       workbenchCloseFocus.focus === 'danmaku',
     dataVisible: !dataBase.panelHidden && dataBase.active,
-    dataReal: data.received > 0 && data.typeRows === 5 && data.nonZeroTypes > 0 && data.activityBars === 20,
+    dataReal: data.received > 0 && data.typeRows === 7 && data.nonZeroTypes > 0 && data.activityBars === 20,
     dataNoFakeMode: data.mode.includes('模拟'),
     dataValueFields: data.giftValue.startsWith('本机字段 ¥') && data.scValue.startsWith('本机字段 ¥'),
     dataPulse: data.pulse && data.oldMetricCards === 0 &&
@@ -1193,7 +1199,7 @@ async function probeTopbarGeometry(page) {
     backendHydration: backendHydration.users === '4' &&
       backendHydration.revenue === '¥42.50' &&
       backendHydration.gift.includes('¥12.50') &&
-      backendHydration.types.join(',') === '7,2,1,0,0',
+      backendHydration.types.join(',') === '7,2,1,0,0,0,0',
     sessionOpenForwarded: sessionOpenForwarded === true,
     filteredMetric: filteredMetric.dropped === '2' && filteredMetric.filtered === '10',
     appearanceSavePersists: appearanceSave.calls === 1 &&
@@ -1212,7 +1218,7 @@ async function probeTopbarGeometry(page) {
       douyinMoney.scDetail.includes('平台未提供') &&
       douyinMoney.typeNote.includes('SC/舰长') &&
       douyinMoney.settingsAccount.includes('抖音用户A') &&
-      douyinMoney.settingsAccountTitle === '抖音登录态' &&
+      douyinMoney.settingsAccountTitle === '账号登录态' &&
       !Object.values(douyinMoney).some((value) => String(value).includes('¥0.00')),
     peak5mMatches: base.peak5mShort === null && base.peak5mExact === 15,
     platformCapabilities: base.platformCapabilityLabel?.label === '快手' &&
@@ -1316,6 +1322,7 @@ async function probeTopbarGeometry(page) {
     settingsControlValue,
     hiddenViewClamp,
     renderedView,
+    douyinMoney,
     metricIsolation,
     mainTopbar,
     heroStress,

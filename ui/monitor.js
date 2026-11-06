@@ -6,7 +6,7 @@
 (function () {
   "use strict";
 
-  const TYPE_ORDER = ["danmaku", "gift", "super_chat", "guard", "enter"];
+  const TYPE_ORDER = ["danmaku", "gift", "super_chat", "guard", "enter", "like", "social"];
   const TYPE_META = Object.freeze({
     danmaku: Object.freeze({
       label: "弹幕",
@@ -47,6 +47,22 @@
       color: "#72DFB7",
       bg: "rgba(114, 223, 183, .085)",
       border: "rgba(114, 223, 183, .26)",
+    }),
+    like: Object.freeze({
+      label: "点赞",
+      short: "赞",
+      code: "LIKE",
+      color: "#FF9DB8",
+      bg: "rgba(255, 157, 184, .085)",
+      border: "rgba(255, 157, 184, .26)",
+    }),
+    social: Object.freeze({
+      label: "关注",
+      short: "关",
+      code: "SOCIAL",
+      color: "#7DDCFF",
+      bg: "rgba(125, 220, 255, .085)",
+      border: "rgba(125, 220, 255, .26)",
     }),
   });
 
@@ -182,6 +198,7 @@
     truncationLowStreak: 0,
     layoutSignature: "",
     connection: "connecting",
+    platform: "bilibili",
     roomTitle: "",
     stats: { received: 0, spoken: 0, dropped: 0 },
     nowPlaying: null,
@@ -410,6 +427,8 @@
     if (text == null && type === "super_chat") text = asText(meta.message || "醒目留言");
     if (text == null && type === "guard") text = "开通 " + guardName(meta.guard_level, meta.guard_name);
     if (text == null && type === "enter") text = "进入直播间";
+    if (text == null && type === "like") text = "点赞了直播间";
+    if (text == null && type === "social") text = asText(meta.social_action || "关注了直播间");
     if (type === "enter") text = asText(text).replace(/^进入了?直播间$/, "进入直播间");
     text = asText(text == null ? "" : text);
 
@@ -664,8 +683,9 @@
 
   function buildFilters() {
     if (!el.typeFilters) return;
+    const order = platformTypeOrder();
     const chips = [{ key: "all", label: "全部", color: "" }].concat(
-      TYPE_ORDER.map(function (type) {
+      order.map(function (type) {
         return { key: type, label: TYPE_META[type].label, color: TYPE_META[type].color };
       })
     );
@@ -691,9 +711,18 @@
     }
   }
 
+  function platformTypeOrder() {
+    return state.platform === "douyin"
+      ? ["danmaku", "gift", "enter", "like", "social"]
+      : ["danmaku", "gift", "super_chat", "guard", "enter"];
+  }
+
   function updateFilterCounts() {
     if (!el.typeFilters) return;
-    const counts = { all: state.items.length, danmaku: 0, gift: 0, super_chat: 0, guard: 0, enter: 0 };
+    const counts = {
+      all: state.items.length, danmaku: 0, gift: 0, super_chat: 0,
+      guard: 0, enter: 0, like: 0, social: 0,
+    };
     state.items.forEach(function (item) {
       counts[item.type] += 1;
     });
@@ -1434,16 +1463,35 @@
 
   function scheduleAutoRead(delay) {
     window.clearTimeout(timers.autoRead);
-    if (state.frozen || hasActiveFilter()) return;
     timers.autoRead = window.setTimeout(function () {
-      if (state.frozen || hasActiveFilter() || !state.ready || !isAtBottom(4)) return;
+      if (!state.ready) return;
+      // 未读只跟“真正读完”走：连续完成（或确定不会朗读）的消息才推进游标。
+      // 滚动到底部、切筛选、取消冻结都不再一次性清空未读。
+      const candidate = settledReadSeq();
+      if (candidate <= state.lastReadSeq) return;
       state.lastAutoReadAt = Date.now();
-      markReadTo(state.latestSeq, { source: "auto-follow", silent: true });
+      markReadTo(candidate, { source: "tts", silent: true });
     }, Number.isFinite(delay) ? delay : 500);
   }
 
   function cancelAutoRead() {
     window.clearTimeout(timers.autoRead);
+  }
+
+  function settledReadSeq() {
+    let candidate = state.lastReadSeq;
+    for (let i = 0; i < state.items.length; i += 1) {
+      const item = state.items[i];
+      if (!item || item.seq <= candidate) continue;
+      const key = item.speech && item.speech.key;
+      // done=已朗读；skipped/failed=已处理且不会再播放，不能永远挂着未读。
+      if (key === "done" || key === "skipped" || key === "failed") {
+        candidate = item.seq;
+      } else {
+        break;
+      }
+    }
+    return candidate;
   }
 
   function renderFocus() {
@@ -1578,9 +1626,7 @@
         refreshSnapshot({ forceRender: true, align: "bottom" });
       }
       cancelAutoRead();
-      window.setTimeout(function () {
-        markReadTo(state.latestSeq, { source: "resume", silent: true });
-      }, 0);
+      scheduleAutoRead(120);
     }
     updateChrome();
     if (!opts.silent) {
@@ -2174,6 +2220,14 @@
     if (!raw || typeof raw !== "object") return;
     const source = raw.state && raw.state.connection ? raw.state : raw;
     if (source.connection != null) state.connection = asText(source.connection);
+    if (source.platform != null) {
+      const platform = asText(source.platform).toLowerCase() === "douyin" ? "douyin" : "bilibili";
+      if (platform !== state.platform) {
+        state.platform = platform;
+        if (platformTypeOrder().indexOf(state.filterType) < 0) state.filterType = "all";
+        buildFilters();
+      }
+    }
     if (source.room_title != null) state.roomTitle = asText(source.room_title);
     if (source.stats && typeof source.stats === "object") {
       state.stats = {
@@ -2236,13 +2290,9 @@
     });
     if (opts.initial) {
       state.initialLoaded = true;
-    } else if (
-      seq > previousLatest &&
-      wasAtBottom &&
-      !state.frozen &&
-      !hasActiveFilter()
-    ) {
-      scheduleAutoRead(500);
+    } else {
+      // TTS 完成状态可能原地更新（seq 不变），所以每次快照变化都尝试推进未读。
+      scheduleAutoRead(seq > previousLatest ? 500 : 200);
     }
     return true;
   }
@@ -2742,6 +2792,7 @@
     window.__MONITOR_TEST__ = {
       push: pushMockMessages,
       setSpoken: setMockSpoken,
+      markAllRead: markAllRead,
       state: function () {
         const detail = detailItem();
         return {
@@ -2750,6 +2801,7 @@
           frozen: state.frozen,
           lastReadSeq: state.lastReadSeq,
           latestSeq: state.latestSeq,
+          unread: unreadCount(),
           backlog: backlogCount(),
           uiSize: state.uiSize,
           layout: currentLayout().twoLine ? "two_line" : "single_line",

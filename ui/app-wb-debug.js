@@ -20,19 +20,34 @@
   var overlayApi = ctx.helpers.overlayApi;
   var overlayErrorText = ctx.helpers.overlayErrorText;
   var WB_TYPES = wb.constants.WB_TYPES;
+  var wbTypesForPlatform = wb.helpers.wbTypesForPlatform;
 
   function wbMockTypeLabels() {
-    return { danmaku: '弹幕', gift: '礼物', super_chat: '醒目留言', guard: '上舰', enter: '入场' };
+    return {
+      danmaku: '弹幕', gift: '礼物', super_chat: '醒目留言', guard: '上舰',
+      enter: '入场', like: '点赞', social: '关注'
+    };
   }
   function wbMockActiveTypeNames() {
     var labels = wbMockTypeLabels();
     var names = [];
-    for (var i = 0; i < WB_TYPES.length; i++) {
-      if (wbState.mock.auto.types[WB_TYPES[i]]) names.push(labels[WB_TYPES[i]]);
+    var types = wbTypesForPlatform();
+    for (var i = 0; i < types.length; i++) {
+      if (wbState.mock.auto.types[types[i]]) names.push(labels[types[i]]);
     }
     return names;
   }
   function wbRenderMockTypeChips() {
+    var labels = wbMockTypeLabels();
+    var types = wbTypesForPlatform();
+    var html = '';
+    for (var t = 0; t < types.length; t++) {
+      var type = types[t];
+      var on = !!wbState.mock.auto.types[type];
+      html += '<button class="wb-type-chip' + (on ? ' is-active' : '') + '" type="button" data-wb-mock-type="' +
+        type + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + wbEscape(labels[type] || type) + '</button>';
+    }
+    if (wbDom.mockTypes) wbDom.mockTypes.innerHTML = html;
     var chips = wbDom.mockTypes.querySelectorAll('[data-wb-mock-type]');
     for (var i = 0; i < chips.length; i++) {
       var type = chips[i].getAttribute('data-wb-mock-type');
@@ -56,13 +71,23 @@
     var names = wbMockActiveTypeNames();
     wbDom.mockAutoStatusDetail.textContent = '每 ' + (auto.interval / 1000).toFixed(auto.interval % 1000 === 0 ? 0 : 1) +
       ' 秒 · 每次 ' + auto.perTick + ' 条 · ' + (names.length ? names.join(' / ') : '未选择类型') +
-      (auto.speak ? ' · 真实朗读' : ' · 仅上屏');
+      (auto.speak ? ' · 真实朗读' : ' · ⚠ 仅上屏，不会朗读');
     wbDom.mockAutoNote.textContent = auto.running ? '按设定频率持续注入；关闭工作台后仍会继续运行' : '按设定频率持续注入模拟消息';
     wbDom.mockIntervalValue.textContent = '每 ' + (auto.interval / 1000).toFixed(auto.interval % 1000 === 0 ? 0 : 1) + ' 秒';
     wbRenderMockTypeChips();
   }
   function wbRenderMockControls() {
     var mock = wbState.mock;
+    var labels = wbMockTypeLabels();
+    var types = wbTypesForPlatform();
+    if (types.indexOf(mock.kind) < 0) mock.kind = types[0];
+    if (wbDom.mockKind) {
+      var options = '';
+      for (var i = 0; i < types.length; i++) {
+        options += '<option value="' + types[i] + '">' + wbEscape(labels[types[i]] || types[i]) + '</option>';
+      }
+      wbDom.mockKind.innerHTML = options;
+    }
     if (document.activeElement !== wbDom.mockKind) wbDom.mockKind.value = mock.kind;
     if (document.activeElement !== wbDom.mockUser) wbDom.mockUser.value = mock.user;
     if (document.activeElement !== wbDom.mockText) wbDom.mockText.value = mock.text;

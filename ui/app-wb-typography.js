@@ -174,7 +174,7 @@
     if (!wbState.loadOk) return;
     wbConfirm({
       title: '全部排版恢复默认？',
-      body: '将清空五类消息共 ' + (WB_TYPES.length * WB_TYPOGRAPHY_FIELD_COUNT) +
+    body: '将清空全部消息类型共 ' + (WB_TYPES.length * WB_TYPOGRAPHY_FIELD_COUNT) +
         ' 个排版覆盖。外观、动效、主题、固定规则与窗口几何不动。',
       confirmLabel: '全部恢复排版',
       danger: true
@@ -189,7 +189,7 @@
       wbMarkDirty();
       wbRenderEditor();
       wbUpdateCoverageDisplay();
-      wbShowToast('已清空五类排版覆盖 · 外观、动效、规则与几何未动');
+      wbShowToast('已清空排版覆盖 · 外观、动效、规则与几何未动');
     });
   }
 

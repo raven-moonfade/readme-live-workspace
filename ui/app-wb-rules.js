@@ -24,8 +24,32 @@
   var WB_PIN_META = {
     gift: { name: '礼物', code: 'GIFT', color: 'var(--wb-gift)', icon: '#wb-i-gift', sub: '按礼物单价过滤；低于门槛进滚动流' },
     sc: { name: '醒目留言', code: 'SC', color: 'var(--wb-sc)', icon: '#wb-i-star', sub: '付费留言；固定失败不复制进滚动流' },
-    guard: { name: '舰长', code: 'GUARD', color: 'var(--wb-guard)', icon: '#wb-i-crown', sub: '大航海；与礼物 / SC 共享固定预算' }
+    guard: { name: '舰长', code: 'GUARD', color: 'var(--wb-guard)', icon: '#wb-i-crown', sub: '大航海；与礼物 / SC 共享固定预算' },
+    danmaku: { name: '弹幕', code: 'DANMAKU', color: 'var(--accent)', icon: '#wb-i-chat', sub: '普通弹幕也可以固定展示；0 = 不限' },
+    enter: { name: '入场', code: 'ENTER', color: 'var(--ok)', icon: '#wb-i-enter', sub: '进入直播间的提示；0 = 不限' },
+    like: { name: '点赞', code: 'LIKE', color: 'var(--warn)', icon: '#wb-i-star', sub: '抖音点赞；高频互动建议只上屏' },
+    social: { name: '关注', code: 'SOCIAL', color: 'var(--ok)', icon: '#wb-i-enter', sub: '抖音关注 / 分享直播间' }
   };
+  var wbPlatform = wb.helpers.wbPlatform;
+  var wbPinLanesForPlatform = wb.helpers.wbPinLanesForPlatform;
+
+  function wbLaneOrder() {
+    return wbPinLanesForPlatform();
+  }
+
+  function wbLaneName(lane) {
+    return WB_PIN_META[lane] ? WB_PIN_META[lane].name : lane;
+  }
+
+  function wbLaneColor(lane) {
+    return WB_PIN_META[lane] ? WB_PIN_META[lane].color : '#566378';
+  }
+
+  function wbZeroBadge(field, value) {
+    return value === 0
+      ? '<span class="wb-zero-hint" title="0 = 不限，需手动清理或由同类消息挤出">∞</span>'
+      : '';
+  }
 
   function wbPinRowHtml(lane) {
     var pin = wbState.draft.pins[lane];
@@ -42,11 +66,13 @@
       (pin.position === 'top' ? ' class="is-active" aria-pressed="true"' : ' aria-pressed="false"') + '>顶部</button><button type="button" data-wb-pin-position="' +
       lane + '" data-wb-position="bottom"' + (pin.position === 'bottom' ? ' class="is-active" aria-pressed="true"' : ' aria-pressed="false"') + '>底部</button></div></td>' +
       '<td><div class="wb-stepper"><button type="button" data-wb-pin-step="' + lane + '" data-wb-pin-field="duration_ms" data-wb-delta="-1000" aria-label="减少停留时长">−</button>' +
-      '<input type="number" data-wb-pin-number="' + lane + '" data-wb-pin-field="duration_ms" value="' + sec + '" min="2" max="30" step="1" aria-label="停留时长">' +
-      '<span class="suffix">s</span><button type="button" data-wb-pin-step="' + lane + '" data-wb-pin-field="duration_ms" data-wb-delta="1000" aria-label="增加停留时长">＋</button></div></td>' +
+      '<input type="number" data-wb-pin-number="' + lane + '" data-wb-pin-field="duration_ms" value="' + sec + '" min="0" max="30" step="1" aria-label="停留时长（0 为不限）" title="0 = 不限时，直到被同类消息挤出">' +
+      '<span class="suffix">s</span>' + wbZeroBadge('duration_ms', sec) +
+      '<button type="button" data-wb-pin-step="' + lane + '" data-wb-pin-field="duration_ms" data-wb-delta="1000" aria-label="增加停留时长">＋</button></div></td>' +
       '<td><div class="wb-stepper"><button type="button" data-wb-pin-step="' + lane + '" data-wb-pin-field="max" data-wb-delta="-1" aria-label="减少条数">−</button>' +
-      '<input type="number" data-wb-pin-number="' + lane + '" data-wb-pin-field="max" value="' + pin.max + '" min="1" max="6" step="1" aria-label="同屏条数">' +
-      '<span class="suffix">条</span><button type="button" data-wb-pin-step="' + lane + '" data-wb-pin-field="max" data-wb-delta="1" aria-label="增加条数">＋</button></div></td>' +
+      '<input type="number" data-wb-pin-number="' + lane + '" data-wb-pin-field="max" value="' + pin.max + '" min="0" max="6" step="1" aria-label="同屏条数（0 为不限）" title="0 = 不限条数，受窗口固定区预算约束">' +
+      '<span class="suffix">条</span>' + wbZeroBadge('max', pin.max) +
+      '<button type="button" data-wb-pin-step="' + lane + '" data-wb-pin-field="max" data-wb-delta="1" aria-label="增加条数">＋</button></div></td>' +
       '<td>' + (lane === 'gift'
         ? '<div class="wb-price-wrap"><span class="currency">¥</span><input type="number" data-wb-pin-number="' + lane +
           '" data-wb-pin-field="min_price" value="' + pin.min_price + '" min="0" max="100000" step="1" aria-label="礼物最低价值"><span class="wb-not-applicable">起</span></div>'
@@ -72,11 +98,11 @@
       (pin.position === 'bottom' ? ' class="is-active" aria-pressed="true"' : ' aria-pressed="false"') + '>底部</button></div></div>' +
       '<div class="wb-rule-field"><span>时长</span><div class="wb-stepper"><button type="button" data-wb-pin-step="' + lane +
       '" data-wb-pin-field="duration_ms" data-wb-delta="-1000">−</button><input type="number" data-wb-pin-number="' + lane +
-      '" data-wb-pin-field="duration_ms" value="' + sec + '" min="2" max="30" step="1"><span class="suffix">s</span>' +
+      '" data-wb-pin-field="duration_ms" value="' + sec + '" min="0" max="30" step="1" title="0 = 不限时"><span class="suffix">s</span>' + wbZeroBadge('duration_ms', sec) +
       '<button type="button" data-wb-pin-step="' + lane + '" data-wb-pin-field="duration_ms" data-wb-delta="1000">＋</button></div></div>' +
       '<div class="wb-rule-field"><span>条数</span><div class="wb-stepper"><button type="button" data-wb-pin-step="' + lane +
       '" data-wb-pin-field="max" data-wb-delta="-1">−</button><input type="number" data-wb-pin-number="' + lane +
-      '" data-wb-pin-field="max" value="' + pin.max + '" min="1" max="6" step="1"><span class="suffix">条</span>' +
+      '" data-wb-pin-field="max" value="' + pin.max + '" min="0" max="6" step="1" title="0 = 不限条数"><span class="suffix">条</span>' + wbZeroBadge('max', pin.max) +
       '<button type="button" data-wb-pin-step="' + lane + '" data-wb-pin-field="max" data-wb-delta="1">＋</button></div></div>' +
       (lane === 'gift'
         ? '<div class="wb-rule-field"><span>最低价值</span><span class="wb-price-wrap"><span class="currency">¥</span><input type="number" data-wb-pin-number="' +
@@ -86,7 +112,7 @@
   }
 
   function wbRenderRules() {
-    var lanes = ['gift', 'sc', 'guard'];
+    var lanes = wbLaneOrder();
     var tableHtml = '';
     var cardsHtml = '';
     for (var i = 0; i < lanes.length; i++) {
@@ -111,7 +137,7 @@
     var row = target.closest ? target.closest('[data-wb-lane]') : null;
     if (!row) return null;
     var lane = row.getAttribute('data-wb-lane');
-    return lane === 'gift' || lane === 'sc' || lane === 'guard' ? lane : null;
+    return wbLaneOrder().indexOf(lane) >= 0 ? lane : null;
   }
 
   function wbOnPinClick(e) {
@@ -144,9 +170,9 @@
     var field = step.getAttribute('data-wb-pin-field');
     var delta = wbFinite(step.getAttribute('data-wb-delta'), 0);
     if (field === 'duration_ms') {
-      wbState.draft.pins[lane].duration_ms = wbRound(wbState.draft.pins[lane].duration_ms + delta, 8000, 2000, 30000);
+      wbState.draft.pins[lane].duration_ms = wbRound(wbState.draft.pins[lane].duration_ms + delta, 8000, 0, 30000);
     } else if (field === 'max') {
-      wbState.draft.pins[lane].max = wbRound(wbState.draft.pins[lane].max + delta, 1, 1, 6);
+      wbState.draft.pins[lane].max = wbRound(wbState.draft.pins[lane].max + delta, 1, 0, 6);
     }
     wbMarkDirty();
     wbRenderRules();
@@ -161,10 +187,10 @@
     var pin = wbState.draft.pins[lane];
     if (!pin) return;
     if (field === 'duration_ms') {
-      var sec = wbRound(raw, pin.duration_ms / 1000, 2, 30);
+      var sec = wbRound(raw, pin.duration_ms / 1000, 0, 30);
       pin.duration_ms = Math.round(sec) * 1000;
     } else if (field === 'max') {
-      pin.max = wbRound(raw, pin.max, 1, 6);
+      pin.max = wbRound(raw, pin.max, 0, 6);
     } else if (field === 'min_price' && lane === 'gift') {
       pin.min_price = clamp(wbFinite(raw, pin.min_price), 0, 100000);
     }
@@ -200,12 +226,21 @@
     var budgetCap = H * 0.5;
     var laneCap = H * 0.4;
     var scrollMin = H * 0.4;
-    var laneOrder = ['sc', 'gift', 'guard'];
+    var laneOrder = wbLaneOrder();
+    var evictOrder = wbPlatform() === 'douyin'
+      ? ['danmaku', 'enter', 'like', 'social', 'gift']
+      : ['danmaku', 'enter', 'guard', 'gift', 'sc'];
+    var fallbackCapRows = Math.max(1, Math.floor((laneCap + 8) / (ITEM + 8)));
     var baseRows = {};
+    var unlimited = {};
     var positions = {};
     for (var i = 0; i < laneOrder.length; i++) {
       var lane = laneOrder[i];
-      baseRows[lane] = wbState.draft.pins[lane].enabled ? wbState.draft.pins[lane].max : 0;
+      var maxRows = wbState.draft.pins[lane].max;
+      unlimited[lane] = !!wbState.draft.pins[lane].enabled && maxRows === 0;
+      baseRows[lane] = wbState.draft.pins[lane].enabled
+        ? (maxRows > 0 ? maxRows : fallbackCapRows)
+        : 0;
       positions[lane] = wbState.draft.pins[lane].position;
     }
     var demandAt = function (rows, gap) {
@@ -236,8 +271,8 @@
       var evictions = 0;
       while (sum > budget) {
         var low = null;
-        for (var q = 0; q < laneOrder.length; q++) {
-          var candidate = ['guard', 'gift', 'sc'][q];
+        for (var q = 0; q < evictOrder.length; q++) {
+          var candidate = evictOrder[q];
           if (rows[candidate] > 1) { low = candidate; break; }
         }
         if (!low) break;
@@ -247,8 +282,8 @@
       }
       while (sum > budget) {
         var suppress = null;
-        for (var w = 0; w < laneOrder.length; w++) {
-          var candidate2 = ['guard', 'gift', 'sc'][w];
+        for (var w = 0; w < evictOrder.length; w++) {
+          var candidate2 = evictOrder[w];
           if (rows[candidate2] > 0) { suppress = candidate2; break; }
         }
         if (!suppress) break;
@@ -278,6 +313,7 @@
         rows: laneRows, px: px, pct: pct, item: ITEM, gap: chosen.gap,
         enabled: wbState.draft.pins[laneName].enabled,
         position: wbState.draft.pins[laneName].position,
+        unlimited: !!unlimited[laneName],
         demand: baseRows[laneName] * ITEM + Math.max(0, baseRows[laneName] - 1) * 8
       };
       used += px;
@@ -290,7 +326,9 @@
     for (var e = 0; e < laneOrder.length; e++) {
       var evLane = laneOrder[e];
       var diff = baseRows[evLane] - chosen.rows[evLane];
-      if (diff > 0) evicted.push(evLane + ' ' + diff + ' 行');
+      if (diff > 0) {
+        evicted.push(wbLaneName(evLane) + (unlimited[evLane] ? ' 受预算限制' : ' ' + diff + ' 行'));
+      }
     }
     return {
       H: H, font: font, item: ITEM, budgetCap: budgetCap, laneCap: laneCap, scrollMin: scrollMin,
@@ -298,6 +336,7 @@
       usedPct: used / H * 100, scrollPct: scroll / H * 100,
       lanes: lanes, top: top, bottom: bottom, totalRows: totalRows,
       level: chosen.levelIndex, gap: chosen.gap,
+      unlimited: unlimited,
       evictedText: evicted.length ? evicted.join(' · ') : '无淘汰',
       scrollRows: Math.floor(scroll / ITEM)
     };
@@ -316,12 +355,18 @@
     wbDom.scrollUsedLine.textContent = '滚动 ' + Math.round(budget.scroll) + 'px · ' + budget.scrollPct.toFixed(1) + '%';
     wbDom.budgetCapLine.textContent = '单 lane 上限 ' + Math.round(budget.laneCap) + 'px · 40%';
     wbDom.budgetHeadMeta.textContent = 'H=' + Math.round(budget.H) + ' · font ' + budget.font + 'px · item ' + budget.item + 'px';
-    var segments = [
-      { lane: 'sc', label: 'SC', px: budget.lanes.sc.px, color: 'var(--wb-sc)' },
-      { lane: 'gift', label: '礼物', px: budget.lanes.gift.px, color: 'var(--wb-gift)' },
-      { lane: 'guard', label: '舰长', px: budget.lanes.guard.px, color: 'var(--wb-guard)' },
-      { lane: 'scroll', label: '滚动', px: budget.scroll, color: '' }
-    ];
+    var laneOrder = wbLaneOrder();
+    var segments = [];
+    for (var li = 0; li < laneOrder.length; li++) {
+      var segLane = laneOrder[li];
+      segments.push({
+        lane: segLane,
+        label: wbLaneName(segLane),
+        px: budget.lanes[segLane].px,
+        color: wbLaneColor(segLane)
+      });
+    }
+    segments.push({ lane: 'scroll', label: '滚动', px: budget.scroll, color: '' });
     var bar = '';
     for (var s = 0; s < segments.length; s++) {
       var seg = segments[s];
@@ -332,20 +377,34 @@
         (seg.px > 42 ? seg.label + ' ' + Math.round(seg.px) : '') + '</span>';
     }
     wbDom.budgetBar.innerHTML = bar;
+    if (wbDom.budgetLegend) {
+      var legend = '';
+      for (var lg = 0; lg < laneOrder.length; lg++) {
+        var lgLane = laneOrder[lg];
+        legend += '<span><i style="--c:' + wbLaneColor(lgLane) + '"></i>' + wbEscape(wbLaneName(lgLane)) + '</span>';
+      }
+      legend += '<span><i style="--c:#566378"></i>滚动区</span>';
+      wbDom.budgetLegend.innerHTML = legend;
+    }
     var rowsHtml = '';
-    var names = ['sc', 'gift', 'guard'];
+    var names = laneOrder;
     for (var r = 0; r < names.length; r++) {
       var lane = names[r];
       var item = budget.lanes[lane];
-      var name = lane === 'sc' ? 'SC' : lane === 'gift' ? '礼物' : '舰长';
-      var color = lane === 'sc' ? 'var(--wb-sc)' : lane === 'gift' ? 'var(--wb-gift)' : 'var(--wb-guard)';
+      var name = wbLaneName(lane);
+      var color = wbLaneColor(lane);
       rowsHtml += '<div class="wb-lane-row"><span class="wb-lane-name"><i style="--c:' + color + '"></i><b>' + name +
         '</b></span><span class="wb-lane-track"><span style="--c:' + color + ';width:' +
         Math.min(100, item.pct / 50 * 100).toFixed(1) + '%"></span></span><span class="wb-lane-value"><b>' +
-        item.rows + ' 行</b> · ' + Math.round(item.px) + 'px · ' + item.pct.toFixed(1) + '%</span></div>';
+        (item.unlimited ? '不限' : item.rows + ' 行') + '</b> · ' + Math.round(item.px) + 'px · ' +
+        item.pct.toFixed(1) + '%</span></div>';
     }
     wbDom.laneRows.innerHTML = rowsHtml;
-    wbDom.capacityNote.innerHTML = '压缩顺序：间距 8→6→4px；仍超预算时先淘汰 guard，再 gift，最后 SC。固定项不复制进滚动流。当前 <b>L' +
+    var evictNames = (wbPlatform() === 'douyin'
+      ? ['danmaku', 'enter', 'like', 'social', 'gift']
+      : ['danmaku', 'enter', 'guard', 'gift', 'sc']).map(wbLaneName).join(' → ');
+    wbDom.capacityNote.innerHTML = '压缩顺序：间距 8→6→4px；仍超预算时按 ' + evictNames +
+      ' 淘汰。0 表示不设每类上限，但仍受固定区 50% 预算约束。固定项不复制进滚动流。当前 <b>L' +
       budget.level + ' / ' + budget.gap + 'px</b> · <b>' + wbEscape(budget.evictedText) + '</b> · 滚动下限 ' +
       Math.round(budget.scrollMin) + 'px · 40%。';
     wbRenderStructure(budget);
@@ -363,7 +422,7 @@
     wbDom.structureTopMeta.textContent = Math.round(budget.top) + 'px · ' + (budget.top / budget.H * 100).toFixed(1) + '%';
     wbDom.structureBottomMeta.textContent = Math.round(budget.bottom) + 'px · ' + (budget.bottom / budget.H * 100).toFixed(1) + '%';
     wbDom.structureScrollMeta.textContent = Math.round(budget.scroll) + 'px · ' + budget.scrollRows + ' 行 · ' + budget.scrollPct.toFixed(1) + '%';
-    var lanes = ['sc', 'gift', 'guard'];
+    var lanes = wbLaneOrder();
     var topLanes = '';
     var bottomLanes = '';
     var topCards = '';
@@ -372,9 +431,10 @@
       var lane = lanes[i];
       var item = budget.lanes[lane];
       if (!item || item.rows <= 0) continue;
-      var name = lane === 'sc' ? 'SC' : lane === 'gift' ? '礼物' : '舰长';
-      var color = lane === 'sc' ? 'var(--wb-sc)' : lane === 'gift' ? 'var(--wb-gift)' : 'var(--wb-guard)';
-      var chip = '<span class="wb-structure-lane" style="--c:' + color + '"><i></i>' + name + ' · ' + item.rows + ' 行</span>';
+      var name = wbLaneName(lane);
+      var color = wbLaneColor(lane);
+      var chip = '<span class="wb-structure-lane" style="--c:' + color + '"><i></i>' + name + ' · ' +
+        (item.unlimited ? '不限' : item.rows + ' 行') + '</span>';
       var cards = '';
       for (var row = 0; row < item.rows; row++) {
         cards += '<div class="wb-structure-mini" style="--c:' + color + '"><b>' + name + ' #' + (row + 1) +
@@ -409,8 +469,8 @@
   function wbRestorePinDefaults() {
     if (!wbState.loadOk) return;
     wbConfirm({
-      title: '恢复三类固定规则默认？',
-      body: '只恢复礼物、SC、舰长的启用、停靠位置、停留时长、同屏条数与礼物最低价值。样式与窗口几何不动。',
+      title: '恢复当前平台固定规则默认？',
+      body: '只恢复当前平台这些消息类型的启用、停靠位置、停留时长、同屏条数与礼物最低价值。样式与窗口几何不动。',
       confirmLabel: '恢复规则默认',
       danger: true
     }).then(function (ok) {
@@ -418,7 +478,7 @@
       wbState.draft.pins = wbClone(WB_PIN_DEFAULTS);
       wbMarkDirty();
       wbRenderRules();
-      wbShowToast('已恢复三类固定规则默认 · 样式与窗口几何未动');
+      wbShowToast('已恢复当前平台固定规则默认 · 样式与窗口几何未动');
     });
   }
 

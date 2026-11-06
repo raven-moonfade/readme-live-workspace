@@ -195,7 +195,7 @@ def parse_response(data: bytes) -> Dict[str, Any]:
 
 
 def normalize_message(method: str, payload: bytes, message_id: int = 0) -> Optional[Tuple[str, Dict[str, Any]]]:
-    """把 webcast 消息映射成 ReadMe 的五类规范化消息。"""
+    """把 webcast 消息映射成 ReadMe 的规范化消息。"""
     if not method or not isinstance(payload, (bytes, bytearray)):
         return None
     fields = _compound(payload)
@@ -283,7 +283,43 @@ def normalize_message(method: str, payload: bytes, message_id: int = 0) -> Optio
         user = parse_user(first(fields, 2))
         if not user:
             return None
-        # 关注/分享不是 ReadMe 的五类消息，暂不进入朗读与浮窗。
-        return None
+        action = as_int(first(fields, 4))
+        share_type = as_int(first(fields, 3))
+        text = "分享了直播间" if action == 2 or share_type else "关注了直播间"
+        return (
+            "social",
+            {
+                "user": user.get("nickname") or "",
+                "uid": user.get("uid") or 0,
+                "text": text,
+                "meta": {
+                    **meta_common,
+                    "avatar": user.get("avatar") or "",
+                    "social_action": text,
+                    "social_share_type": share_type,
+                    "follow_count": as_int(first(fields, 6)),
+                },
+            },
+        )
+
+    if method == "WebcastLikeMessage":
+        user = parse_user(first(fields, 5)) or parse_user(first(fields, 2))
+        if not user:
+            return None
+        count = max(1, as_int(first(fields, 2), 1))
+        return (
+            "like",
+            {
+                "user": user.get("nickname") or "",
+                "uid": user.get("uid") or 0,
+                "text": "点赞了直播间",
+                "meta": {
+                    **meta_common,
+                    "avatar": user.get("avatar") or "",
+                    "like_count": count,
+                    "like_total": max(0, as_int(first(fields, 3))),
+                },
+            },
+        )
 
     return None

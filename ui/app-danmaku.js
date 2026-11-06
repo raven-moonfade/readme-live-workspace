@@ -96,6 +96,8 @@
     if (type === 'guard') return '开通了' + guardName(meta.guard_level);
     if (type === 'enter') return '进入直播间';
     if (type === 'super_chat') return meta.message || '发送了一条醒目留言';
+    if (type === 'like') return '点赞了直播间';
+    if (type === 'social') return meta.social_action || '关注了直播间';
     return '';
   }
 
@@ -367,6 +369,11 @@
       var input = switches[i];
       var want = !!getPath(c, input.dataset.path);
       if (!isEditing(input) && input.checked !== want) input.checked = want;
+    }
+    var platformRows = document.querySelectorAll('[data-platform-only]');
+    for (i = 0; i < platformRows.length; i++) {
+      var row = platformRows[i];
+      row.hidden = row.getAttribute('data-platform-only') !== (state.platform === 'douyin' ? 'douyin' : 'bilibili');
     }
 
     // 数字输入

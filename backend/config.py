@@ -42,8 +42,8 @@ logger = logging.getLogger("danmaku_tts.config")
 
 SCHEMA_VERSION = 3
 APPEARANCE_SCHEMA_VERSION = 1
-OVERLAY_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter")
-PIN_LANES = ("gift", "sc", "guard")
+OVERLAY_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
+PIN_LANES = ("gift", "sc", "guard", "danmaku", "enter", "like", "social")
 APPEARANCE_PRESETS = ("broadcast", "cobalt")
 APPEARANCE_THEME_MODES = ("light", "dark", "system")
 APPEARANCE_PATTERN_TYPES = ("none", "dots")
@@ -71,10 +71,12 @@ _KEEP = object()
 _MIGRATION_ERROR = "MigrationError"
 WRITE_FAILED = "config: 写入配置失败"
 
-_READ_BOOL_KEYS = ("danmaku", "gift", "super_chat", "guard", "enter", "include_user")
-_TEMPLATE_KEYS = ("danmaku", "gift", "super_chat", "guard", "enter")
+_READ_BOOL_KEYS = (
+    "danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "include_user",
+)
+_TEMPLATE_KEYS = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
 _MOCK_INT_RANGES = {"interval_ms": (200, 60000), "per_tick": (1, 20)}
-_MOCK_TYPE_KEYS = ("danmaku", "gift", "super_chat", "guard", "enter")
+_MOCK_TYPE_KEYS = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
 
 _OVERLAY_BOOL_KEYS = (
     "enabled",
@@ -95,11 +97,11 @@ _OVERLAY_INT_RANGES = {
     "outline_width": (0, 6),
     "name_max_len": (1, 10 ** 9),
     "text_max_len": (1, 10 ** 9),
-    "max_lines": (1, 30),
-    "dwell_ms": (1000, 120000),
+    "max_lines": (0, 30),
+    "dwell_ms": (0, 120000),
     "gap": (0, 40),
-    "gift_pin_duration_ms": (2000, 600000),
-    "gift_pin_max": (1, 6),
+    "gift_pin_duration_ms": (0, 600000),
+    "gift_pin_max": (0, 6),
     "gift_pin_min_price": (0, 1000000),
 }
 _OVERLAY_FLOAT_RANGES = {
@@ -167,6 +169,8 @@ DEFAULT_LEGACY_OVERLAY: Dict[str, Any] = {
         "super_chat": True,
         "guard": True,
         "enter": False,
+        "like": True,
+        "social": True,
     },
     "click_through": True,
     "always_on_top": True,
@@ -199,6 +203,8 @@ DEFAULT_LEGACY_CONFIG: Dict[str, Any] = {
         "super_chat": True,
         "guard": True,
         "enter": False,
+        "like": False,
+        "social": True,
         "gift_min_price": 0,
         "include_user": True,
         "templates": {
@@ -207,6 +213,8 @@ DEFAULT_LEGACY_CONFIG: Dict[str, Any] = {
             "super_chat": "{user}的醒目留言：{message}",
             "guard": "感谢{user}开通{guard_name}",
             "enter": "{user}进入直播间",
+            "like": "{user}点了赞",
+            "social": "{user}{social_action}",
         },
     },
     "filters": {
@@ -220,13 +228,16 @@ DEFAULT_LEGACY_CONFIG: Dict[str, Any] = {
     "mock": {
         "interval_ms": 1500,
         "per_tick": 1,
-        "speak": False,
+        "speak": True,
+        "speak_version": 2,
         "types": {
             "danmaku": True,
             "gift": False,
             "super_chat": False,
             "guard": False,
             "enter": False,
+            "like": False,
+            "social": False,
         },
     },
 }
@@ -270,6 +281,10 @@ DEFAULT_CONFIG: Dict[str, Any] = {
             },
             "sc": {"enabled": True, "position": "top", "duration_ms": 12000, "max": 2},
             "guard": {"enabled": True, "position": "bottom", "duration_ms": 6000, "max": 2},
+            "danmaku": {"enabled": False, "position": "bottom", "duration_ms": 8000, "max": 3},
+            "enter": {"enabled": False, "position": "bottom", "duration_ms": 6000, "max": 2},
+            "like": {"enabled": False, "position": "bottom", "duration_ms": 6000, "max": 2},
+            "social": {"enabled": False, "position": "bottom", "duration_ms": 6000, "max": 2},
         },
     },
     "monitor": {
@@ -526,7 +541,7 @@ def _validate_pin(value: Any, path: str, gift: bool, errors: List[str]) -> None:
         errors.append("%s.enabled: 必须是布尔值" % path)
     if "position" in value and value["position"] not in ("top", "bottom"):
         errors.append("%s.position: 枚举非法" % path)
-    for key, low, high in (("duration_ms", 2000, 30000), ("max", 1, 6)):
+    for key, low, high in (("duration_ms", 0, 30000), ("max", 0, 6)):
         if key not in value:
             continue
         number = value[key]
@@ -550,9 +565,9 @@ def _validate_pins(value: Any, path: str, errors: List[str]) -> None:
         if key not in PIN_LANES:
             errors.append("%s.%s: 未声明字段" % (path, key))
     for lane in PIN_LANES:
-        if lane not in value:
+        if lane not in value and lane in ("gift", "sc", "guard"):
             errors.append("%s.%s: 缺少必填字段" % (path, lane))
-        else:
+        elif lane in value:
             _validate_pin(value[lane], "%s.%s" % (path, lane), lane == "gift", errors)
 
 
@@ -879,13 +894,13 @@ def _clean_pin_patch(src: Any, path: str, gift: bool, rejected: List[str]) -> Di
         elif key == "duration_ms":
             cleaned = (
                 value
-                if isinstance(value, int) and not isinstance(value, bool) and 2000 <= value <= 30000
+                if isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= 30000
                 else _KEEP
             )
         elif key == "max":
             cleaned = (
                 value
-                if isinstance(value, int) and not isinstance(value, bool) and 1 <= value <= 6
+                if isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= 6
                 else _KEEP
             )
         else:
@@ -1498,9 +1513,9 @@ def _process_overlay_patch(src: Any, rejected: List[str]) -> Tuple[Dict[str, Any
             gift["enabled"] = legacy["gift_pin"]
         if "gift_pin_position" in legacy and legacy["gift_pin_position"] in ("top", "bottom"):
             gift["position"] = legacy["gift_pin_position"]
-        if "gift_pin_duration_ms" in legacy and 2000 <= legacy["gift_pin_duration_ms"] <= 30000:
+        if "gift_pin_duration_ms" in legacy and 0 <= legacy["gift_pin_duration_ms"] <= 30000:
             gift["duration_ms"] = legacy["gift_pin_duration_ms"]
-        if "gift_pin_max" in legacy and 1 <= legacy["gift_pin_max"] <= 6:
+        if "gift_pin_max" in legacy and 0 <= legacy["gift_pin_max"] <= 6:
             gift["max"] = legacy["gift_pin_max"]
         if "gift_pin_min_price" in legacy and 0 <= legacy["gift_pin_min_price"] <= 100000:
             gift["min_price"] = legacy["gift_pin_min_price"]
@@ -1890,9 +1905,9 @@ def _migrate_pins(overlay: Dict[str, Any]) -> Dict[str, Any]:
         gift["enabled"] = bool(overlay.get("gift_pin"))
     if overlay.get("gift_pin_position") in ("top", "bottom"):
         gift["position"] = overlay["gift_pin_position"]
-    duration = _int(overlay.get("gift_pin_duration_ms", gift["duration_ms"]), 2000, 30000)
+    duration = _int(overlay.get("gift_pin_duration_ms", gift["duration_ms"]), 0, 30000)
     gift["duration_ms"] = duration if duration is not _KEEP else gift["duration_ms"]
-    maximum = _int(overlay.get("gift_pin_max", gift["max"]), 1, 6)
+    maximum = _int(overlay.get("gift_pin_max", gift["max"]), 0, 6)
     gift["max"] = maximum if maximum is not _KEEP else gift["max"]
     min_price = _float(overlay.get("gift_pin_min_price", gift["min_price"]), 0, 100000)
     if min_price is not _KEEP:
@@ -2245,6 +2260,18 @@ class ConfigStore:
         plain_fallback: str = "",
     ) -> None:
         self._legacy_doc = copy.deepcopy(legacy_doc) if isinstance(legacy_doc, dict) else {}
+        mock_doc = self._legacy_doc.get("mock")
+        if isinstance(mock_doc, dict):
+            try:
+                speak_version = int(mock_doc.get("speak_version") or 1)
+            except (TypeError, ValueError):
+                speak_version = 1
+            if speak_version < 2:
+                # v2：自动模拟默认进入真实朗读，只迁移一次。
+                mock_doc = copy.deepcopy(mock_doc)
+                mock_doc["speak"] = True
+                mock_doc["speak_version"] = 2
+                self._legacy_doc["mock"] = mock_doc
         overlay = self._legacy_doc.get("overlay")
         self._legacy_overlay = deep_merge(
             DEFAULT_LEGACY_OVERLAY,

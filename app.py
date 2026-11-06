@@ -33,6 +33,68 @@ if __name__ == "__main__" and "--overlay-child" in sys.argv:
 
 import webview
 
+
+def _patch_webview2_capture_compat() -> None:
+    """让 OBS 的窗口捕获能拿到 WebView2 的实际画面。
+
+    WebView2 默认走 GPU 合成；部分显卡/驱动下 OBS 的 BitBlt 捕获只能得到
+    一片灰白。这里在创建 CoreWebView2 前追加软件渲染参数。设置
+    README_WEBVIEW_GPU=1 可恢复硬件加速（用于排查性能问题）。
+    """
+    if os.name != "nt" or os.environ.get("README_WEBVIEW_GPU", "").strip() == "1":
+        return
+    extra = "--disable-gpu --disable-gpu-compositing"
+    try:
+        import types
+
+        from webview.platforms import edgechromium
+
+        original_init = edgechromium.EdgeChrome.__init__
+        if getattr(original_init, "_readme_capture_patch", False):
+            return
+
+        # 直接改写 __init__ 的常量池：pywebview 在构造 WebView2 时会把
+        # AdditionalBrowserArguments 覆盖成固定字符串，事后修改 props 已太晚。
+        # 这样即使 PyInstaller 没有 .py 源文件也能生效。
+        code = original_init.__code__
+        consts = list(code.co_consts)
+        replaced = False
+        for index, value in enumerate(consts):
+            if value == "--disable-features=ElasticOverscroll":
+                consts[index] = value + " " + extra
+                replaced = True
+        if replaced:
+            patched_code = code.replace(co_consts=tuple(consts))
+            patched_init = types.FunctionType(
+                patched_code,
+                original_init.__globals__,
+                original_init.__name__,
+                original_init.__defaults__,
+                original_init.__closure__,
+            )
+            patched_init._readme_capture_patch = True  # type: ignore[attr-defined]
+            edgechromium.EdgeChrome.__init__ = patched_init
+            return
+
+        # 兜底：常量池结构变化时，至少在构造完成后补一次参数。
+        def patched_init(self, form, window, cache_dir):  # noqa: ANN001
+            original_init(self, form, window, cache_dir)
+            try:
+                props = self.webview.CreationProperties
+                args = str(getattr(props, "AdditionalBrowserArguments", "") or "")
+                if "--disable-gpu" not in args:
+                    props.AdditionalBrowserArguments = (args + " " + extra).strip()
+            except Exception:
+                pass
+
+        patched_init._readme_capture_patch = True  # type: ignore[attr-defined]
+        edgechromium.EdgeChrome.__init__ = patched_init
+    except Exception:
+        traceback.print_exc()
+
+
+_patch_webview2_capture_compat()
+
 from backend import __version__ as APP_VERSION  # noqa: E402
 from backend.core import DanmakuTTSService  # noqa: E402
 from backend.douyin import (  # noqa: E402

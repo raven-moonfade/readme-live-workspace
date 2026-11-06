@@ -42,14 +42,16 @@
     platform: 'bilibili',
     tts: { voice: 'zh-CN-XiaoxiaoNeural', rate: '+0%', pitch: '+0Hz', volume: '+0%' },
     read: {
-      danmaku: true, gift: true, super_chat: true, guard: true, enter: false,
+      danmaku: true, gift: true, super_chat: true, guard: true, enter: false, like: false, social: true,
       gift_min_price: 0, include_user: true,
       templates: {
         danmaku: '{user}说：{text}',
         gift: '感谢{user}送出的{gift_name}乘以{num}',
         super_chat: '{user}的醒目留言：{message}',
         guard: '感谢{user}开通{guard_name}',
-        enter: '{user}进入直播间'
+        enter: '{user}进入直播间',
+        like: '{user}点了赞',
+        social: '{user}{social_action}'
       }
     },
     filters: { blacklist: [], dedup_seconds: 5, max_len: 80, user_cooldown: 3, global_cooldown: 0.5 },
@@ -103,18 +105,23 @@
     mock: {
       interval_ms: 1500,
       per_tick: 1,
-      speak: false,
+      speak: true,
       types: {
         danmaku: true,
         gift: false,
         super_chat: false,
         guard: false,
-        enter: false
+        enter: false,
+        like: false,
+        social: false
       }
     }
   };
 
-  var BADGE_LABEL = { danmaku: '弹幕', gift: '礼物', super_chat: 'SC', guard: '上舰', enter: '入场' };
+  var BADGE_LABEL = {
+    danmaku: '弹幕', gift: '礼物', super_chat: 'SC', guard: '上舰',
+    enter: '入场', like: '点赞', social: '关注'
+  };
   var USER_COLOR_VARS = [
     '--user-c1', '--user-c2', '--user-c3', '--user-c4', '--user-c5',
     '--user-c6', '--user-c7', '--user-c8', '--user-c9', '--user-c10'
@@ -156,13 +163,15 @@
     queue_full: '队列已满',
     unsupported: '不支持类型'
   };
-  var MOCK_AUTO_TYPE_KEYS = ['danmaku', 'gift', 'super_chat', 'guard', 'enter'];
+  var MOCK_AUTO_TYPE_KEYS = ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'like', 'social'];
   var MOCK_AUTO_TYPE_LABELS = {
     danmaku: '弹幕',
     gift: '礼物',
     super_chat: '醒目留言',
     guard: '上舰',
-    enter: '入场'
+    enter: '入场',
+    like: '点赞',
+    social: '关注'
   };
 
   /* ---------------- DOM 引用 ---------------- */
@@ -405,6 +414,8 @@
     if (ev.type === 'guard') return '开通了' + guardName(meta.guard_level);
     if (ev.type === 'enter') return '进入直播间';
     if (ev.type === 'super_chat') return meta.message || '发送了醒目留言';
+    if (ev.type === 'like') return '点赞了直播间';
+    if (ev.type === 'social') return meta.social_action || '关注了直播间';
     return '';
   }
 
@@ -920,6 +931,13 @@
         state.roomKey = '';
         state.roomId = 0;
         state.roomTitle = '';
+        document.dispatchEvent(new CustomEvent('mutai:platform-changed', {
+          detail: { platform: next }
+        }));
+        var platformRows = document.querySelectorAll('[data-platform-only]');
+        for (var pr = 0; pr < platformRows.length; pr++) {
+          platformRows[pr].hidden = platformRows[pr].getAttribute('data-platform-only') !== next;
+        }
         delete els.roomInput.dataset.touched;
         els.roomInput.value = '';
         clearRoomError();
@@ -1365,7 +1383,26 @@
      浮窗工作台 v2（B 工作台）
      只消费 get_config_v2 / apply_overlay / update_config / mock_*。
      ============================================================ */
-  var WB_TYPES = ['danmaku', 'gift', 'super_chat', 'guard', 'enter'];
+  var WB_TYPES = ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'like', 'social'];
+  var WB_TYPES_BY_PLATFORM = {
+    bilibili: ['danmaku', 'gift', 'super_chat', 'guard', 'enter'],
+    douyin: ['danmaku', 'gift', 'enter', 'like', 'social']
+  };
+  var WB_PIN_LANES_BY_PLATFORM = {
+    bilibili: ['gift', 'sc', 'guard', 'danmaku', 'enter'],
+    douyin: ['gift', 'danmaku', 'enter', 'like', 'social']
+  };
+  function wbPlatform() {
+    return state.platform === 'douyin' ? 'douyin' : 'bilibili';
+  }
+  function wbTypesForPlatform(platform) {
+    var key = platform === 'douyin' ? 'douyin' : (platform === 'bilibili' ? 'bilibili' : wbPlatform());
+    return (WB_TYPES_BY_PLATFORM[key] || WB_TYPES_BY_PLATFORM.bilibili).slice();
+  }
+  function wbPinLanesForPlatform(platform) {
+    var key = platform === 'douyin' ? 'douyin' : (platform === 'bilibili' ? 'bilibili' : wbPlatform());
+    return (WB_PIN_LANES_BY_PLATFORM[key] || WB_PIN_LANES_BY_PLATFORM.bilibili).slice();
+  }
   var WB_STYLE_FIELDS = [
     'font_size', 'font_weight', 'text_color', 'name_color',
     'bg_color', 'bg_opacity', 'opacity', 'outline',
@@ -1464,6 +1501,14 @@
     enter: {
       name: '入场', code: 'ENTER', color: 'var(--ok)', icon: '#wb-i-enter',
       sub: '进入直播间的轻量提示'
+    },
+    like: {
+      name: '点赞', code: 'LIKE', color: 'var(--warn)', icon: '#wb-i-star',
+      sub: '抖音点赞 · 高频互动默认只上屏'
+    },
+    social: {
+      name: '关注', code: 'SOCIAL', color: 'var(--ok)', icon: '#wb-i-enter',
+      sub: '抖音关注 / 分享直播间'
     }
   };
   var WB_THEME_META = {
@@ -1518,7 +1563,11 @@
   var WB_PIN_DEFAULTS = {
     gift: { enabled: true, position: 'top', duration_ms: 8000, max: 3, min_price: 10 },
     sc: { enabled: true, position: 'top', duration_ms: 12000, max: 2 },
-    guard: { enabled: true, position: 'bottom', duration_ms: 6000, max: 2 }
+    guard: { enabled: true, position: 'bottom', duration_ms: 6000, max: 2 },
+    danmaku: { enabled: false, position: 'bottom', duration_ms: 8000, max: 3 },
+    enter: { enabled: false, position: 'bottom', duration_ms: 6000, max: 2 },
+    like: { enabled: false, position: 'bottom', duration_ms: 6000, max: 2 },
+    social: { enabled: false, position: 'bottom', duration_ms: 6000, max: 2 }
   };
   function wbNullStyle() {
     var out = {};
@@ -1801,7 +1850,7 @@
       gap: 8,
       align: 'left',
       template_id: 'bubble',
-      types: { danmaku: true, gift: true, super_chat: true, guard: true, enter: true },
+      types: { danmaku: true, gift: true, super_chat: true, guard: true, enter: true, like: true, social: true },
       styles: { theme: 'classic', global: {}, types: wbNullTypes() },
       motion: { schema_version: 1, global: wbClone(WB_MOTION_DEFAULTS), types: wbNullMotionTypes() },
       typography: { schema_version: 1, global: wbNullTypographyStyle(), types: wbNullTypographyTypes() },
@@ -1993,15 +2042,15 @@
   function wbNormalizePins(src) {
     var out = wbClone(WB_PIN_DEFAULTS);
     if (!src || typeof src !== 'object') return out;
-    var lanes = ['gift', 'sc', 'guard'];
+    var lanes = Object.keys(WB_PIN_DEFAULTS);
     for (var i = 0; i < lanes.length; i++) {
       var lane = lanes[i];
       var raw = src[lane];
       if (!raw || typeof raw !== 'object') continue;
       if (typeof raw.enabled === 'boolean') out[lane].enabled = raw.enabled;
       if (raw.position === 'top' || raw.position === 'bottom') out[lane].position = raw.position;
-      out[lane].duration_ms = wbRound(raw.duration_ms, out[lane].duration_ms, 2000, 30000);
-      out[lane].max = wbRound(raw.max, out[lane].max, 1, 6);
+      out[lane].duration_ms = wbRound(raw.duration_ms, out[lane].duration_ms, 0, 30000);
+      out[lane].max = wbRound(raw.max, out[lane].max, 0, 6);
       if (lane === 'gift') {
         out[lane].min_price = clamp(wbFinite(raw.min_price, out[lane].min_price), 0, 100000);
       }
@@ -2094,7 +2143,7 @@
           (typeof overlay.name_sep === 'string' ? overlay.name_sep.slice(0, 4) : '：'),
         nameMaxLen: wbRound(flatOverlay.name_max_len, wbRound(overlay.name_max_len, 12, 4, 24), 4, 24),
         textMaxLen: wbRound(flatOverlay.text_max_len, wbRound(overlay.text_max_len, 100, 1, 10000), 1, 10000),
-        maxLines: wbRound(flatOverlay.max_lines, wbRound(overlay.max_lines, 8, 1, 30), 1, 30),
+        maxLines: wbRound(flatOverlay.max_lines, wbRound(overlay.max_lines, 8, 0, 30), 0, 30),
         gap: wbRound(flatOverlay.gap, wbRound(overlay.gap, 8, 0, 40), 0, 40),
         align: flatOverlay.align === 'center' || flatOverlay.align === 'right' ? flatOverlay.align :
           (overlay.align === 'center' || overlay.align === 'right' ? overlay.align : 'left'),
@@ -2139,8 +2188,11 @@
       busy: false,
       auto: {
         running: false, sent: 0, interval: 1500, perTick: 1,
-        types: { danmaku: true, gift: false, super_chat: false, guard: false, enter: false },
-        speak: false
+        types: {
+          danmaku: true, gift: false, super_chat: false, guard: false, enter: false,
+          like: false, social: false
+        },
+        speak: true
       },
       applyTimer: 0,
       pollTimer: 0,
@@ -2551,6 +2603,17 @@
     });
 
     document.addEventListener('keydown', wbOnDocumentKeydown, true);
+    document.addEventListener('mutai:platform-changed', function (e) {
+      var platform = e && e.detail && e.detail.platform === 'douyin' ? 'douyin' : 'bilibili';
+      // 平台切换后，消息类型/固定 lane/模拟数据类型都换成对应平台的一套。
+      var platformTypes = wbTypesForPlatform(platform);
+      if (platformTypes.indexOf(wbState.currentType) < 0) wbState.currentType = platformTypes[0];
+      wbState.mock.kind = platformTypes.indexOf(wbState.mock.kind) >= 0 ? wbState.mock.kind : platformTypes[0];
+      if (wbState.loadOk) {
+        wbRenderAll();
+        wbRenderMockControls();
+      }
+    });
     window.addEventListener('resize', function () {
       wbFitStructure();
     });
@@ -2814,7 +2877,7 @@
         ov.text_max_len = clamp(Math.round(p.text_max_len), 1, 10000);
       }
       if (typeof p.max_lines === 'number' && isFinite(p.max_lines)) {
-        ov.max_lines = clamp(Math.round(p.max_lines), 1, 30);
+        ov.max_lines = clamp(Math.round(p.max_lines), 0, 30);
       }
       if (typeof p.gap === 'number' && isFinite(p.gap)) {
         ov.gap = clamp(Math.round(p.gap), 0, 40);
@@ -2992,7 +3055,7 @@
     function injectMockEvent(payload) {
       var p = payload && typeof payload === 'object' ? payload : {};
       var kind = String(p.kind || 'danmaku');
-      var allowed = ['danmaku', 'gift', 'super_chat', 'guard', 'enter'];
+      var allowed = ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'like', 'social'];
       if (allowed.indexOf(kind) < 0) {
         return { ok: false, error: '不支持的消息类型：' + kind };
       }
@@ -3480,7 +3543,7 @@
         count = clamp(count, 1, 200);
         var requestedKind = String(p.kind || 'mixed');
         var speak = !!p.speak;
-        var kinds = ['danmaku', 'gift', 'super_chat', 'guard', 'enter'];
+        var kinds = ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'like', 'social'];
         var injected = 0;
         var spoken = 0;
         var filters = {};
@@ -4081,6 +4144,8 @@
       WB_TYPOGRAPHY_FIELDS: WB_TYPOGRAPHY_FIELDS,
       WB_TYPOGRAPHY_FONT_SUGGESTIONS: WB_TYPOGRAPHY_FONT_SUGGESTIONS,
       WB_PIN_DEFAULTS: WB_PIN_DEFAULTS,
+      WB_TYPES_BY_PLATFORM: WB_TYPES_BY_PLATFORM,
+      WB_PIN_LANES_BY_PLATFORM: WB_PIN_LANES_BY_PLATFORM,
       WB_THEME_META: WB_THEME_META,
       WB_TYPE_META: WB_TYPE_META
     },
@@ -4110,6 +4175,9 @@
       wbNormalizeTypographyOverride: wbNormalizeTypographyOverride,
       wbNormalizeTypographyPatch: wbNormalizeTypographyPatch,
       wbNormalizeTypographyValue: wbNormalizeTypographyValue,
+      wbPinLanesForPlatform: wbPinLanesForPlatform,
+      wbPlatform: wbPlatform,
+      wbTypesForPlatform: wbTypesForPlatform,
       wbRenderEditor: wbRenderEditor,
       wbRenderMockControls: wbRenderMockControls,
       wbRenderMotionEditor: wbRenderMotionEditor,

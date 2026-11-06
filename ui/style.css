@@ -657,6 +657,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .badge-super_chat { color: #FFC960; background: rgba(255, 190, 70, .12); border-color: rgba(255, 190, 70, .30); }
 .badge-guard      { color: #C3A8FF; background: rgba(150, 110, 255, .14); border-color: rgba(150, 110, 255, .30); }
 .badge-enter      { color: #7FE0D2; background: rgba(80, 215, 195, .10); border-color: rgba(80, 215, 195, .24); }
+.badge-like       { color: #FFB3C8; background: rgba(255, 130, 170, .12); border-color: rgba(255, 130, 170, .28); }
+.badge-social     { color: #8BE3FF; background: rgba(90, 200, 255, .10); border-color: rgba(90, 200, 255, .26); }
 
 .item-meta {
   display: inline-flex;
@@ -1901,6 +1903,14 @@ select.wb-input {
 .wb-stepper input::-webkit-inner-spin-button,
 .wb-stepper input::-webkit-outer-spin-button { appearance: none; margin: 0; }
 .wb-stepper .suffix { padding: 0 6px 0 4px; color: #68758A; font-size: 10.5px; white-space: nowrap; }
+.wb-zero-hint {
+  padding: 0 4px 0 2px;
+  color: var(--wb-accent, #FF7A45);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
 .wb-color-control { min-width: 0; display: flex; align-items: center; gap: 6px; }
 .wb-color-swatch {
   width: 31px;

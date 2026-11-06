@@ -16,7 +16,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from backend.core import CACHE_MAX_FILES, DanmakuTTSService  # noqa: E402
+from backend.core import AUDIO_REPLAY_KEEP, CACHE_MAX_FILES, DanmakuTTSService  # noqa: E402
 from backend.player import AudioPlayer  # noqa: E402
 
 PASS = 0
@@ -79,6 +79,38 @@ def main() -> int:
             sum(1 for path in paths if path.is_file()) <= CACHE_MAX_FILES + 1,
             "清理仍会删除队列外的旧音频",
             sum(1 for path in paths if path.is_file()),
+        )
+
+    with tempfile.TemporaryDirectory(prefix="mutai-audio-retire-") as root:
+        cache_dir = Path(root)
+        service = object.__new__(DanmakuTTSService)
+        service.cache_dir = str(cache_dir)
+        service._player = FakePlayer([])
+        service._cache_lock = threading.Lock()
+        service._recent_audio = []
+        retired = []
+        for i in range(AUDIO_REPLAY_KEEP + 2):
+            path = cache_dir / ("played-%03d.mp3" % i)
+            path.write_bytes(b"x")
+            retired.append(path)
+            DanmakuTTSService._retire_audio(service, str(path))
+        check(
+            not retired[0].exists() and not retired[1].exists(),
+            "播放完成后只保留最近 N 条可重播音频",
+            (retired[0].exists(), retired[1].exists()),
+        )
+        check(
+            all(path.exists() for path in retired[2:]),
+            "保留窗口内的音频仍可用于重播",
+            sum(1 for path in retired[2:] if path.exists()),
+        )
+        service._events = collections.deque([
+            {"id": "entry-1", "text": "原始文本", "meta": {"tts_text": "实际朗读文本"}},
+        ])
+        service._events_lock = threading.Lock()
+        check(
+            DanmakuTTSService._replay_text(service, "entry-1") == "实际朗读文本",
+            "缓存被清理后仍能找到实际朗读文本用于重新合成",
         )
 
     print("\nSUMMARY PASS=%d FAIL=%d" % (PASS, FAIL))

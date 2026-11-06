@@ -17,6 +17,8 @@
   var wbNormalizeMotionPartial = helpers.wbNormalizeMotionPartial;
   var wbNormalizeTypographyPatch = helpers.wbNormalizeTypographyPatch;
   var WB_TYPES = wb.constants.WB_TYPES;
+  var wbTypesForPlatform = wb.helpers.wbTypesForPlatform;
+  var wbPlatform = wb.helpers.wbPlatform;
   var WB_STYLE_FIELDS = wb.constants.WB_STYLE_FIELDS;
   var WB_MOTION_FIELDS = wb.constants.WB_MOTION_FIELDS;
   var WB_TYPOGRAPHY_FIELDS = wb.constants.WB_TYPOGRAPHY_FIELDS;
@@ -122,7 +124,7 @@
       out.text_max_len = strictInteger(source.text_max_len, 1, 10000, "content.text_max_len");
     }
     if (has(source, "max_lines")) {
-      out.max_lines = strictInteger(source.max_lines, 1, 30, "content.max_lines");
+      out.max_lines = strictInteger(source.max_lines, 0, 30, "content.max_lines");
     }
     if (has(source, "types")) out.types = normalizeTypes(source.types, warnings);
     warnUnknown(source, ["show_name", "name_separator", "name_max_len", "text_max_len", "max_lines", "types", "overflow"], "content", warnings);
@@ -350,6 +352,22 @@
     $("wbPresetMaxLines").value = String(draft.maxLines || 8);
     $("wbPresetGap").value = String(draft.gap === undefined ? 8 : draft.gap);
     $("wbPresetAlign").value = draft.align || "left";
+    var typeBox = $("wbPresetTypes");
+    if (typeBox) {
+      var types = wbTypesForPlatform();
+      var sig = types.join(",");
+      if (typeBox.getAttribute("data-platform-types") !== sig) {
+        var labels = {
+          danmaku: "弹幕", gift: "礼物", super_chat: "SC", guard: "舰长",
+          enter: "入场", like: "点赞", social: "关注"
+        };
+        typeBox.innerHTML = types.map(function (type) {
+          return '<label><input type="checkbox" data-wb-preset-type="' + type + '">' +
+            labels[type] + '</label>';
+        }).join("");
+        typeBox.setAttribute("data-platform-types", sig);
+      }
+    }
     document.querySelectorAll("[data-wb-preset-type]").forEach(function (el) {
       el.checked = !!(draft.types && draft.types[el.getAttribute("data-wb-preset-type")]);
     });
@@ -628,13 +646,16 @@
         wbMarkDirty();
       });
     });
-    document.querySelectorAll("[data-wb-preset-type]").forEach(function (el) {
-      el.addEventListener("change", function () {
-        wbState.draft.types[el.getAttribute("data-wb-preset-type")] = el.checked;
+    var presetTypes = $("wbPresetTypes");
+    if (presetTypes) {
+      presetTypes.addEventListener("change", function (event) {
+        var input = event.target;
+        if (!input || !input.matches || !input.matches("[data-wb-preset-type]")) return;
+        wbState.draft.types[input.getAttribute("data-wb-preset-type")] = input.checked;
         clearParsedForEdit();
         wbMarkDirty();
       });
-    });
+    }
   }
 
   function debugSnapshot() {

@@ -337,16 +337,21 @@ def run() -> None:
             layout_batch.append(message)
     window._ingest(layout_batch)
     window._relayout(snap_scroll=True)
-    check({lane: len(items) for lane, items in window._pins.items()} ==
-          {"gift": 2, "sc": 2, "guard": 2}, "布局：固定 lane 各保留 2 条")
+    check({lane: len(window._pins.get(lane, [])) for lane in ("gift", "sc", "guard")} ==
+          {"gift": 2, "sc": 2, "guard": 2}, "布局：固定 lane 各保留 2 条",
+          {lane: len(items) for lane, items in window._pins.items()})
     check(abs(window._plan.get("fixed_height") - 288.6) < 0.01
           and abs(window._plan.get("scroll_height") - 331.4) < 0.01,
           "布局：固定 288.6 / 滚动 331.4", window._plan.get("fixed_height"))
-    check(window._plan.get("lane_heights") == {"gift": 96.2, "sc": 96.2, "guard": 96.2},
+    check(window._plan.get("lane_heights") == {
+              "gift": 96.2, "sc": 96.2, "guard": 96.2,
+              "danmaku": 0, "enter": 0, "like": 0, "social": 0,
+          },
           "布局：每 lane 按真实高度 96.2", window._plan.get("lane_heights"))
     check(window._plan.get("lane_cap") == 248 and window._plan.get("item_px") == 45,
           "布局：40% cap=248 / item_px=45",
-          (window._plan.get("lane_cap"), window._plan.get("item_px")))
+          (window._plan.get("lane_cap"), window._plan.get("item_px"),
+           window._plan.get("item_px_by_lane")))
 
     window._clear_messages()
     for lane in window._effective["pins"].values():

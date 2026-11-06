@@ -17,11 +17,19 @@ import math
 from collections.abc import Mapping, Sequence
 from typing import Any, Dict, List
 
-LANES = ("gift", "sc", "guard")
-PRIORITY = ("sc", "gift", "guard")
-EVICTION_ORDER = ("guard", "gift", "sc")
+LANES = ("gift", "sc", "guard", "danmaku", "enter", "like", "social")
+PRIORITY = ("sc", "gift", "guard", "social", "like", "enter", "danmaku")
+EVICTION_ORDER = ("danmaku", "enter", "like", "social", "guard", "gift", "sc")
 GAP_CANDIDATES = (8, 6, 4)
-DEFAULT_POSITIONS = {"sc": "top", "gift": "top", "guard": "bottom"}
+DEFAULT_POSITIONS = {
+    "sc": "top",
+    "gift": "top",
+    "guard": "bottom",
+    "danmaku": "bottom",
+    "enter": "bottom",
+    "like": "bottom",
+    "social": "bottom",
+}
 
 
 def item_px_for_font(font_size: float) -> int:
@@ -287,7 +295,11 @@ def plan_lanes(
     exact_heights = _exact_heights(item_heights_by_lane, grouped, per_lane)
     base_rows = {
         lane: (
-            min(configs[lane]["max"], len(grouped[lane]))
+            (
+                len(grouped[lane])
+                if int(configs[lane]["max"]) <= 0
+                else min(int(configs[lane]["max"]), len(grouped[lane]))
+            )
             if configs[lane]["enabled"]
             else 0
         )

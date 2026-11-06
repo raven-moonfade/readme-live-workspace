@@ -11,7 +11,7 @@ import copy
 import re
 from typing import Any, Dict, Mapping
 
-OVERLAY_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter")
+OVERLAY_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
 
 STYLE_FIELDS = (
     "font_size",
@@ -36,6 +36,8 @@ TYPE_BADGE_COLORS: Dict[str, str] = {
     "super_chat": "#FF6F91",
     "guard": "#A98BFF",
     "enter": "#53D6C5",
+    "like": "#FF9DB8",
+    "social": "#7DDCFF",
 }
 
 # 与现有 overlay_qt.py 的经典主题保持一致。百分比字段使用 10..100 的整数。

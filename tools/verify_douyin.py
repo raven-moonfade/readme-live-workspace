@@ -141,6 +141,21 @@ def test_protobuf() -> None:
     check(kind == "enter", "入场类型映射", kind)
     check(body and body["user"] == "进场人", "入场用户名", body)
 
+    like = (
+        field_bytes(5, make_user(4444, "点赞人"))
+        + field_varint(2, 7)
+        + field_varint(3, 120)
+    )
+    kind, body = normalize_message("WebcastLikeMessage", like, 9005)
+    check(kind == "like", "点赞类型映射", kind)
+    check(body and body["user"] == "点赞人", "点赞用户名", body)
+    check(body and body["meta"]["like_count"] == 7, "点赞数量", body)
+
+    social = field_bytes(2, make_user(5555, "关注人")) + field_varint(4, 1)
+    kind, body = normalize_message("WebcastSocialMessage", social, 9006)
+    check(kind == "social", "关注类型映射", kind)
+    check(body and body["meta"]["social_action"] == "关注了直播间", "关注文案", body)
+
     compressed = gzip.compress(raw)
     check(len(parse_response(compressed)["messages"]) == 1, "兼容 gzip 响应")
     push_frame = field_bytes(8, raw)

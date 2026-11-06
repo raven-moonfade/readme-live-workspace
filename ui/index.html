@@ -399,12 +399,12 @@
               <input class="switch-input" type="checkbox" data-path="read.gift" checked>
               <span class="switch-track"><span class="switch-knob"></span></span>
             </label>
-            <label class="switch-row">
+            <label class="switch-row" data-platform-only="bilibili">
               <span class="switch-text">醒目留言</span>
               <input class="switch-input" type="checkbox" data-path="read.super_chat" checked>
               <span class="switch-track"><span class="switch-knob"></span></span>
             </label>
-            <label class="switch-row">
+            <label class="switch-row" data-platform-only="bilibili">
               <span class="switch-text">上舰</span>
               <input class="switch-input" type="checkbox" data-path="read.guard" checked>
               <span class="switch-track"><span class="switch-knob"></span></span>
@@ -412,6 +412,16 @@
             <label class="switch-row">
               <span class="switch-text">入场</span>
               <input class="switch-input" type="checkbox" data-path="read.enter">
+              <span class="switch-track"><span class="switch-knob"></span></span>
+            </label>
+            <label class="switch-row" data-platform-only="douyin">
+              <span class="switch-text">点赞</span>
+              <input class="switch-input" type="checkbox" data-path="read.like">
+              <span class="switch-track"><span class="switch-knob"></span></span>
+            </label>
+            <label class="switch-row" data-platform-only="douyin">
+              <span class="switch-text">关注 / 分享</span>
+              <input class="switch-input" type="checkbox" data-path="read.social" checked>
               <span class="switch-track"><span class="switch-knob"></span></span>
             </label>
           </div>
@@ -1036,7 +1046,7 @@
         <aside class="wb-panel wb-type-panel">
           <header class="wb-panel-head">
             <h3>消息类型</h3>
-            <p>五类消息各自覆盖；未覆盖字段跟随全局。</p>
+            <p>各平台消息类型各自覆盖；未覆盖字段跟随全局。</p>
           </header>
           <div id="wbTypeList" class="wb-type-list" role="group" aria-label="消息类型"></div>
           <div class="wb-baseline">
@@ -1124,7 +1134,7 @@
               <div id="wbMotionAdvancedGrid" class="wb-motion-grid"></div>
             </details>
             <p class="wb-motion-note">入场方向/位移仅在滑入时生效；退场方向/位移在非「无」退场时作为附加偏移生效。</p>
-            <p class="wb-motion-note">固定区（礼物 / SC / 舰长）到期只做 ≤120ms 纯淡出，不占布局；取本类退场开关与时长，方向/位移/缩放不生效，选「无」则不淡出。</p>
+            <p class="wb-motion-note">固定区（当前平台 lane）到期只做 ≤120ms 纯淡出，不占布局；取本类退场开关与时长，方向/位移/缩放不生效，选「无」则不淡出。</p>
             <p class="wb-motion-note">高密度保护：约 ≥24 条/秒持续 1 秒，或单批达到同屏行数时，新滚动消息自动降为 ≤80ms 淡入/淡出；不写入设置，「无」保持无；低于 8 条/秒稳定 3 秒后恢复。</p>
             <p id="wbMotionReduced" class="wb-motion-reduced" hidden>系统已启用减少动态效果：滑入改为 80ms 淡入，位移停用。设置值不会被改写。</p>
           </div>
@@ -1178,19 +1188,13 @@
               <label class="wb-preset-field"><span>用户名分隔符</span><input id="wbPresetNameSep" class="input" maxlength="4" value="："></label>
               <label class="wb-preset-field"><span>用户名长度上限</span><input id="wbPresetNameMax" class="input" type="number" min="4" max="24" step="1" value="12"></label>
               <label class="wb-preset-field"><span>正文长度上限</span><input id="wbPresetTextMax" class="input" type="number" min="1" max="10000" step="1" value="100"></label>
-              <label class="wb-preset-field"><span>最多行数</span><input id="wbPresetMaxLines" class="input" type="number" min="1" max="30" step="1" value="8"></label>
+              <label class="wb-preset-field"><span>最多行数</span><input id="wbPresetMaxLines" class="input" type="number" min="0" max="30" step="1" value="8" title="0 = 不限条数"></label>
             </section>
             <section class="wb-preset-section">
               <div class="wb-preset-section-head"><b>布局层</b><span>怎么排</span></div>
               <label class="wb-preset-field"><span>条间距</span><input id="wbPresetGap" class="input" type="number" min="0" max="40" step="1" value="8"></label>
               <label class="wb-preset-field"><span>对齐</span><select id="wbPresetAlign" class="input"><option value="left">左对齐</option><option value="center">居中</option><option value="right">右对齐</option></select></label>
-              <div id="wbPresetTypes" class="wb-preset-types" role="group" aria-label="显示消息类型">
-                <label><input type="checkbox" data-wb-preset-type="danmaku" checked>弹幕</label>
-                <label><input type="checkbox" data-wb-preset-type="gift" checked>礼物</label>
-                <label><input type="checkbox" data-wb-preset-type="super_chat" checked>SC</label>
-                <label><input type="checkbox" data-wb-preset-type="guard" checked>舰长</label>
-                <label><input type="checkbox" data-wb-preset-type="enter">入场</label>
-              </div>
+              <div id="wbPresetTypes" class="wb-preset-types" role="group" aria-label="显示消息类型"></div>
             </section>
             <section class="wb-preset-section">
               <div class="wb-preset-section-head"><b>模板层</b><span>原生结构</span></div>
@@ -1205,8 +1209,8 @@
         <section class="wb-panel wb-rules-main">
           <header class="wb-rules-head">
             <div>
-              <div class="wb-rules-title"><h3>置顶与置底</h3><span class="wb-chip"><i aria-hidden="true"></i>三类 lane 独立</span></div>
-              <p>固定项不进滚动流；容量预算按窗口真实高度计算。</p>
+              <div class="wb-rules-title"><h3>置顶与置底</h3><span class="wb-chip"><i aria-hidden="true"></i>五类 lane 独立 · 随平台切换</span></div>
+              <p>固定项不进滚动流；容量预算按窗口真实高度计算。停留时长 / 同屏条数填 0 = 不限。</p>
             </div>
             <div class="wb-rules-actions">
               <div id="wbRulesViewSwitch" class="wb-seg" role="group" aria-label="规则视图">
@@ -1242,12 +1246,7 @@
               <span id="wbBudgetCapLine" class="wb-budget-cap">单 lane 上限 0px · 40%</span>
             </div>
             <div id="wbBudgetBar" class="wb-budget-bar"></div>
-            <div class="wb-budget-legend">
-              <span><i style="--c:var(--wb-sc)"></i>SC</span>
-              <span><i style="--c:var(--wb-gift)"></i>礼物</span>
-              <span><i style="--c:var(--wb-guard)"></i>舰长</span>
-              <span><i style="--c:#566378"></i>滚动区</span>
-            </div>
+            <div id="wbBudgetLegend" class="wb-budget-legend"></div>
             <div id="wbLaneRows" class="wb-lane-rows"></div>
             <p id="wbCapacityNote" class="wb-capacity-note">压缩顺序：间距 8→6→4px；仍超预算时先淘汰 guard，再 gift，最后 SC。固定项不复制进滚动流。</p>
             <div class="wb-decision-grid">

@@ -15,7 +15,7 @@
   var dragBar = document.getElementById('dragBar');
   var resizeHandle = document.getElementById('resizeHandle');
 
-  var OVERLAY_TYPES = ['danmaku', 'gift', 'super_chat', 'guard', 'enter'];
+  var OVERLAY_TYPES = ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'like', 'social'];
   var THEMES = ['classic', 'shortvideo', 'minimal', 'highcontrast'];
   var CONFIG_POLL_MS = 500;
   var ITEM_POLL_MS = 260;
@@ -61,7 +61,9 @@
       gift: true,
       super_chat: true,
       guard: true,
-      enter: true
+      enter: true,
+      like: true,
+      social: true
     },
     click_through: false,
     always_on_top: true,
@@ -170,7 +172,9 @@
       gift: true,
       super_chat: true,
       guard: true,
-      enter: true
+      enter: true,
+      like: true,
+      social: true
     }
   });
 
@@ -645,7 +649,7 @@
       bg_opacity: clampNumber(source.bg_opacity, 0, 1, BASE_CONFIG.bg_opacity),
       opacity: clampNumber(source.opacity, 0, 1, BASE_CONFIG.opacity),
       align: align,
-      max_lines: intClamp(source.max_lines, 1, 30, BASE_CONFIG.max_lines),
+      max_lines: intClamp(source.max_lines, 0, 30, BASE_CONFIG.max_lines),
       animation: animation,
       dwell_ms: clampNumber(source.dwell_ms, 0, 3600000, BASE_CONFIG.dwell_ms),
       gap: clampNumber(source.gap, 0, 48, BASE_CONFIG.gap),
@@ -831,10 +835,10 @@
       }
     });
 
-    while (state.active.length > effective.max_lines) {
+    while (effective.max_lines > 0 && state.active.length > effective.max_lines) {
       removeRecordNow(state.active[0], true);
     }
-    if (state.pending.length > effective.max_lines) {
+    if (effective.max_lines > 0 && state.pending.length > effective.max_lines) {
       state.pending.splice(0, state.pending.length - effective.max_lines);
     }
 
@@ -966,6 +970,16 @@
       result.body = item.text || '进入直播间';
       return result;
     }
+    if (item.type === 'like') {
+      result.tags.push({ kind: 'like', label: '点赞', icon: 'enter' });
+      result.body = item.text || '点赞了直播间';
+      return result;
+    }
+    if (item.type === 'social') {
+      result.tags.push({ kind: 'social', label: '关注', icon: 'enter' });
+      result.body = item.text || normalizeMetaText(meta.social_action, '关注了直播间');
+      return result;
+    }
 
     result.body = item.text || '';
     return result;
@@ -1066,7 +1080,7 @@
     if (!state.effective || !typeEnabled(item.type)) {
       return false;
     }
-    if (state.active.length >= state.effective.max_lines) {
+    if (state.effective.max_lines > 0 && state.active.length >= state.effective.max_lines) {
       return false;
     }
 
@@ -1139,7 +1153,7 @@
     state.pumping = true;
     try {
       var maxLines = state.effective.max_lines;
-      while (state.active.length < maxLines && state.pending.length) {
+      while ((maxLines <= 0 || state.active.length < maxLines) && state.pending.length) {
         var next = state.pending.shift();
         if (!typeEnabled(next.type)) {
           continue;
@@ -1150,7 +1164,7 @@
         }
       }
 
-      if (state.active.length >= maxLines && state.pending.length) {
+      if (maxLines > 0 && state.active.length >= maxLines && state.pending.length) {
         var alreadyLeaving = state.active.some(function (record) {
           return record.leaving;
         });
@@ -1201,7 +1215,7 @@
       return;
     }
     state.pending.push.apply(state.pending, accepted);
-    if (state.pending.length > state.effective.max_lines) {
+    if (state.effective.max_lines > 0 && state.pending.length > state.effective.max_lines) {
       state.pending.splice(0, state.pending.length - state.effective.max_lines);
     }
     pump();

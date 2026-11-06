@@ -117,6 +117,26 @@ async function selectSize(page, size) {
         singleEntries.removed.length === 0,
       '监看每个动作只保留一个入口', singleEntries);
 
+    const unreadFlow = await page.evaluate(async () => {
+      await window.__MONITOR_TEST__.markAllRead({ silent: true });
+      await new Promise((resolve) => setTimeout(resolve, 120));
+      const base = window.__MONITOR_TEST__.state();
+      window.__MONITOR_TEST__.push(1);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const afterNew = window.__MONITOR_TEST__.state();
+      window.__MONITOR_TEST__.setSpoken(afterNew.latestSeq, true);
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      const afterRead = window.__MONITOR_TEST__.state();
+      return { base, afterNew, afterRead };
+    });
+    assert(unreadFlow.afterNew.unread === unreadFlow.base.unread + 1,
+      '新消息只增加 1 条未读，不跳变',
+      { base: unreadFlow.base.unread, afterNew: unreadFlow.afterNew.unread });
+    assert(unreadFlow.afterRead.lastReadSeq === unreadFlow.afterNew.latestSeq &&
+        unreadFlow.afterRead.unread === unreadFlow.base.unread,
+      '朗读完成后未读逐条减 1',
+      unreadFlow.afterRead);
+
     await selectSize(page, 'small');
     const small = await page.evaluate(() => ({
       state: window.__MONITOR_TEST__.state(),

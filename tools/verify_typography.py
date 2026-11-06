@@ -64,7 +64,10 @@ def doc(
 def run_resolver() -> None:
     print("\n-- resolver --")
     classic = TypographyResolver(doc()).resolve_all()
-    check(set(classic) == {"danmaku", "gift", "super_chat", "guard", "enter"}, "五类齐全")
+    check(
+        set(classic) == {"danmaku", "gift", "super_chat", "guard", "enter", "like", "social"},
+        "七类齐全",
+    )
     check(
         all(set(spec) == set(TYPOGRAPHY_FIELDS) for spec in classic.values()),
         "每类 3 个排版字段",

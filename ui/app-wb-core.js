@@ -62,6 +62,9 @@
   var WB_TYPE_META = wb.constants.WB_TYPE_META;
   var WB_TYPOGRAPHY_FIELD_COUNT = wb.constants.WB_TYPOGRAPHY_FIELD_COUNT;
   var WB_TYPES = wb.constants.WB_TYPES;
+  var wbPlatform = wb.helpers.wbPlatform;
+  var wbTypesForPlatform = wb.helpers.wbTypesForPlatform;
+  var wbPinLanesForPlatform = wb.helpers.wbPinLanesForPlatform;
 
   function $(id) {
     return document.getElementById(id);
@@ -132,6 +135,7 @@
     wbDom.scrollUsedLine = $('wbScrollUsedLine');
     wbDom.budgetCapLine = $('wbBudgetCapLine');
     wbDom.budgetBar = $('wbBudgetBar');
+    wbDom.budgetLegend = $('wbBudgetLegend');
     wbDom.laneRows = $('wbLaneRows');
     wbDom.capacityNote = $('wbCapacityNote');
     wbDom.structureStage = $('wbStructureStage');
@@ -293,9 +297,9 @@
     if (wbState.tab === 'style') {
       wbDom.footNote.innerHTML = '<b>修改后自动应用</b>；外观、排版、动效分别计数、分别恢复。';
     } else if (wbState.tab === 'rules') {
-      wbDom.footNote.innerHTML = '<b>修改后自动应用</b>；恢复规则默认只改三类固定规则。';
+    wbDom.footNote.innerHTML = '<b>修改后自动应用</b>；恢复规则默认只改当前平台的固定规则。';
     } else if (wbState.tab === 'window') {
-      wbDom.footNote.innerHTML = '<b>位置、尺寸、缩放与主题修改后自动应用</b>；不改变五类外观覆盖。';
+    wbDom.footNote.innerHTML = '<b>位置、尺寸、缩放与主题修改后自动应用</b>；不改变各类型外观覆盖。';
     } else if (wbState.tab === 'presets') {
       wbDom.footNote.innerHTML = '<b>预设应用后自动写入</b>；只替换所选层。';
     } else {
@@ -418,10 +422,12 @@
   }
 
   function wbRenderTypeList() {
+    var platformTypes = wbTypesForPlatform();
+    if (platformTypes.indexOf(wbState.currentType) < 0) wbState.currentType = platformTypes[0];
     var html = '';
     var strip = '';
-    for (var i = 0; i < WB_TYPES.length; i++) {
-      var type = WB_TYPES[i];
+    for (var i = 0; i < platformTypes.length; i++) {
+      var type = platformTypes[i];
       var meta = WB_TYPE_META[type];
       var count = wbTypeCoverageCount(type);
       var total = wbTypeCoverageTotal();
@@ -444,7 +450,7 @@
   }
 
   function wbSelectType(type) {
-    if (WB_TYPES.indexOf(type) < 0) return;
+    if (wbTypesForPlatform().indexOf(type) < 0) return;
     var active = document.activeElement;
     var restoreFocus = !!(active && active.closest &&
       active.closest('#wbTypeList, #wbTypeStrip'));
@@ -948,7 +954,7 @@
     if (!wbState.loadOk) return;
     wbConfirm({
       title: '全部外观恢复默认？',
-      body: '将清空五类消息共 ' + (WB_TYPES.length * WB_STYLE_FIELD_COUNT) +
+    body: '将清空全部消息类型共 ' + (WB_TYPES.length * WB_STYLE_FIELD_COUNT) +
         ' 个外观覆盖。主题、固定规则、窗口几何与监看字号不动。',
       confirmLabel: '全部恢复',
       danger: true
@@ -968,7 +974,7 @@
       wbMarkDirty();
       wbRenderEditor();
       wbUpdateCoverage();
-      wbShowToast('已清空五类外观与全局覆盖 · 主题、固定规则与窗口几何未动');
+      wbShowToast('已清空外观与全局覆盖 · 主题、固定规则与窗口几何未动');
     });
   }
   function wbRestoreAllCurrentDomain() {
@@ -988,7 +994,7 @@
     wbState.draft.nameSeparator = String(wbState.draft.nameSeparator || '：').slice(0, 4);
     wbState.draft.nameMaxLen = wbRound(wbState.draft.nameMaxLen, 12, 4, 24);
     wbState.draft.textMaxLen = wbRound(wbState.draft.textMaxLen, 100, 1, 10000);
-    wbState.draft.maxLines = wbRound(wbState.draft.maxLines, 8, 1, 30);
+    wbState.draft.maxLines = wbRound(wbState.draft.maxLines, 8, 0, 30);
     wbState.draft.gap = wbRound(wbState.draft.gap, 8, 0, 40);
     wbState.draft.align = ['left', 'center', 'right'].indexOf(wbState.draft.align) >= 0
       ? wbState.draft.align : 'left';
