@@ -7,6 +7,7 @@ __pycache__/
 # Node / frontend build
 node_modules/
 dist/
+build/
 
 # Local user data and secrets
 config.json

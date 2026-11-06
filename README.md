@@ -8,9 +8,9 @@ B 站 / 抖音直播弹幕实时语音朗读工具。输入直播间号或抖音
 
 ## 下载
 
-前往 [Releases](https://github.com/raven-moonfade/readme-live-workspace/releases/latest) 下载最新的 `ReadMe-v1.0.0-portable.zip`，解压后双击 `run.bat`。首次运行会创建 `.venv` 并安装依赖。
+前往 [Releases](https://github.com/raven-moonfade/readme-live-workspace/releases/latest) 下载最新的 `ReadMe-v1.0.0-standalone.zip`，解压后双击 `ReadMe.exe`。**不需要安装 Python、pip 或 `.venv`。**
 
-运行环境：Windows 10/11、Python 3.11、WebView2；语音合成需要联网。
+运行环境：Windows 10/11、WebView2；语音合成需要联网。
 
 ## 功能
 
@@ -36,7 +36,7 @@ B 站 / 抖音直播弹幕实时语音朗读工具。输入直播间号或抖音
 
 ## 快速开始
 
-1. 解压发布包后双击 `run.bat`；首次运行会自动创建 `.venv` 并安装依赖
+1. 解压 `ReadMe-v1.0.0-standalone.zip` 后双击 `ReadMe.exe`
 2. 顶部选择「B 站」或「抖音」，输入直播间号；抖音也支持 `live.douyin.com/...` / `v.douyin.com/...` 链接
 3. 点「连接」；弹幕开始朗读
 
@@ -180,6 +180,16 @@ npx playwright install chromium
 ```
 
 可用 `--backend-only` / `--ui-only` / `--list` / `--skip-smoke` 缩短反馈；后端专项脚本位于 `tools/`，工作台测试位于 `tests/ui/`。
+
+构建无 Python 依赖的独立目录包：
+
+```powershell
+$env:README_BUILD_PYTHON = "C:\path\to\python-3.11\python.exe"
+& $env:README_BUILD_PYTHON -m pip install -r packaging\requirements-build.txt
+.\packaging\build-standalone.ps1
+```
+
+输出为 `dist\ReadMe\ReadMe.exe` 和 `dist\ReadMe-v1.0.0-standalone.zip`。
 
 ## 弹幕浮窗（窗口捕获）
 

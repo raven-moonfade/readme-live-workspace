@@ -20,6 +20,14 @@ npx playwright install chromium
 
 Start the app with `run_debug.bat` while developing.
 
+To build the standalone Windows package:
+
+```powershell
+$env:README_BUILD_PYTHON = "C:\path\to\python-3.11\python.exe"
+& $env:README_BUILD_PYTHON -m pip install -r packaging\requirements-build.txt
+.\packaging\build-standalone.ps1
+```
+
 ## Tests
 
 Run the full suite when the change affects shared behavior:

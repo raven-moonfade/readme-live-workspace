@@ -3382,7 +3382,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     if app is None:
         app = QApplication(sys.argv[:1])
     app.setApplicationName(APP_TITLE)
-    icon_path = base_dir / "assets" / "app.ico"
+    resource_dir = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+    icon_path = resource_dir / "assets" / "app.ico"
+    if not icon_path.exists():
+        icon_path = base_dir / "assets" / "app.ico"
     if icon_path.is_file():
         app.setWindowIcon(QIcon(str(icon_path)))
     app.setQuitOnLastWindowClosed(False)

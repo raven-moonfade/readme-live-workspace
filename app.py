@@ -17,10 +17,21 @@ import time
 import traceback
 from ctypes import wintypes
 
-import webview
+APP_DIR = pathlib.Path(getattr(sys, "_MEIPASS", pathlib.Path(__file__).resolve().parent))
+DATA_DIR = (
+    pathlib.Path(sys.executable).resolve().parent
+    if getattr(sys, "frozen", False)
+    else APP_DIR
+)
+sys.path.insert(0, str(APP_DIR))
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, BASE_DIR)
+if __name__ == "__main__" and "--overlay-child" in sys.argv:
+    from overlay_qt import main as overlay_main
+
+    child_args = [arg for arg in sys.argv[1:] if arg != "--overlay-child"]
+    raise SystemExit(overlay_main(child_args))
+
+import webview
 
 from backend import __version__ as APP_VERSION  # noqa: E402
 from backend.core import DanmakuTTSService  # noqa: E402
@@ -33,7 +44,7 @@ from backend.douyin import (  # noqa: E402
 APP_TITLE = "ReadMe"
 OVERLAY_TITLE = "ReadMe 浮窗"
 MONITOR_TITLE = "ReadMe 监看"
-ICON_PATH = os.path.join(BASE_DIR, "assets", "app.ico")
+ICON_PATH = str(APP_DIR / "assets" / "app.ico")
 IPC_CONNECTION_TIMEOUT = 5.0
 
 # Win32 常量
@@ -902,7 +913,7 @@ class JsApi:
         return {
             "name": "ReadMe",
             "version": APP_VERSION,
-            "base_dir": BASE_DIR,
+        "base_dir": str(DATA_DIR),
         }
 
 
@@ -1025,7 +1036,7 @@ class MonitorApi:
 def _write_boot_error(exc: BaseException):
     """启动失败时把堆栈写到 logs/boot_error.log（pythonw 无控制台，便于排查）。"""
     try:
-        log_dir = os.path.join(BASE_DIR, "logs")
+        log_dir = os.path.join(str(DATA_DIR), "logs")
         os.makedirs(log_dir, exist_ok=True)
         with open(os.path.join(log_dir, "boot_error.log"), "a", encoding="utf-8") as f:
             f.write("=" * 60 + "\n")
@@ -1037,7 +1048,7 @@ def _write_boot_error(exc: BaseException):
 def _log_boot(message: str) -> None:
     """把浮窗相关的非致命错误写进 logs/app.log 同目录的 boot_error.log。"""
     try:
-        log_dir = os.path.join(BASE_DIR, "logs")
+        log_dir = os.path.join(str(DATA_DIR), "logs")
         os.makedirs(log_dir, exist_ok=True)
         with open(os.path.join(log_dir, "boot_error.log"), "a", encoding="utf-8") as f:
             f.write("[%s] %s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"), message))
@@ -1174,7 +1185,7 @@ class OverlayBridge:
         self._thread.start()
         # 便于排查与自动化测试：端口落盘
         try:
-            with open(os.path.join(BASE_DIR, "logs", "overlay_ipc_port.txt"), "w", encoding="utf-8") as f:
+            with open(os.path.join(str(DATA_DIR), "logs", "overlay_ipc_port.txt"), "w", encoding="utf-8") as f:
                 f.write(str(self.port))
         except Exception:
             pass
@@ -1189,7 +1200,7 @@ class OverlayBridge:
                 pass
             self._server = None
         try:
-            p = os.path.join(BASE_DIR, "logs", "overlay_ipc_port.txt")
+            p = os.path.join(str(DATA_DIR), "logs", "overlay_ipc_port.txt")
             if os.path.exists(p):
                 os.remove(p)
         except Exception:
@@ -1198,19 +1209,28 @@ class OverlayBridge:
 
 def _launch_overlay(port: int, token: str = ""):
     """启动 Qt 浮窗子进程（独立进程，避免与 pywebview 抢主线程）。"""
-    script = os.path.join(BASE_DIR, "overlay_qt.py")
-    if not os.path.exists(script):
-        _log_boot("浮窗脚本不存在：%s" % script)
-        return None
-    exe = os.path.join(BASE_DIR, ".venv", "Scripts", "pythonw.exe")
-    if not os.path.exists(exe):
-        exe = sys.executable
+    if getattr(sys, "frozen", False):
+        command = [
+            sys.executable,
+            "--overlay-child",
+            "--port", str(port),
+            "--base", str(DATA_DIR),
+        ]
+    else:
+        script = os.path.join(str(APP_DIR), "overlay_qt.py")
+        if not os.path.exists(script):
+            _log_boot("浮窗脚本不存在：%s" % script)
+            return None
+        exe = os.path.join(str(APP_DIR), ".venv", "Scripts", "pythonw.exe")
+        if not os.path.exists(exe):
+            exe = sys.executable
+        command = [exe, script, "--port", str(port), "--base", str(DATA_DIR)]
     try:
         env = dict(os.environ)
         env.pop("DM_OVERLAY_TOKEN", None)  # 不再通过环境变量传递令牌
         proc = subprocess.Popen(
-            [exe, script, "--port", str(port), "--base", BASE_DIR],
-            cwd=BASE_DIR,
+            command,
+            cwd=str(DATA_DIR),
             stdin=subprocess.PIPE,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -1576,9 +1596,9 @@ def main():
             pass
         _log_boot("检测到已有实例，本次启动已退出")
         return
-    service = DanmakuTTSService(BASE_DIR)
+    service = DanmakuTTSService(str(DATA_DIR))
 
-    index = pathlib.Path(BASE_DIR) / "ui" / "index.html"
+    index = APP_DIR / "ui" / "index.html"
     url = index.as_uri()
 
     work_l, work_t, work_w, work_h = _logical_work_area()
@@ -1613,7 +1633,7 @@ def main():
     except Exception as e:  # noqa: BLE001
         _log_boot("浮窗初始化失败：%r" % (e,))
 
-    monitor_path = pathlib.Path(BASE_DIR) / "ui" / "monitor.html"
+    monitor_path = APP_DIR / "ui" / "monitor.html"
     monitor_window = None
     # The first pywebview window is the master window. Create the visible
     # main window first; a hidden monitor created first would delay the
