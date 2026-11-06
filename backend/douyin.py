@@ -160,12 +160,17 @@ def parse_room_input(value: Any) -> Dict[str, str]:
         url = "https://" + raw
     if url:
         parsed = urllib.parse.urlparse(url)
+        host = (parsed.hostname or "").lower()
         query = urllib.parse.parse_qs(parsed.query)
         for key in ("web_rid", "room_id"):
             candidate = _numeric_web_rid((query.get(key) or [""])[0])
             if candidate:
                 return {"web_rid": candidate, "url": url}
         path_parts = [part for part in parsed.path.split("/") if part]
+        # webcast.amemv.com/douyin/webcast/reflow/<内部 room_id> 不是 web_rid，
+        # 需要由 resolve_web_rid 读取页面里的 webRid 字段。
+        if host.endswith("webcast.amemv.com") and "reflow" in path_parts:
+            return {"web_rid": "", "url": url}
         for part in path_parts:
             candidate = _numeric_web_rid(part)
             if candidate:
@@ -176,6 +181,12 @@ def parse_room_input(value: Any) -> Dict[str, str]:
     tail = raw.rsplit("/", 1)[-1]
     tail = _numeric_web_rid(tail)
     return {"web_rid": tail, "url": ""}
+
+
+def web_rid_from_reflow_html(html: str) -> str:
+    """从 webcast reflow 页面提取真正的 webRid（页面 JSON 可能带转义）。"""
+    match = re.search(r'webRid\\?"\s*:\s*\\?"(\d+)', str(html or ""))
+    return match.group(1) if match else ""
 
 
 def _ttwid_from_jar(session: aiohttp.ClientSession) -> str:
@@ -246,9 +257,14 @@ async def resolve_web_rid(
             timeout=aiohttp.ClientTimeout(total=15),
         ) as response:
             final_url = str(response.url)
-            await response.read()
+            html = await response.text(errors="ignore")
     except Exception as exc:  # noqa: BLE001
         raise RuntimeError("解析抖音房间链接失败：%s" % exc) from exc
+    # 直播分享短链会跳到 webcast.amemv.com/.../reflow/<内部 room_id>，
+    # 页面内带有真正的 webRid，可直接用于房间接口。
+    reflow_web_rid = web_rid_from_reflow_html(html)
+    if reflow_web_rid:
+        return reflow_web_rid
     return parse_room_input(final_url)["web_rid"]
 
 
