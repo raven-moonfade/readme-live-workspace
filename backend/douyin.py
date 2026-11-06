@@ -498,7 +498,9 @@ class DouyinConnection:
                     "platform": "douyin",
                 }
         except Exception as exc:  # noqa: BLE001
-            error = "%s: %s" % (type(exc).__name__, exc)
+            error = str(exc) if isinstance(exc, RuntimeError) else "%s: %s" % (
+                type(exc).__name__, exc
+            )
             self._on_error(error, {"stage": "open"})
             self._on_state(STATE_ERROR, self._room_id, None, None)
             await self._close_session()

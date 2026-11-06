@@ -2398,7 +2398,9 @@ class DanmakuTTSService:
                 self._finish_current_session("connect_failed")
             raise
         except Exception as exc:  # noqa: BLE001
-            error = "%s: %s" % (type(exc).__name__, exc)
+            error = str(exc) if isinstance(exc, RuntimeError) else "%s: %s" % (
+                type(exc).__name__, exc
+            )
             await self._close_sources()
             self._set_connection(
                 STATE_ERROR,
