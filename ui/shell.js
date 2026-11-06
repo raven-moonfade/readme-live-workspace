@@ -374,10 +374,11 @@
 
   function historyGiftText(session) {
     var profile = platformCapability(session && session.platform);
+    if (profile.gift_value_unit === "diamond") {
+      return formatLiveNumber(Math.max(0, historyNumber(session && session.gift_diamond))) + " 钻石";
+    }
     if (!profile.money_comparable) {
-      return profile.gift_value_unit === "diamond"
-        ? "仅单条钻石 · 不汇总"
-        : "口径未接入";
+      return "口径未接入";
     }
     var parts = [];
     if (historyNumber(session && session.gift_cny) > 0) parts.push(formatMoney(session.gift_cny));
@@ -390,7 +391,7 @@
     var profile = platformCapability(session && session.platform);
     var moneyComparable = !!profile.money_comparable;
     return {
-      giftLabel: profile.gift_value_unit === "diamond" ? "礼物价值" : "礼物金额",
+      giftLabel: profile.gift_value_unit === "diamond" ? "钻石流水（本机字段）" : "礼物金额",
       giftText: historyGiftText(session),
       scLabel: profile.supports_super_chat ? "SC 金额" : "SC / 舰长",
       scText: moneyComparable
@@ -1895,16 +1896,22 @@
       totalCoin = (isFinite(price) ? price : 0) * amount;
     }
     var coinType = String(value.coin_type || "").toLowerCase();
+    var diamonds = 0;
+    if (coinType === "diamond") {
+      var unit = Number(value.diamond_count);
+      diamonds = isFinite(unit) && unit > 0 ? Math.round(unit) * amount : 0;
+      return { cny: 0, silver: 0, unknown: 0, diamond: diamonds };
+    }
     if (coinType === "gold") {
-      return { cny: totalCoin / 1000, silver: 0, unknown: 0 };
+      return { cny: totalCoin / 1000, silver: 0, unknown: 0, diamond: 0 };
     }
     if (coinType === "mock_cny" || value.mock || (source === "mock" && !coinType)) {
-      return { cny: totalCoin, silver: 0, unknown: 0 };
+      return { cny: totalCoin, silver: 0, unknown: 0, diamond: 0 };
     }
     if (coinType === "silver") {
-      return { cny: 0, silver: totalCoin, unknown: 0 };
+      return { cny: 0, silver: totalCoin, unknown: 0, diamond: 0 };
     }
-    return { cny: 0, silver: 0, unknown: totalCoin };
+    return { cny: 0, silver: 0, unknown: totalCoin, diamond: 0 };
   }
 
   function receiveMessage(event) {
@@ -1929,6 +1936,7 @@
       metrics.values.giftCny += gift.cny;
       metrics.values.giftSilver += gift.silver;
       metrics.values.giftUnknown += gift.unknown;
+      metrics.values.giftDiamond = (Number(metrics.values.giftDiamond) || 0) + gift.diamond;
     } else if (type === "super_chat") {
       var sc = Number(meta.price);
       if (isFinite(sc) && sc > 0) metrics.values.superChatCny += sc;
@@ -2458,6 +2466,10 @@
         Number(stats && stats.gift_unknown) || 0,
         Number(metrics.values.giftUnknown) || 0
       ),
+      giftDiamond: Math.max(
+        Number(stats && stats.gift_diamond) || 0,
+        Number(metrics.values.giftDiamond) || 0
+      ),
       superChatCny: Math.max(
         Number(stats && stats.super_chat_cny) || 0,
         Number(metrics.values.superChatCny) || 0
@@ -2472,19 +2484,25 @@
       safeText(els.dataRevenue, formatMoney(mergedValues.giftCny + mergedValues.superChatCny));
       safeText(els.dataRevenueGift, formatMoney(mergedValues.giftCny));
       safeText(els.dataRevenueSc, formatMoney(mergedValues.superChatCny));
+    } else if (platformProfile.gift_value_unit === "diamond") {
+      var diamondTotal = Math.max(0, Math.round(mergedValues.giftDiamond));
+      safeText(els.dataRevenueLabel, "本机钻石流水");
+      safeText(els.dataRevenueGiftLabel, "礼物");
+      safeText(els.dataRevenueScLabel, "SC/舰长");
+      safeText(els.dataRevenue, formatLiveNumber(diamondTotal));
+      safeText(els.dataRevenueGift, formatLiveNumber(diamondTotal) + " 钻石");
+      safeText(els.dataRevenueSc, "未提供");
+      safeText(els.dataGiftValue, "本机字段 " + formatLiveNumber(diamondTotal) + " 钻石");
+      safeText(els.dataScValue, "平台未提供");
     } else {
-      safeText(els.dataRevenueLabel, platformProfile.gift_value_unit === "diamond"
-        ? "礼物价值" : "金额口径");
+      safeText(els.dataRevenueLabel, "金额口径");
       safeText(els.dataRevenueGiftLabel, "礼物");
       safeText(els.dataRevenueScLabel, platformProfile.supports_super_chat ? "SC" : "SC/舰长");
-      safeText(els.dataGiftValue, platformProfile.gift_value_unit === "diamond"
-        ? "钻石不汇总 · 单条消息显示" : "金额口径未接入");
+      safeText(els.dataGiftValue, "金额口径未接入");
       safeText(els.dataScValue, platformProfile.supports_super_chat
         ? "本机字段未接入" : "平台未提供 SC/舰长");
-      safeText(els.dataRevenue, platformProfile.gift_value_unit === "diamond"
-        ? "仅单条钻石" : "不可比");
-      safeText(els.dataRevenueGift, platformProfile.gift_value_unit === "diamond"
-        ? "钻石不汇总" : "未接入");
+      safeText(els.dataRevenue, "不可比");
+      safeText(els.dataRevenueGift, "未接入");
       safeText(els.dataRevenueSc, platformProfile.supports_super_chat
         ? "未接入" : "未提供");
     }

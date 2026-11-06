@@ -261,7 +261,30 @@ def main() -> int:
     check(cancelled_session in cancel_service.session_store.finished,
           "连接取消结束新建场次")
 
-    print("\nSUMMARY PASS=29 FAIL=0")
+    diamond_service = object.__new__(DanmakuTTSService)
+    diamond_service._state_lock = threading.RLock()
+    diamond_service._state = {
+        "session_id": "douyin-session",
+        "session_stats": {
+            "all": _empty_session_metrics(),
+            "real": _empty_session_metrics(),
+            "mock": _empty_session_metrics(),
+        },
+    }
+    diamond_service._source_platform = "douyin"
+    diamond_service._session_users = {"all": set(), "real": set(), "mock": set()}
+    diamond_service._session_message_bump(
+        "gift",
+        {"diamond_count": 10, "num": 3, "coin_type": "diamond"},
+        uid="douyin-user",
+    )
+    diamond_stats = diamond_service._state["session_stats"]["real"]
+    check(diamond_stats["gift_diamond"] == 30,
+          "抖音礼物按单颗钻石 × 数量计入 real.gift_diamond")
+    check(diamond_stats["gift_cny"] == 0,
+          "抖音钻石流水不污染 real.gift_cny")
+
+    print("\nSUMMARY PASS=31 FAIL=0")
     return 0
 
 

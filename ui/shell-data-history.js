@@ -1122,7 +1122,13 @@
     }
     var moneyText;
     if (data.money && data.money.comparable === false) {
-      moneyText = data.money.note || "金额字段不可比较";
+      if (data.money.gift_value_unit === "diamond") {
+        var trendDiamonds = Math.max(0, Number(totals.gift_diamond) || 0);
+        moneyText = "钻石流水（本机字段） " +
+          trendDiamonds.toLocaleString("zh-CN") + " 钻石 · 不折人民币";
+      } else {
+        moneyText = data.money.note || "金额字段不可比较";
+      }
     } else {
       moneyText = "礼物（本机字段）" + ctx.root.formatMoney(totals.gift_cny) +
         (Number(totals.gift_silver) ? " · 银瓜子 " + Number(totals.gift_silver) : "") +

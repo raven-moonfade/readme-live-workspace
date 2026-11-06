@@ -172,7 +172,7 @@ def main() -> int:
         )
         store.record_message(
             "douyin-money", "gift", at(today, 16, 1), "u1",
-            {"total_coin": 1000, "coin_type": "gold", "num": 1, "price": 1},
+            {"diamond_count": 100, "num": 2, "coin_type": "diamond"},
         )
         store.record_message(
             "douyin-money", "super_chat", at(today, 16, 2), "u2",
@@ -182,9 +182,11 @@ def main() -> int:
         store.flush(3.0)
         money_session = store.get_session("douyin-money").get("session") or {}
         check(money_session.get("gift_cny") == 0 and
-              money_session.get("super_chat_cny") == 0,
+              money_session.get("super_chat_cny") == 0 and
+              money_session.get("gift_diamond") == 200,
               "非 B 平台金额不按 B 站规则折算",
               {"gift_cny": money_session.get("gift_cny"),
+               "gift_diamond": money_session.get("gift_diamond"),
                "super_chat_cny": money_session.get("super_chat_cny")})
         douyin_money = store.trend_sessions(
             today.timestamp(), tomorrow.timestamp(),
@@ -203,6 +205,9 @@ def main() -> int:
             "不可比平台 API 金额字段置空",
             douyin_money.get("money"),
         )
+        check(douyin_money.get("money", {}).get("gift_diamond") == 200,
+              "抖音趋势保留钻石流水",
+              douyin_money.get("money"))
 
         huge = store.trend_sessions(0, 1e12)
         check(not huge.get("ok") and huge.get("error_code") == "range_too_large",

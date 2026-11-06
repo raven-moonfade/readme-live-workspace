@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""验证历史库 v4 的过滤/硬丢弃字段与 v3 迁移。"""
+"""验证历史库 v5 的过滤/硬丢弃/钻石流水字段与旧库迁移。"""
 
 from __future__ import annotations
 
@@ -47,6 +47,7 @@ def main() -> int:
             check(session.get("real_dropped_total") == 5, "新场次保留总丢弃", session)
             check(session.get("real_filtered") == 2, "新场次保留过滤数", session)
             check(session.get("real_dropped_known") is True, "新场次口径已知", session)
+            check(session.get("gift_diamond") == 0, "新场次含钻石流水字段", session)
         finally:
             store.close()
 
@@ -69,12 +70,13 @@ def main() -> int:
 
         migrated = SessionStore(legacy_path)
         try:
-            check(bool(migrated._migration_backup_path), "v3 到 v4 迁移前已备份")
+            check(bool(migrated._migration_backup_path), "v3 到 v5 迁移前已备份")
             result = migrated.get_session("legacy")
             session = result.get("session") or {}
             check(session.get("real_dropped") == 10, "旧场次保留旧总丢弃", session)
             check(session.get("real_filtered") == 0, "旧场次过滤数显示为零", session)
             check(session.get("real_dropped_known") is False, "旧场次标记旧口径", session)
+            check(session.get("gift_diamond") == 0, "旧场次迁移后钻石流水为零", session)
         finally:
             migrated.close()
 

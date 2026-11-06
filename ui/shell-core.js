@@ -22,7 +22,13 @@
         danmaku: 0, gift: 0, super_chat: 0, guard: 0, enter: 0,
         like: 0, social: 0, fansclub: 0
       },
-      values: { giftCny: 0, giftSilver: 0, giftUnknown: 0, superChatCny: 0 },
+      values: {
+        giftCny: 0,
+        giftSilver: 0,
+        giftUnknown: 0,
+        giftDiamond: 0,
+        superChatCny: 0
+      },
       users: new Set(),
       minuteBuckets: new Map(),
       lastEventAt: null

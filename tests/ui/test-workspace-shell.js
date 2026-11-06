@@ -548,6 +548,7 @@ async function probeTopbarGeometry(page) {
     const snap = JSON.parse(JSON.stringify(previous));
     snap.platform = 'douyin';
     snap.connection = 'connected';
+    snap.is_mock = false;
     snap.room_id = 0;
     snap.room_title = '抖音边界测试';
     snap.account = {
@@ -560,7 +561,10 @@ async function probeTopbarGeometry(page) {
       id: 'douyin-boundary',
       started_at: Date.now() / 1000 - 60,
       open: true,
-      real: { received: 3, spoken: 2, dropped: 0, filtered: 0, unique_users: 2, types: {} }
+      real: {
+        received: 3, spoken: 2, dropped: 0, filtered: 0, unique_users: 2,
+        gift_diamond: 1234, types: {}
+      }
     };
     shell.state.snapshot = snap;
     shell.renderData();
@@ -1210,11 +1214,11 @@ async function probeTopbarGeometry(page) {
       pendingReloaded.theme === 'dark' && pendingReloaded.stored.pending === true &&
       pendingReloaded.stored.themeMode === 'dark',
     dataNotices: data.notices.includes('调试预览'),
-    douyinMoneyBoundary: douyinMoney.revenueLabel === '礼物价值' &&
-      douyinMoney.revenue === '仅单条钻石' &&
-      douyinMoney.gift === '钻石不汇总' &&
+    douyinMoneyBoundary: douyinMoney.revenueLabel === '本机钻石流水' &&
+      douyinMoney.revenue === '1,234' &&
+      douyinMoney.gift === '1,234 钻石' &&
       douyinMoney.sc === '未提供' &&
-      douyinMoney.giftDetail.includes('单条') &&
+      douyinMoney.giftDetail.includes('1,234 钻石') &&
       douyinMoney.scDetail.includes('平台未提供') &&
       douyinMoney.typeNote.includes('SC/舰长') &&
       douyinMoney.settingsAccount.includes('抖音用户A') &&

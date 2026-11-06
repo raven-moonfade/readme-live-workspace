@@ -375,8 +375,18 @@ def main() -> int:
         )
         _, dy_rows = read_csv(dy_csv["path"])
         money_rows = [row for row in dy_rows if row.get("section") == "money"]
-        check(bool(money_rows) and all(row.get("value") == "" for row in money_rows),
-              "非 B 平台 CSV 金额留空", money_rows[:3])
+        diamond_rows = [
+            row for row in money_rows if row.get("metric_key") == "gift_diamond"
+        ]
+        non_diamond_rows = [
+            row for row in money_rows if row.get("metric_key") != "gift_diamond"
+        ]
+        check(
+            bool(diamond_rows) and all(row.get("value") == "0" for row in diamond_rows) and
+            all(row.get("value") == "" for row in non_diamond_rows),
+            "非 B 平台 CSV 只写钻石流水，人民币金额留空",
+            money_rows[:4],
+        )
 
         one = store.export_compare_multi_report(
             "target", ["baseline-short"], fmt="json", output_dir=out

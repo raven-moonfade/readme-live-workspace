@@ -239,10 +239,11 @@ fs.mkdirSync(OUT, { recursive: true });
     const view = window.MutaiShell.root.historyMoneyView({
       platform: 'douyin',
       gift_cny: 0,
+      gift_diamond: 4321,
       super_chat_cny: 0
     });
     return {
-      gift: view.giftText.includes('仅单条钻石 · 不汇总'),
+      gift: view.giftText.includes('4,321 钻石'),
       sc: view.scText === '平台未提供',
       note: view.note.includes('平台未提供 SC/舰长等价能力'),
       noFakeZero: !String(view.giftText + view.scText).includes('¥0.00')

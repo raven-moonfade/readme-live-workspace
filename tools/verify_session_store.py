@@ -175,6 +175,31 @@ def main() -> int:
         listed2 = store.list_sessions()
         check(listed2.get("total") == 1, "纯模拟场次不进入历史")
 
+        douyin_id = "session-douyin"
+        store.start_session(
+            douyin_id,
+            0,
+            "抖音场次",
+            started_at=now,
+            platform="douyin",
+            room_key="dy:test",
+        )
+        store.record_message(
+            douyin_id,
+            "gift",
+            now + 1,
+            "dy-user",
+            {"diamond_count": 100, "num": 3, "coin_type": "diamond"},
+        )
+        store.finish_session(douyin_id, ended_at=now + 2, reason="manual_disconnect")
+        store.flush(3.0)
+        douyin_detail = store.get_session(douyin_id).get("session") or {}
+        check(douyin_detail.get("gift_diamond") == 300,
+              "抖音礼物钻石流水按单颗 × 数量累计", douyin_detail)
+        check(douyin_detail.get("gift_cny") == 0,
+              "抖音钻石流水不写入人民币金额", douyin_detail)
+        store.delete_session(douyin_id)
+
         with closing(sqlite3.connect(path)) as conn:
             tables = {
                 row[0]
@@ -186,6 +211,7 @@ def main() -> int:
             }
         check({"sessions", "session_types", "session_minutes"}.issubset(tables), "历史表结构存在", repr(tables))
         check(not {"text", "user_name", "uid", "viewer_key"}.intersection(columns), "场次表不保存正文/用户名/UID")
+        check("gift_diamond" in columns, "场次表保存抖音钻石流水字段", repr(columns))
 
         deleted = store.delete_session(session_id)
         check(deleted.get("ok"), "删除历史场次")

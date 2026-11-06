@@ -109,7 +109,7 @@ def main() -> int:
             )
             store.record_message(
                 "dy", "gift", 1767225602, "dy-user",
-                {"total_coin": 1000, "coin_type": "gold"},
+                {"diamond_count": 10, "num": 3, "coin_type": "diamond"},
             )
             store.record_message(
                 "dy", "super_chat", 1767225603, "dy-user",
@@ -136,6 +136,7 @@ def main() -> int:
                 dy_detail.get("gift_cny") == 0 and
                 dy_detail.get("gift_silver") == 0 and
                 dy_detail.get("gift_unknown") == 0 and
+                dy_detail.get("gift_diamond") == 30 and
                 dy_detail.get("super_chat_cny") == 0 and
                 (dy_detail.get("types") or {}).get("gift") == 1 and
                 (dy_detail.get("types") or {}).get("super_chat") == 1,

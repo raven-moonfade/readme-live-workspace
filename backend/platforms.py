@@ -41,7 +41,7 @@ _PROFILES: Dict[str, PlatformProfile] = {
         gift_value_unit="diamond",
         supports_super_chat=False,
         supports_guard=False,
-        money_note="抖音礼物按单条钻石显示，不汇总人民币；平台未提供 SC/舰长等价能力",
+        money_note="抖音礼物按钻石累计，不折人民币，不代表平台结算；平台未提供 SC/舰长等价能力",
     ),
 }
 

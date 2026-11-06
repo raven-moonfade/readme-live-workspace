@@ -163,7 +163,7 @@ def main() -> int:
             "real_received", "real_spoken", "real_dropped", "duration_seconds",
             "received_per_hour", "spoken_rate", "drop_rate",
             "unique_users_sum", "unique_users_max", "gift_cny", "gift_silver",
-            "gift_unknown", "super_chat_cny", "mock_received", "mock_spoken",
+            "gift_unknown", "gift_diamond", "super_chat_cny", "mock_received", "mock_spoken",
             "mock_dropped", "short_sessions", "incomplete_sessions", "replaced_sessions",
             "unknown_end_sessions", "inconsistent_sessions", "mock_sessions", "has_data",
         ]
@@ -347,9 +347,16 @@ def main() -> int:
         check(douyin_compare_report.get("money", {}).get("gift_value_unit") == "diamond" and
               douyin_compare_report.get("money", {}).get("supports_super_chat") is False,
               "抖音对比报告暴露平台能力")
-        check(all(row.get("current") is None
-                  for row in douyin_compare_report.get("money", {}).get("rows") or []),
-              "不可比对比金额不写入报告数值")
+        douyin_money_rows = douyin_compare_report.get("money", {}).get("rows") or []
+        check(
+            any(row.get("metric_key") == "gift_diamond" and row.get("current") == 0
+                for row in douyin_money_rows) and
+            all(row.get("current") is None
+                for row in douyin_money_rows
+                if row.get("metric_key") != "gift_diamond"),
+            "抖音对比报告只写入钻石流水，不写入人民币金额",
+            douyin_money_rows,
+        )
 
         sparse_insights = store.export_insights_report(
             "dy-target", fmt="json", output_dir=out

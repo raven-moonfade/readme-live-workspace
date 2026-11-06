@@ -2,7 +2,7 @@
 """本机直播场次存储。
 
 只持久化聚合数据：场次元信息、真实/模拟计数、类型分布、分钟桶、去重用户数
-和已知金额。不保存弹幕正文、用户名、UID 或登录凭证。
+和已知金额 / 抖音钻石流水。不保存弹幕正文、用户名、UID 或登录凭证。
 """
 
 from __future__ import annotations
@@ -63,6 +63,7 @@ from .platforms import (
     money_note as platform_money_note,
     normalize_platform,
     normalize_room_key,
+    platform_profile,
 )
 from .export_store import ExportManager
 
@@ -71,7 +72,7 @@ logger = logging.getLogger("danmaku_tts.sessions")
 _TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub")
 _COUNTERS = ("received", "spoken", "dropped", "filtered")
 _SCOPES = ("real", "mock")
-_SCHEMA_VERSION = 4
+_SCHEMA_VERSION = 5
 _SETTING_DEFAULTS = {
     "auto_prune_enabled": False,
     "auto_prune_days": 90,
@@ -156,24 +157,31 @@ class SessionStore:
                 existing_columns = {
                     str(row[1]) for row in conn.execute("PRAGMA table_info(sessions)").fetchall()
                 }
-                if version == _SCHEMA_VERSION and existing_columns and "room_key" not in existing_columns:
-                    raise RuntimeError("历史库版本为 4，但缺少 room_key 列")
-                if version == _SCHEMA_VERSION and existing_columns and (
-                    "real_filtered" not in existing_columns
-                    or "mock_filtered" not in existing_columns
-                ):
-                    raise RuntimeError("历史库版本为 4，但缺少 filtered 列")
+                if version == _SCHEMA_VERSION and existing_columns:
+                    missing = {
+                        "room_key", "real_filtered", "mock_filtered", "gift_diamond",
+                    } - existing_columns
+                    if missing:
+                        raise RuntimeError(
+                            "历史库版本为 %d，但缺少列：%s"
+                            % (_SCHEMA_VERSION, ", ".join(sorted(missing)))
+                        )
                 if existing_columns and version < _SCHEMA_VERSION:
                     self._migrate_schema(conn)
                     version = _SCHEMA_VERSION
                     existing_columns.add("room_key")
                     existing_columns.update(("real_filtered", "mock_filtered"))
+                    existing_columns.add("gift_diamond")
                 if existing_columns and "room_key" not in existing_columns:
                     conn.execute("ALTER TABLE sessions ADD COLUMN room_key TEXT NOT NULL DEFAULT ''")
                 if existing_columns and "real_filtered" not in existing_columns:
                     conn.execute("ALTER TABLE sessions ADD COLUMN real_filtered INTEGER")
                 if existing_columns and "mock_filtered" not in existing_columns:
                     conn.execute("ALTER TABLE sessions ADD COLUMN mock_filtered INTEGER")
+                if existing_columns and "gift_diamond" not in existing_columns:
+                    conn.execute(
+                        "ALTER TABLE sessions ADD COLUMN gift_diamond INTEGER NOT NULL DEFAULT 0"
+                    )
                 conn.executescript(
                 """
                 CREATE TABLE IF NOT EXISTS sessions (
@@ -199,6 +207,7 @@ class SessionStore:
                     gift_cny REAL NOT NULL DEFAULT 0,
                     gift_silver INTEGER NOT NULL DEFAULT 0,
                     gift_unknown INTEGER NOT NULL DEFAULT 0,
+                    gift_diamond INTEGER NOT NULL DEFAULT 0,
                     super_chat_cny REAL NOT NULL DEFAULT 0
                 );
                 CREATE TABLE IF NOT EXISTS session_types (
@@ -251,7 +260,7 @@ class SessionStore:
                     conn.execute("PRAGMA user_version=%d" % _SCHEMA_VERSION)
 
     def _migrate_schema(self, conn: sqlite3.Connection) -> None:
-        """在单事务内完成旧库到 v4 的结构迁移。调用方负责先做备份。"""
+        """在单事务内完成旧库到 v5 的结构迁移。调用方负责先做备份。"""
         conn.execute("BEGIN IMMEDIATE")
         try:
             columns = {
@@ -263,6 +272,10 @@ class SessionStore:
                 conn.execute("ALTER TABLE sessions ADD COLUMN real_filtered INTEGER")
             if "mock_filtered" not in columns:
                 conn.execute("ALTER TABLE sessions ADD COLUMN mock_filtered INTEGER")
+            if "gift_diamond" not in columns:
+                conn.execute(
+                    "ALTER TABLE sessions ADD COLUMN gift_diamond INTEGER NOT NULL DEFAULT 0"
+                )
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS session_types (
@@ -695,16 +708,25 @@ class SessionStore:
                 if platform_money_comparable(platform)
                 else {"cny": 0, "silver": 0, "unknown": 0}
             )
+            diamond_value = self._gift_diamond_value(meta)
             conn.execute(
                 """
                 UPDATE sessions
                    SET gift_cny = gift_cny + ?,
                        gift_silver = gift_silver + ?,
                        gift_unknown = gift_unknown + ?,
+                       gift_diamond = gift_diamond + ?,
                        updated_at = ?
                  WHERE id = ?
                 """,
-                (value["cny"], value["silver"], value["unknown"], now, session_id),
+                (
+                    value["cny"],
+                    value["silver"],
+                    value["unknown"],
+                    diamond_value,
+                    now,
+                    session_id,
+                ),
             )
         elif kind == "super_chat":
             try:
@@ -734,6 +756,18 @@ class SessionStore:
         if coin_type == "silver":
             return {"cny": 0, "silver": int(total_coin), "unknown": 0}
         return {"cny": 0, "silver": 0, "unknown": int(total_coin)}
+
+    @staticmethod
+    def _gift_diamond_value(meta: Dict[str, Any]) -> int:
+        """抖音礼物按单颗钻石数 × 数量累计；不换算人民币。"""
+        if str(meta.get("coin_type") or "").lower() != "diamond":
+            return 0
+        try:
+            unit = max(0, int(meta.get("diamond_count") or 0))
+            count = max(1, int(meta.get("num") or 1))
+        except (TypeError, ValueError):
+            return 0
+        return unit * count
 
     # ------------------------------------------------------------ 公开写接口
     def start_session(
@@ -1251,6 +1285,9 @@ class SessionStore:
                     not platform_money_comparable(scoped_filter["platform"])):
                 result["money"]["comparable"] = False
                 result["money"]["note"] = platform_money_note(scoped_filter["platform"])
+                result["money"]["gift_value_unit"] = platform_profile(
+                    scoped_filter["platform"]
+                ).gift_value_unit
                 for money_key in ("gift_cny", "gift_silver", "gift_unknown", "super_chat_cny"):
                     result["money"][money_key] = None
             result["quality"]["unscoped_sessions"] = unscoped_sessions
@@ -2324,7 +2361,7 @@ class SessionStore:
                     "started_at", "ended_at", "end_reason", "last_event_at",
                     "real_received", "real_spoken", "real_dropped",
                     "mock_received", "mock_spoken", "mock_dropped",
-                    "unique_users", "gift_cny", "gift_silver", "gift_unknown",
+                    "unique_users", "gift_cny", "gift_silver", "gift_unknown", "gift_diamond",
                     "super_chat_cny", "danmaku", "gift", "super_chat", "guard", "enter", "like", "social",
                     "fansclub",
                     "minutes_json",
@@ -2351,6 +2388,7 @@ class SessionStore:
                     "gift_cny": session.get("gift_cny"),
                     "gift_silver": session.get("gift_silver"),
                     "gift_unknown": session.get("gift_unknown"),
+                    "gift_diamond": session.get("gift_diamond"),
                     "super_chat_cny": session.get("super_chat_cny"),
                     "danmaku": types.get("danmaku", 0),
                     "gift": types.get("gift", 0),

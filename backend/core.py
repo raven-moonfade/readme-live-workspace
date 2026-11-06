@@ -97,6 +97,7 @@ def _empty_session_metrics() -> Dict[str, Any]:
         "gift_cny": 0.0,
         "gift_silver": 0,
         "gift_unknown": 0,
+        "gift_diamond": 0,
         "super_chat_cny": 0.0,
     }
 _TEMPLATE_TOKEN_RE = re.compile(r"\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
@@ -663,6 +664,10 @@ class DanmakuTTSService:
                     user_set.add(uid_text)
                     bucket["unique_users"] = int(bucket.get("unique_users") or 0) + 1
                 if kind == "gift":
+                    bucket["gift_diamond"] = (
+                        int(bucket.get("gift_diamond") or 0)
+                        + int(SessionStore._gift_diamond_value(meta))
+                    )
                     if mock:
                         try:
                             total = float(meta.get("total_coin") or 0)

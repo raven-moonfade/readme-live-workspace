@@ -50,7 +50,7 @@ COMPARE_METRIC_DEFINITIONS = (
 def _money_labels(platform: Any) -> Dict[str, Any]:
     profile = platform_profile(platform)
     return {
-        "gift": "礼物价值" if profile.gift_value_unit == "diamond" else "礼物（本机字段）",
+        "gift": "钻石流水（本机字段）" if profile.gift_value_unit == "diamond" else "礼物（本机字段）",
         "sc": "SC / 舰长" if not profile.supports_super_chat else "SC（本机字段）",
         "note": profile.money_note or "该平台金额口径未接入",
         "gift_value_unit": profile.gift_value_unit,
@@ -91,6 +91,7 @@ _TREND_BUCKET_KEYS = (
     "gift_cny",
     "gift_silver",
     "gift_unknown",
+    "gift_diamond",
     "super_chat_cny",
     "mock_received",
     "mock_spoken",
@@ -261,6 +262,7 @@ def _session_snapshot(session: Any) -> Dict[str, Any]:
         "gift_cny": _number(session.get("gift_cny")),
         "gift_silver": _int(session.get("gift_silver")),
         "gift_unknown": _int(session.get("gift_unknown")),
+        "gift_diamond": _int(session.get("gift_diamond")),
         "super_chat_cny": _number(session.get("super_chat_cny")),
         "types": dict(session.get("types") or {}) if isinstance(session.get("types"), dict) else {},
         "minutes": [
@@ -503,22 +505,44 @@ def build_compare_report(result: Dict[str, Any], exported_at: int) -> Dict[str, 
         })
 
     money_rows = []
-    for key, label in (
-        ("gift_cny", money_labels["gift"]),
-        ("gift_silver", "银瓜子"),
-        ("gift_unknown", "瓜子"),
-        ("super_chat_cny", money_labels["sc"]),
-    ):
+    if money_labels["gift_value_unit"] == "diamond":
         money_rows.append({
             "section": "金额与状态",
-            "metric_key": key,
-            "label": label,
-            "current": _number(current.get(key)) if money_comparable else None,
-            "baseline": _number(baseline.get(key)) if money_comparable else None,
-            "delta": _delta(current.get(key), baseline.get(key)) if money_comparable else None,
-            "unit": "CNY" if key in ("gift_cny", "super_chat_cny") else "个",
-            "note": "" if money_comparable else money_note,
+            "metric_key": "gift_diamond",
+            "label": money_labels["gift"],
+            "current": _int(current.get("gift_diamond")),
+            "baseline": _int(baseline.get("gift_diamond")),
+            "delta": _int(current.get("gift_diamond")) - _int(baseline.get("gift_diamond")),
+            "unit": "钻石",
+            "note": "本机观测钻石流水；不折人民币，不代表平台结算",
         })
+        money_rows.append({
+            "section": "金额与状态",
+            "metric_key": "super_chat_cny",
+            "label": money_labels["sc"],
+            "current": None,
+            "baseline": None,
+            "delta": None,
+            "unit": "CNY",
+            "note": "平台未提供 SC/舰长等价能力",
+        })
+    else:
+        for key, label in (
+            ("gift_cny", money_labels["gift"]),
+            ("gift_silver", "银瓜子"),
+            ("gift_unknown", "瓜子"),
+            ("super_chat_cny", money_labels["sc"]),
+        ):
+            money_rows.append({
+                "section": "金额与状态",
+                "metric_key": key,
+                "label": label,
+                "current": _number(current.get(key)) if money_comparable else None,
+                "baseline": _number(baseline.get(key)) if money_comparable else None,
+                "delta": _delta(current.get(key), baseline.get(key)) if money_comparable else None,
+                "unit": "CNY" if key in ("gift_cny", "super_chat_cny") else "个",
+                "note": "" if money_comparable else money_note,
+            })
 
     report = _base_report(
         "compare",
@@ -679,27 +703,49 @@ def _multi_money_block(
     labels = _money_labels(target.get("platform"))
     note = "" if comparable else labels["note"]
     rows: List[Dict[str, Any]] = []
-    for field, label, unit in (
-        ("gift_cny", labels["gift"], "CNY"),
-        ("gift_silver", "银瓜子", "个"),
-        ("gift_unknown", "瓜子", "个"),
-        ("super_chat_cny", labels["sc"], "CNY"),
-    ):
-        values = {"current": _number(target.get(field)) if comparable else None}
+    if labels["gift_value_unit"] == "diamond":
+        values = {"current": _int(target.get("gift_diamond"))}
         for item in baselines:
-            values[item["key"]] = (
-                _number(item["session"].get(field)) if comparable else None
-            )
+            values[item["key"]] = _int(item["session"].get("gift_diamond"))
         rows.append({
-            "field": field,
-            "label": label,
-            "unit": unit,
+            "field": "gift_diamond",
+            "label": labels["gift"],
+            "unit": "钻石",
             "values": values,
-            "note": "" if comparable else note,
+            "note": "本机观测钻石流水；不折人民币，不代表平台结算",
         })
+        sc_values = {"current": None}
+        for item in baselines:
+            sc_values[item["key"]] = None
+        rows.append({
+            "field": "super_chat_cny",
+            "label": labels["sc"],
+            "unit": "CNY",
+            "values": sc_values,
+            "note": "平台未提供 SC/舰长等价能力",
+        })
+    else:
+        for field, label, unit in (
+            ("gift_cny", labels["gift"], "CNY"),
+            ("gift_silver", "银瓜子", "个"),
+            ("gift_unknown", "瓜子", "个"),
+            ("super_chat_cny", labels["sc"], "CNY"),
+        ):
+            values = {"current": _number(target.get(field)) if comparable else None}
+            for item in baselines:
+                values[item["key"]] = (
+                    _number(item["session"].get(field)) if comparable else None
+                )
+            rows.append({
+                "field": field,
+                "label": label,
+                "unit": unit,
+                "values": values,
+                "note": "" if comparable else note,
+            })
     return {
         "comparable": comparable,
-        "currency": "CNY",
+        "currency": "diamond" if labels["gift_value_unit"] == "diamond" else "CNY",
         "note": note or "本机字段，不代表平台营收；不跨币种相加",
         "gift_value_unit": labels["gift_value_unit"],
         "supports_super_chat": labels["supports_super_chat"],
@@ -988,7 +1034,7 @@ def render_csv(report: Dict[str, Any]) -> str:
             "real_received", "real_spoken", "real_dropped", "duration_seconds",
             "received_per_hour", "spoken_rate", "drop_rate",
             "unique_users_sum", "unique_users_max", "gift_cny", "gift_silver",
-            "gift_unknown", "super_chat_cny", "mock_received", "mock_spoken",
+            "gift_unknown", "gift_diamond", "super_chat_cny", "mock_received", "mock_spoken",
             "mock_dropped", "short_sessions", "incomplete_sessions", "replaced_sessions",
             "unknown_end_sessions", "inconsistent_sessions", "mock_sessions", "has_data",
             "granularity", "trend_bucket_schema_version",
@@ -1029,6 +1075,7 @@ def render_csv(report: Dict[str, Any]) -> str:
                 "gift_cny": bucket.get("gift_cny") if money.get("comparable") else "",
                 "gift_silver": bucket.get("gift_silver") if money.get("comparable") else "",
                 "gift_unknown": bucket.get("gift_unknown") if money.get("comparable") else "",
+                "gift_diamond": bucket.get("gift_diamond"),
                 "super_chat_cny": bucket.get("super_chat_cny") if money.get("comparable") else "",
                 "mock_received": bucket.get("mock_received"),
                 "mock_spoken": bucket.get("mock_spoken"),

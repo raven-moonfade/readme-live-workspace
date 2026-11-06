@@ -165,6 +165,7 @@ def candidate_summary(row: Any, target_started_at: float) -> Dict[str, Any]:
         "gift_cny": float(row["gift_cny"] or 0),
         "gift_silver": int(row["gift_silver"] or 0),
         "gift_unknown": int(row["gift_unknown"] or 0),
+        "gift_diamond": int(row["gift_diamond"] or 0),
         "super_chat_cny": float(row["super_chat_cny"] or 0),
         "relation": relation(target_started_at, started),
         "distance_seconds": abs(started - target_started_at),

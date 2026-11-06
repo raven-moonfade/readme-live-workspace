@@ -870,11 +870,11 @@
     var moneyComparable = platformMoneyComparable(current.platform);
     var currentCapability = platformCapability(current.platform);
     var moneyUnavailable = currentCapability.money_note || "该平台金额口径未接入";
-    var giftLabel = currentCapability.gift_value_unit === "diamond"
-      ? "礼物价值" : "礼物（本机字段）";
+    var diamondMoney = currentCapability.gift_value_unit === "diamond";
+    var giftLabel = diamondMoney ? "钻石流水（本机字段）" : "礼物（本机字段）";
     var scLabel = currentCapability.supports_super_chat ? "SC（本机字段）" : "SC / 舰长";
-    var giftUnavailable = currentCapability.gift_value_unit === "diamond"
-      ? "仅单条钻石 · 不汇总" : "口径未接入";
+    var giftUnavailable = "口径未接入";
+    var giftComparable = moneyComparable || diamondMoney;
     var scUnavailable = currentCapability.supports_super_chat ? "口径未接入" : "平台未提供";
     var baselineAction = state.historyCompareSource === "manual"
       ? '<button class="btn btn-ghost btn-sm" type="button" data-history-compare>改用上一场</button>'
@@ -924,7 +924,7 @@
           '<table class="history-compare-table"><caption>当前记录与基准场本机金额字段</caption>' +
           '<thead><tr><th scope="col">项目</th><th scope="col">当前记录</th><th scope="col">基准场</th><th scope="col">说明</th></tr></thead>' +
           '<tbody>' +
-            historyCompareRow(giftLabel, moneyComparable ? historyGiftText(current) : giftUnavailable, moneyComparable ? historyGiftText(baseline) : giftUnavailable, moneyComparable ? "不跨币种相加" : moneyUnavailable, "") +
+            historyCompareRow(giftLabel, giftComparable ? historyGiftText(current) : giftUnavailable, giftComparable ? historyGiftText(baseline) : giftUnavailable, giftComparable ? (diamondMoney ? "本机钻石，不折人民币" : "不跨币种相加") : moneyUnavailable, "") +
             historyCompareRow(scLabel, moneyComparable ? ctx.root.formatMoney(current.super_chat_cny) : scUnavailable, moneyComparable ? ctx.root.formatMoney(baseline.super_chat_cny) : scUnavailable, moneyComparable ? "仅本机字段" : moneyUnavailable, "") +
             historyCompareRow("结束方式", historyEndLabel(current.end_reason), historyEndLabel(baseline.end_reason), "", "") +
           '</tbody></table></section>' +
@@ -1171,15 +1171,22 @@
     warningItems = warningItems.concat(overlapText, sampleFlags);
     var scopePlatform = data.scope && data.scope.platform;
     var scopeCapability = platformCapability(scopePlatform);
-    var money = platformMoneyComparable(scopePlatform)
-      ? '<section class="history-multi-section"><div class="workspace-card-head"><div><span class="workspace-eyebrow">金额</span><h3>本机金额字段</h3></div></div>' +
+    var diamondComparable = scopeCapability.gift_value_unit === "diamond";
+    var money = (platformMoneyComparable(scopePlatform) || diamondComparable)
+      ? '<section class="history-multi-section"><div class="workspace-card-head"><div><span class="workspace-eyebrow">金额</span><h3>' +
+        (diamondComparable ? "本机钻石流水" : "本机金额字段") + '</h3></div></div>' +
         '<div class="history-multi-money">' + [target].concat(items.map(function (item) {
           return item.session;
         })).map(function (session, index) {
           return '<div><span>' + escapeHtml(labels[index]) + '</span><b>' +
             escapeHtml(historyGiftText(session)) + '</b><small>SC ' +
-            escapeHtml(ctx.root.formatMoney(session.super_chat_cny)) + '</small></div>';
-        }).join("") + '</div><p class="workspace-note">金额只读本机字段，不代表平台营收；不跨币种相加。</p></section>'
+            escapeHtml(diamondComparable ? "未提供" : ctx.root.formatMoney(session.super_chat_cny)) +
+            '</small></div>';
+        }).join("") + '</div><p class="workspace-note">' +
+        (diamondComparable
+          ? "钻石流水只读本机字段，不折人民币，不代表平台结算。"
+          : "金额只读本机字段，不代表平台营收；不跨币种相加。") +
+        '</p></section>'
       : '<section class="history-multi-section"><div class="workspace-card-head"><div><span class="workspace-eyebrow">金额</span><h3>平台金额边界</h3></div></div><p class="history-multi-note">' +
         escapeHtml(scopeCapability.money_note || "该平台金额口径未接入，不参与跨场比较。") +
         '</p></section>';

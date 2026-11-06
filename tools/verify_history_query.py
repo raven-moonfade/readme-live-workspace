@@ -220,7 +220,7 @@ def main() -> int:
             legacy_version = int(legacy_check.execute("PRAGMA user_version").fetchone()[0])
         finally:
             legacy_check.close()
-        check(legacy_version == 4, "v2 历史库升级到 v4", legacy_version)
+        check(legacy_version == 5, "v2 历史库升级到 v5", legacy_version)
         legacy_store.close()
 
         key_store = SessionStore(str(Path(tmp) / "room-key" / "data" / "history.sqlite3"))
@@ -237,7 +237,7 @@ def main() -> int:
         Path(future_path).parent.mkdir(parents=True)
         conn = sqlite3.connect(future_path)
         try:
-            conn.execute("PRAGMA user_version=5")
+            conn.execute("PRAGMA user_version=6")
             conn.commit()
         finally:
             conn.close()
