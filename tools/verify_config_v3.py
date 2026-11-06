@@ -330,6 +330,36 @@ def run_v1_migration() -> None:
         check(store.get("tts", "voice") == "zh-CN-XiaoxiaoNeural", "v1 TTS 进入 legacy sidecar")
 
 
+def run_new_type_compat() -> None:
+    section("旧 v3 配置缺少新增消息类型时自动补齐")
+    with tempfile.TemporaryDirectory(prefix="mutai-config-v3-new-type-") as tmp:
+        root = Path(tmp)
+        value = copy.deepcopy(canonical_config(DEFAULT_CONFIG))
+        value["overlay"]["enabled"] = True
+        value["overlay"]["styles"]["types"].pop("fansclub", None)
+        value["overlay"]["pins"].pop("fansclub", None)
+        write_json(root / "config.json", value)
+        write_json(root / "config.legacy.json", {
+            "room_id": 321,
+            "sessdata": "",
+            "sessdata_enc": "",
+        })
+
+        store = ConfigStore(tmp)
+        check(store.is_read_only is False, "缺少新类型的旧 v3 配置不会进入只读安全模式")
+        snapshot = store.snapshot()
+        check("fansclub" in snapshot["overlay"]["styles"]["types"],
+              "内存配置补齐 fansclub 样式")
+        check("fansclub" in snapshot["overlay"]["pins"],
+              "内存配置补齐 fansclub lane")
+        check(snapshot["overlay"]["enabled"] is True,
+              "补齐默认值不会覆盖原有 overlay.enabled")
+        disk = read_json(root / "config.json")
+        check("fansclub" in disk["overlay"]["styles"]["types"],
+              "新增类型默认值已写回 config.json")
+        check(validate_config(disk) == [], "修复后的配置通过当前 schema 校验")
+
+
 def run_failure_rollback() -> None:
     section("迁移/加载失败回滚")
     with tempfile.TemporaryDirectory(prefix="mutai-config-v3-fail-v2-") as tmp:
@@ -512,6 +542,7 @@ def main() -> int:
     run_appearance_atomic_persistence()
     run_v2_migration()
     run_v1_migration()
+    run_new_type_compat()
     run_failure_rollback()
     run_service_config_apply_preserves_credentials()
     run_current_v3_cleanup()

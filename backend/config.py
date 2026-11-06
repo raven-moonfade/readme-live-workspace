@@ -800,6 +800,40 @@ def canonical_config(config: Mapping[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _fill_missing_overlay_type_defaults(raw: Dict[str, Any]) -> bool:
+    """为旧 v3 配置补齐新增消息类型的默认字段。
+
+    新增 lane / 消息类型属于向后兼容扩展：旧配置缺少这些键时不应被判定为
+    损坏并进入只读安全模式，而是在校验前补默认值。
+    """
+    changed = False
+    overlay = raw.get("overlay")
+    if not isinstance(overlay, dict):
+        return False
+    styles = overlay.get("styles")
+    if isinstance(styles, dict):
+        types = styles.get("types")
+        if isinstance(types, dict):
+            for kind in OVERLAY_TYPES:
+                if kind not in types:
+                    types[kind] = _null_style()
+                    changed = True
+    pins = overlay.get("pins")
+    if isinstance(pins, dict):
+        defaults = DEFAULT_CONFIG["overlay"]["pins"]
+        for lane in PIN_LANES:
+            if lane not in pins and lane in defaults:
+                pins[lane] = copy.deepcopy(defaults[lane])
+                changed = True
+    type_switches = overlay.get("types")
+    if isinstance(type_switches, dict):
+        for kind in OVERLAY_TYPES:
+            if kind not in type_switches:
+                type_switches[kind] = True
+                changed = True
+    return changed
+
+
 # --------------------------------------------------------------- 规范结构 patch
 def _clean_style_override(src: Any, path: str, rejected: List[str]) -> Dict[str, Any]:
     out: Dict[str, Any] = {}
@@ -2672,7 +2706,9 @@ class ConfigStore:
                 return self.snapshot()
 
             current = canonical_config(raw)
+            normalized = _fill_missing_overlay_type_defaults(current)
             validation_target = copy.deepcopy(raw)
+            normalized = _fill_missing_overlay_type_defaults(validation_target) or normalized
             # 凭证由 legacy sidecar 管理，不属于规范 schema；其余额外键仍严格拒绝。
             validation_target.pop("sessdata_enc", None)
             validation_target.pop("sessdata", None)
@@ -2700,6 +2736,12 @@ class ConfigStore:
                 if enc_raw and not str(legacy_doc.get("sessdata_enc") or ""):
                     self._set_secret(enc_raw, plain_raw)
                 self._strip_copied_global_runtime()
+                if normalized and not self._read_only:
+                    try:
+                        if self._save_locked():
+                            logger.info("已将新增消息类型的默认字段写回 config.json")
+                    except Exception:  # noqa: BLE001
+                        logger.warning("写回新增消息类型默认字段失败（继续使用内存配置）", exc_info=True)
                 self._read_only = False
                 self._migration_status = {
                     "from": raw.get("schema_version"),
