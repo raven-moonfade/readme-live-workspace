@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+<title>ReadMe · 弹幕监看</title>
+  <script>
+  (function () {
+    try {
+      var saved = JSON.parse(localStorage.getItem("mutai-appearance-prod-v1") || "null") || {};
+      var mode = saved.themeMode || saved.theme_mode;
+      if (mode !== "light" && mode !== "system") mode = "dark";
+      var resolved = mode === "system"
+        ? (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+        : mode;
+      document.documentElement.dataset.theme = resolved;
+      document.documentElement.dataset.themeMode = mode;
+      document.documentElement.style.colorScheme = resolved;
+    } catch (e) {}
+  })();
+  </script>
+  <link rel="stylesheet" href="./monitor.css">
+  <link rel="stylesheet" href="./monitor-appearance.css">
+  <script src="./monitor-appearance.js" defer></script>
+  <script src="./monitor.js" defer></script>
+</head>
+<body>
+  <svg class="svg-defs" aria-hidden="true">
+    <symbol id="i-logo" viewBox="0 0 64 64">
+      <rect x="15" y="15" width="34" height="7" fill="currentColor" stroke="none"/>
+      <rect x="15" y="28" width="24" height="7" fill="currentColor" stroke="none"/>
+      <rect x="44" y="28" width="6" height="7" fill="#F0441C" stroke="none"/>
+      <rect x="15" y="41" width="29" height="7" fill="currentColor" stroke="none"/>
+    </symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.7" cy="10.7" r="6.2"/><path d="m15.3 15.3 4.1 4.1"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z"/></symbol>
+    <symbol id="i-focus" viewBox="0 0 24 24"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></symbol>
+    <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M15 4.5v15"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v15M5.8 12.8 12 19l6.2-6.2"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 20V5M5.8 11.2 12 5l6.2 6.2"/></symbol>
+    <symbol id="i-columns" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M9.2 5v14M15 5v14"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m7 9 5 5 5-5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.2 4.2L19 6.8"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="12" rx="1.5"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v10A1.5 1.5 0 0 0 5.5 17H8"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.8"/><path d="M12 2.5V5M12 19v2.5M2.5 12H5M19 12h2.5"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-envelope" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m5 7 7 5.2L19 7"/></symbol>
+  </svg>
+
+  <div class="monitor" id="monitor">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#i-logo"></use></svg></span>
+        <span class="brand-title">ReadMe 监看</span>
+        <span class="window-kind">MONITOR</span>
+      </div>
+      <span class="top-rule" aria-hidden="true"></span>
+      <div class="room-line" id="roomLine">
+        <span class="live-dot" id="liveDot"></span>
+        <span class="live-label" id="liveLabel">连接中</span>
+        <span class="room-name" id="roomName">尚未连接直播间</span>
+      </div>
+      <div class="top-spacer"></div>
+      <div class="top-stats" aria-label="本场统计">
+        <span>本场 <b id="topReceived">0</b></span>
+        <span aria-hidden="true">·</span>
+        <span>已朗读 <b id="topSpoken">0</b></span>
+        <span aria-hidden="true">·</span>
+        <span>队列 <b id="topQueue">0</b></span>
+      </div>
+      <button class="mock-badge" id="mockBadge" type="button" aria-label="Mock 模式，点击模拟一条新消息" hidden>MOCK</button>
+      <span class="unread-pill" id="unreadPill" role="status" aria-live="polite" title="未读消息">
+        <i aria-hidden="true"></i>
+        <span>未读 <b id="unreadCount">0</b></span>
+      </span>
+      <span class="pause-pill" id="pausePill" title="列表冻结时后台仍继续接收">
+        <span id="pauseText">正在跟随最新</span>
+      </span>
+      <span class="connection-state" id="connectionState"><i aria-hidden="true"></i><span id="connectionText">连接中</span></span>
+    </header>
+
+    <section class="toolbar" aria-label="监看工具条">
+      <button class="tool-btn freeze-btn" id="freezeBtn" type="button" title="冻结列表；后台继续接收">
+        <svg class="icon" aria-hidden="true"><use href="#i-pause"></use></svg>
+        <span class="btn-label" id="freezeLabel">冻结</span>
+      </button>
+      <div class="filters" id="typeFilters" role="group" aria-label="按消息类型筛选"></div>
+      <label class="filter-select-wrap" id="filterSelectWrap">
+        <span>筛选</span>
+        <select class="filter-select" id="filterSelect" aria-label="消息类型筛选"></select>
+      </label>
+      <label class="searchbox" aria-label="搜索用户、内容、UID">
+        <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+        <input id="monitorSearch" type="search" placeholder="搜索用户、内容、UID" autocomplete="off" spellcheck="false">
+      </label>
+      <div class="toolbar-spacer"></div>
+      <button class="tool-btn" id="columnsBtn" type="button" title="列设置" aria-haspopup="dialog" aria-expanded="false">
+        <svg class="icon" aria-hidden="true"><use href="#i-columns"></use></svg>
+        <span class="optional-label">列设置</span>
+      </button>
+      <div class="size-control" id="interfaceSizeControl" role="group" aria-label="界面大小">
+        <span class="size-control-label">界面</span>
+        <button class="size-btn" type="button" data-interface-size="small" aria-pressed="false" title="小界面：紧凑列表与精简栏位">小</button>
+        <button class="size-btn is-active" type="button" data-interface-size="medium" aria-pressed="true" title="中界面：标准列表与布局">中</button>
+        <button class="size-btn" type="button" data-interface-size="large" aria-pressed="false" title="大界面：宽松列表与更大控件">大</button>
+        <button class="size-btn" type="button" data-interface-size="xlarge" aria-pressed="false" title="超大界面：50px 影院式列表">超大</button>
+      </div>
+      <button class="tool-btn" id="unreadOnlyBtn" type="button" aria-pressed="false" title="只看未读">
+        <svg class="icon" aria-hidden="true"><use href="#i-envelope"></use></svg>
+        <span>只看未读</span>
+      </button>
+      <button class="tool-btn icon-only" id="inspectorToggle" type="button" title="展开 / 收起检查器" aria-label="展开或收起检查器" aria-pressed="false">
+        <svg class="icon" aria-hidden="true"><use href="#i-panel"></use></svg>
+      </button>
+      <button class="tool-btn icon-only" id="focusToggle" type="button" title="专注模式" aria-label="专注模式" aria-pressed="false">
+        <svg class="icon" aria-hidden="true"><use href="#i-focus"></use></svg>
+      </button>
+      <button class="tool-btn icon-only" id="latestBtn" type="button" title="回到最新并恢复跟随" aria-label="回到最新">
+        <svg class="icon" aria-hidden="true"><use href="#i-down"></use></svg>
+      </button>
+      <button class="tool-btn overview-toggle" id="overviewToggle" type="button" aria-expanded="false" aria-controls="overview" title="展开或收起概览">
+        <span>概览</span>
+        <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg>
+      </button>
+    </section>
+
+    <section class="overview" id="overview" aria-label="运行概览" hidden>
+      <span class="overview-label">概览</span>
+      <span class="overview-item overview-now"><span>当前朗读</span><b id="overviewNow">待机</b></span>
+      <span class="overview-item"><span>队列</span><b id="overviewQueue">0</b></span>
+      <span class="overview-item"><span>本场接收</span><b id="overviewReceived">0</b></span>
+      <span class="overview-item"><span>已朗读</span><b id="overviewSpoken">0</b></span>
+      <span class="overview-item"><span>丢弃</span><b id="overviewDropped">0</b></span>
+    </section>
+
+    <div class="table-head" id="tableHead" role="row" aria-label="消息表列头"></div>
+
+    <main class="workspace" id="workspace">
+      <section class="table-panel" aria-label="高密度消息表">
+        <div class="table-scroll" id="tableScroll" tabindex="0" role="grid" aria-label="实时消息流" aria-rowcount="0">
+          <div class="rows" id="messageRows"></div>
+          <div class="scroll-spacer" id="scrollSpacer" aria-hidden="true"></div>
+          <div class="empty-state" id="emptyState" hidden>
+            <span>没有匹配的消息</span>
+            <button type="button" id="clearFiltersBtn">清除筛选</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="inspector is-collapsed" id="inspector" aria-label="消息检查器" aria-hidden="true">
+        <header class="inspector-head">
+          <div class="inspector-title">
+            <h2>消息详情</h2>
+            <span>READ ONLY</span>
+          </div>
+          <div class="inspector-actions">
+          </div>
+        </header>
+        <div class="inspector-body">
+          <div class="inspector-empty" id="inspectorEmpty">
+            <svg class="icon" aria-hidden="true"><use href="#i-envelope"></use></svg>
+            <b>尚未选择消息</b>
+            <span>点击消息行，或按 J / K 移动选中项。</span>
+          </div>
+          <section class="detail-card" id="detailCard" hidden>
+            <div class="detail-top">
+              <span class="detail-badge" id="detailBadge">弹幕</span>
+              <span class="detail-type-name" id="detailTypeName">DANMAKU · #msg_0000</span>
+            </div>
+            <div class="detail-person">
+              <span class="person-avatar" id="detailAvatar">?</span>
+              <div class="person-copy">
+                <b id="detailUser">未知用户</b>
+                <span id="detailUid">UID —</span>
+              </div>
+              <span class="detail-price" id="detailPrice">—</span>
+            </div>
+            <p class="detail-quote" id="detailQuote"></p>
+            <div class="detail-meta">
+              <div class="meta-cell"><span>消息序号</span><b id="metaSeq">seq —</b></div>
+              <div class="meta-cell"><span>接收时间</span><b id="metaTime">—</b></div>
+              <div class="meta-cell"><span>朗读状态</span><b id="metaTts">—</b></div>
+              <div class="meta-cell"><span>只读高水位</span><b id="metaReadState">未读</b></div>
+            </div>
+            <div class="detail-actions">
+              <button class="detail-action" id="copyDetailBtn" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg>复制
+              </button>
+              <button class="detail-action" id="markReadDetailBtn" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>标为已读
+              </button>
+              <button class="detail-action" id="locateBtn" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-target"></use></svg>定位
+              </button>
+            </div>
+          </section>
+          <section class="inspector-card" id="ttsCard" hidden>
+            <div class="card-head"><span>朗读参数与来源</span><span id="ttsState">—</span></div>
+            <div class="tts-row"><span>引擎 / 音色</span><b id="ttsEngine">—</b></div>
+            <div class="tts-row"><span>耗时</span><b id="ttsDuration">—</b></div>
+            <div class="tts-row"><span>来源 / 过滤</span><b id="ttsSource">—</b></div>
+          </section>
+          <p class="inspector-note">检查器只读。选择消息会把当前监看窗口的已读高水位推进到该条，但不会改变朗读队列；完整正文按原样保留。</p>
+        </div>
+        <footer class="inspector-foot"><span>文本可选择、可复制</span><b>只读观察者</b></footer>
+      </aside>
+    </main>
+
+    <footer class="statusbar">
+      <div class="status-left">
+        <i id="statusDot" aria-hidden="true"></i>
+        <b id="followState" aria-live="polite">正在加载监看数据…</b>
+      </div>
+      <div class="status-mid">
+        <b id="sizeStatus">中号界面</b>
+        · <b id="visibleStatus">0 行</b>
+        · <b id="modeStatus">标准单行</b>
+      </div>
+      <div class="status-right">
+        <span class="status-hint">Ctrl+滚轮 切换界面</span>
+        <button class="mark-read-btn" id="markReadBtn" type="button" title="推进当前监看窗口的 lastReadSeq">全部已读</button>
+        <span class="readonly-mark">只读</span>
+      </div>
+    </footer>
+  </div>
+
+  <div class="popover" id="columnsMenu" role="dialog" aria-label="列设置" hidden>
+    <div class="popover-head">
+      <span>列设置</span>
+      <span>仅本窗口</span>
+    </div>
+    <div class="columns-list" id="columnsList"></div>
+    <p>内容列固定显示；窄窗口会按设计优先级自动收起次要列。</p>
+  </div>
+
+  <section class="focus-panel" id="focusPanel" aria-label="专注模式" hidden>
+    <header class="focus-head">
+      <svg class="icon" aria-hidden="true"><use href="#i-focus"></use></svg>
+      <b>专注模式</b>
+      <span>最近 10 条 · 大字阅读 · 不暂停 TTS</span>
+    </header>
+    <div class="focus-list" id="focusList"></div>
+  </section>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"><i aria-hidden="true"></i><span id="toastText"></span></div>
+</body>
+</html>

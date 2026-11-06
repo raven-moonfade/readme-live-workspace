@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320" role="img" aria-label="ReadMe 直播工作台">
+  <rect width="1280" height="320" rx="32" fill="#0B0D0C"/>
+  <g transform="translate(54 54)">
+    <rect width="212" height="212" rx="48" fill="#121411"/>
+    <rect x="46" y="46" width="120" height="25" fill="#FAFAF6"/>
+    <rect x="46" y="92" width="85" height="25" fill="#FAFAF6"/>
+    <rect x="149" y="92" width="21" height="25" fill="#F0441C"/>
+    <rect x="46" y="138" width="103" height="25" fill="#FAFAF6"/>
+  </g>
+  <text x="310" y="190" fill="#F1F3ED" font-family="Bahnschrift, 'Segoe UI', sans-serif" font-size="116" font-weight="700" letter-spacing="-5">ReadMe</text>
+  <text x="316" y="236" fill="#D3C8BA" font-family="'Segoe UI', sans-serif" font-size="22" letter-spacing="5">LIVE WORKSPACE</text>
+</svg>

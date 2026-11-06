@@ -1,0 +1,41 @@
+# ReadMe v1.0.0 runtime environment
+# Python 3.11.9 (the project venv interpreter)
+# Install from the repository root:
+#   python -m pip install -r requirements-v1.txt
+
+# Local Bilibili client source (same source used by the release build)
+./vendor/blivedm-master
+
+# Reproducible runtime dependencies
+aiohttp==3.9.5
+aiosignal==1.4.0
+attrs==26.1.0
+bottle==0.13.4
+Brotli==1.1.0
+certifi==2026.10.19
+cffi==2.1.1
+clr_loader==0.3.1
+colorama==0.4.6
+edge-tts==7.3.1
+frozenlist==1.8.0
+idna==3.20
+multidict==6.9.1
+pillow==13.0.0
+proxy_tools==0.1.0
+pure-protobuf==3.1.5
+pycparser==3.11
+pygame==2.6.1
+PySide6==6.12.0
+PySide6_Addons==6.12.0
+PySide6_Essentials==6.12.0
+PySide6_WebEngine==6.12.0.140
+pythonnet==3.2.1
+pywebview==6.2.1
+qrcode==8.2
+shiboken6==6.12.0
+tabulate==0.10.0
+typing_extensions==4.16.0
+yarl==1.9.11
+
+# Build backend for the vendored blivedm source
+pdm-backend==2.5.0

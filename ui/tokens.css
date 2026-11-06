@@ -1,0 +1,154 @@
+/* ============================================================
+   ReadMe workspace design tokens
+   v7 baseline: warm paper light / ink dark, signal orange default
+   Keep legacy variable names as aliases while the shell migrates.
+   ============================================================ */
+
+:root {
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", "PingFang SC", system-ui, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", "Microsoft YaHei UI", "PingFang SC", system-ui, sans-serif;
+  --font-mono: "Cascadia Mono", "Consolas", "SFMono-Regular", monospace;
+
+  --text-xs: 11.5px;
+  --text-sm: 12.5px;
+  --text-md: 14px;
+  --text-lg: 18px;
+  --text-xl: 24px;
+  --text-display: 34px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+
+  --r-card: 0px;
+  --r-control: 2px;
+  --r-chip: 2px;
+  --r-sm: 2px;
+  --r-ctl: var(--r-control);
+  --r-pill: var(--r-chip);
+
+  --topbar-h: 66px;
+  --status-h: 42px;
+  --sidebar-w: 220px;
+  --pad: 26px;
+  --dur: 180ms;
+  --dur-slow: 220ms;
+  --ease: cubic-bezier(.22, .72, .28, 1);
+
+  --shadow-card: none;
+  --shadow-float: 0 24px 64px -36px rgba(40, 27, 15, .38);
+  --shadow-pop: 0 14px 30px -18px rgba(40, 27, 15, .28);
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg: #EFF0EB;
+  --bg-soft: #E4E6DF;
+  --surface: #FAFAF6;
+  --surface-2: #F3F4EF;
+  --surface-3: #E8EAE3;
+  --surface-soft: var(--surface-2);
+  --surface2: var(--surface-2);
+  --surface3: var(--surface-3);
+  --ink: #121411;
+  --ink-2: #3F463F;
+  --ink-rgb: 18, 20, 17;
+  --text: var(--ink);
+  --muted: #5E665E;
+  --faint: #667066;
+  --line: #CDD1C8;
+  --line-strong: #B8BEB4;
+  --accent: #F0441C;
+  --accent-lift: var(--accent);
+  --accent-bright: #F0441C;
+  --accent-soft: rgba(240, 68, 28, .065);
+  --accent-wash: rgba(240, 68, 28, .035);
+  --accent-ink: #C8320D;
+  --accent-2: var(--accent);
+  --on-accent: #FFF9F4;
+  --grad: linear-gradient(135deg, var(--accent), var(--accent));
+  --grad-btn: linear-gradient(135deg, var(--accent), var(--accent));
+  --focus: #C8320D;
+  --teal: #2F6F58;
+  --teal-soft: #E4F0E9;
+  --gold: #82571A;
+  --gold-soft: #F4E9D1;
+  --danger: #B4442D;
+  --danger-soft: #F6E2DD;
+  --hero-a: transparent;
+  --hero-b: transparent;
+  --hero-c: transparent;
+  --hero-line: var(--line-strong);
+  --checker-a: #E7E9E2;
+  --checker-b: #F5F6F1;
+  --live: #F0441C;
+  --live-ink: #C8320D;
+  --selection: rgba(240, 68, 28, .14);
+  --topbar-bg: #FAFAF6;
+  --dot: transparent;
+  --ok: #2F6F58;
+  --warn: #82571A;
+  --err: #B4442D;
+  --shadow-card: none;
+  --shadow-float: 0 24px 64px -36px rgba(18, 20, 17, .28);
+  --shadow-pop: 0 14px 30px -18px rgba(18, 20, 17, .22);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0B0D0C;
+  --bg-soft: #101310;
+  --surface: #121512;
+  --surface-2: #171B17;
+  --surface-3: #1D221D;
+  --surface-soft: var(--surface-2);
+  --surface2: var(--surface-2);
+  --surface3: var(--surface-3);
+  --ink: #F1F3ED;
+  --ink-2: #C4CAC1;
+  --ink-rgb: 241, 243, 237;
+  --text: var(--ink);
+  --muted: #A7ADA4;
+  --faint: #8B928A;
+  --line: #2A2F2A;
+  --line-strong: #3A4039;
+  --accent: #FF5F3A;
+  --accent-lift: var(--accent);
+  --accent-bright: #FF5F3A;
+  --accent-soft: rgba(255, 95, 58, .11);
+  --accent-wash: rgba(255, 95, 58, .05);
+  --accent-ink: #FF9B82;
+  --accent-2: var(--accent);
+  --on-accent: #23150F;
+  --grad: linear-gradient(135deg, var(--accent), var(--accent));
+  --grad-btn: linear-gradient(135deg, var(--accent), var(--accent));
+  --focus: #FF9B82;
+  --teal: #78C4A4;
+  --teal-soft: rgba(120, 196, 164, .11);
+  --gold: #D9AF68;
+  --gold-soft: rgba(217, 175, 104, .11);
+  --danger: #F08372;
+  --danger-soft: rgba(240, 131, 114, .11);
+  --hero-a: transparent;
+  --hero-b: transparent;
+  --hero-c: transparent;
+  --hero-line: var(--line-strong);
+  --checker-a: #1A1F1A;
+  --checker-b: #101310;
+  --live: #FF5F3A;
+  --live-ink: #FF9B82;
+  --selection: rgba(255, 95, 58, .18);
+  --topbar-bg: #121512;
+  --dot: rgba(246, 239, 229, .11);
+  --ok: #78C4A4;
+  --warn: #D9AF68;
+  --err: #F08372;
+  --shadow-card: none;
+  --shadow-float: 0 30px 74px -38px rgba(0, 0, 0, .9);
+  --shadow-pop: 0 18px 44px -28px rgba(0, 0, 0, .9);
+}

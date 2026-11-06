@@ -1,0 +1,33 @@
+# Python / runtime
+.venv/
+__pycache__/
+*.py[cod]
+*.pyd
+
+# Node / frontend build
+node_modules/
+dist/
+
+# Local user data and secrets
+config.json
+config.legacy.json
+config.save.txn
+config.*.bak
+config.legacy.*.bak
+config.pre-*.bak
+config.legacy.pre-*.bak
+data/
+logs/
+cache/
+exports/
+
+# Test artifacts
+qa/
+qa/shots/
+qa/results/
+qa/round1-baseline/
+qa/__pycache__/
+.pytest_cache/
+playwright-report/
+test-results/
+*.log

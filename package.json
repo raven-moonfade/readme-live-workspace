@@ -1,0 +1,12 @@
+{
+  "name": "readme-live-workspace-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser regression tests for ReadMe",
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="1024" height="1024" role="img" aria-labelledby="title desc">
+  <title id="title">ReadMe logo: Read Lines</title>
+  <desc id="desc">Three white reading lines on an ink tile, with a signal-orange live cursor.</desc>
+  <rect x="2" y="2" width="60" height="60" rx="13" fill="#121411"/>
+  <rect x="15" y="15" width="34" height="7" fill="#FAFAF6"/>
+  <rect x="15" y="28" width="24" height="7" fill="#FAFAF6"/>
+  <rect x="44" y="28" width="6" height="7" fill="#F0441C"/>
+  <rect x="15" y="41" width="29" height="7" fill="#FAFAF6"/>
+</svg>

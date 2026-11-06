@@ -1,0 +1,1176 @@
+/* ============================================================
+   ReadMe · 弹幕工作台主题层
+   The embedded overlay workbench uses the same cool-paper / ink
+   surface language as the rest of the workspace.
+   ============================================================ */
+
+.wb-card {
+  --wb-surface: var(--surface);
+  --wb-surface-2: var(--surface-2);
+  --wb-surface-3: var(--surface-3);
+  --wb-line: var(--line);
+  --wb-line-strong: var(--line-strong);
+  --wb-text: var(--text);
+  --wb-text-2: var(--ink-2);
+  --wb-muted: var(--muted);
+  --wb-faint: var(--faint);
+  --wb-accent: var(--accent);
+  --wb-accent-2: var(--accent);
+  --wb-ok: var(--ok);
+  --wb-warn: var(--warn);
+  --wb-danger: var(--danger);
+  --wb-danmaku: var(--accent);
+  --wb-gift: var(--warn);
+  --wb-sc: var(--err);
+  --wb-guard: var(--accent-ink);
+  --wb-enter: var(--ok);
+  --wb-global: var(--warn);
+  --wb-monitor: var(--accent-ink);
+  --wb-main: var(--ink-2);
+  --wb-mono: var(--font-mono);
+  --font: var(--font-ui);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: none;
+}
+
+html[data-theme="light"] .wb-card {
+  --ink-rgb: 18, 20, 17;
+}
+
+html[data-theme="dark"] .wb-card {
+  --ink-rgb: 241, 243, 237;
+}
+
+.wb-card *,
+.wb-card *::before,
+.wb-card *::after {
+  box-sizing: border-box;
+}
+
+.wb-card :is(h1, h2, h3, h4, b, strong) {
+  color: var(--ink);
+}
+
+.wb-card :is(p, small, label, em, dt, dd) {
+  color: var(--muted);
+}
+
+.wb-card :is(code, kbd, .wb-code) {
+  font-family: var(--font-mono);
+}
+
+.wb-card :focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Header */
+.wb-head {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.wb-brand-mark {
+  border: 1px solid #2A2F2A;
+  border-radius: var(--r-control);
+  color: #FAFAF6;
+  background: #121411;
+  box-shadow: none;
+}
+
+.wb-title-line h2 {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -.015em;
+}
+
+.wb-badge {
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+  color: var(--muted);
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+}
+
+.wb-brand-copy p,
+.wb-dot,
+.wb-sync {
+  color: var(--muted);
+}
+
+.wb-sync i {
+  background: var(--ok);
+  box-shadow: none;
+}
+
+.wb-sync.is-busy i {
+  background: var(--warn);
+  box-shadow: none;
+}
+
+.wb-sync.is-error i {
+  background: var(--danger);
+  box-shadow: none;
+}
+
+.wb-icon-btn {
+  color: var(--muted);
+  border-radius: var(--r-control);
+}
+
+.wb-icon-btn:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
+/* Tabs */
+.wb-tabs {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.wb-tab {
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.wb-tab:hover {
+  color: var(--ink);
+}
+
+.wb-tab.is-active {
+  background: transparent;
+  color: var(--ink);
+}
+
+.wb-tab.is-active::after {
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  border-radius: 0;
+  background: var(--accent);
+  box-shadow: none;
+}
+
+.wb-runtime {
+  color: var(--muted);
+}
+
+.wb-runtime i {
+  background: var(--ok);
+}
+
+.wb-tabs kbd {
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  color: var(--muted);
+  background: var(--surface-2);
+}
+
+/* Body / shared panels */
+.wb-body {
+  background: transparent;
+}
+
+.wb-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: none;
+}
+
+.wb-panel-head {
+  border-bottom: 1px solid var(--line);
+}
+
+.wb-panel-head h3,
+.wb-rules-title h3,
+.wb-debug-title h3 {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 650;
+  letter-spacing: -.02em;
+}
+
+.wb-panel-head p,
+.wb-rules-head p,
+.wb-debug-title p {
+  color: var(--muted);
+}
+
+.wb-chip {
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+  color: var(--muted);
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+}
+
+.wb-chip i {
+  background: var(--accent);
+}
+
+.wb-chip-debug {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 28%, var(--line));
+  background: var(--teal-soft);
+}
+
+.wb-chip-debug i {
+  background: var(--ok);
+}
+
+.wb-code {
+  color: var(--faint);
+}
+
+/* Controls */
+.wb-card .wb-btn {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-control);
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: none;
+}
+
+.wb-card .wb-btn:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
+.wb-card .wb-btn.wb-primary {
+  border-color: var(--ink);
+  color: var(--surface);
+  background: var(--ink);
+  box-shadow: none;
+}
+
+.wb-card .wb-btn.wb-primary:hover {
+  border-color: var(--accent);
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+.wb-card .wb-btn.wb-primary.is-saved,
+.wb-card .wb-btn.wb-primary.is-saved:hover {
+  border-color: color-mix(in srgb, var(--ok) 34%, var(--line));
+  color: var(--ok);
+  background: var(--teal-soft);
+}
+
+.wb-card .wb-btn.wb-danger,
+.wb-card .wb-btn.wb-danger-ghost {
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--line));
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.wb-card .wb-btn.wb-danger:hover,
+.wb-card .wb-btn.wb-danger-ghost:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.wb-mini-link {
+  border-radius: var(--r-control);
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+
+.wb-mini-link:hover {
+  background: var(--accent-wash);
+}
+
+.wb-card .wb-input,
+.wb-card .wb-hex,
+.wb-card .wb-input-affix {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-control);
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.wb-card .input,
+.wb-card .select,
+.wb-card .textarea {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-control);
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.wb-card .input::placeholder,
+.wb-card .select::placeholder,
+.wb-card .textarea::placeholder {
+  color: var(--faint);
+}
+
+.wb-card .input:focus,
+.wb-card .select:focus,
+.wb-card .textarea:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.wb-card option {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+html[data-theme="light"] .wb-card select {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] .wb-card select {
+  color-scheme: dark;
+}
+
+.wb-card .wb-input::placeholder {
+  color: var(--faint);
+}
+
+.wb-card .wb-input:hover,
+.wb-card .wb-hex:hover,
+.wb-card .wb-input-affix:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+}
+
+.wb-card .wb-input:focus,
+.wb-card .wb-hex:focus,
+.wb-card .wb-input-affix:focus-within {
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.wb-card select.wb-input {
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+}
+
+.wb-card .wb-input-affix input {
+  color: var(--ink);
+  background: transparent;
+}
+
+.wb-card .wb-input-affix em,
+.wb-card .wb-stepper .suffix {
+  color: var(--faint);
+}
+
+.wb-seg {
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+}
+
+.wb-seg button {
+  border-radius: var(--r-control);
+  color: var(--muted);
+}
+
+.wb-seg button:hover {
+  color: var(--ink);
+}
+
+.wb-seg button.is-active {
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.wb-switch .track {
+  border: 1px solid var(--line-strong);
+  background: var(--surface-3);
+}
+
+.wb-switch .track::after {
+  background: var(--faint);
+}
+
+.wb-switch.is-on .track {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.wb-switch.is-on .track::after {
+  background: var(--on-accent);
+}
+
+.wb-switch .wb-switch-label {
+  color: var(--muted);
+}
+
+.wb-switch.is-on .wb-switch-label {
+  color: var(--accent-ink);
+}
+
+.wb-range {
+  accent-color: var(--accent);
+}
+
+.wb-range-output {
+  color: var(--muted);
+}
+
+.wb-stepper {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-control);
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.wb-stepper button {
+  color: var(--muted);
+}
+
+.wb-stepper button:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
+.wb-stepper input {
+  border-left-color: var(--line);
+  border-right-color: var(--line);
+  color: var(--ink);
+}
+
+.wb-color-swatch {
+  border-color: var(--line-strong);
+  border-radius: var(--r-control);
+}
+
+.wb-hex.is-invalid {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-soft);
+}
+
+/* Type rail and baseline */
+.wb-type-item {
+  border-radius: var(--r-control);
+}
+
+.wb-type-item:hover {
+  background: var(--surface-2);
+}
+
+.wb-type-item.is-active {
+  border-color: color-mix(in srgb, var(--type) 30%, var(--line));
+  background: color-mix(in srgb, var(--type) 7%, var(--surface));
+}
+
+.wb-type-item.is-active::before {
+  background: var(--type);
+}
+
+.wb-type-item .wb-type-icon,
+.wb-editor-identity > .wb-type-icon {
+  border-color: color-mix(in srgb, var(--type) 30%, var(--line));
+  border-radius: var(--r-control);
+  color: var(--type);
+  background: color-mix(in srgb, var(--type) 8%, var(--surface));
+}
+
+.wb-type-name {
+  color: var(--ink);
+}
+
+.wb-type-name code {
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+
+.wb-type-sub {
+  color: var(--muted);
+}
+
+.wb-type-count {
+  border-color: var(--line);
+  border-radius: var(--r-chip);
+  color: var(--muted);
+  background: var(--surface-2);
+}
+
+.wb-type-count.has-override {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+
+.wb-baseline {
+  border-color: var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+}
+
+.wb-baseline-head {
+  color: var(--muted);
+}
+
+.wb-baseline-head .wb-icon {
+  color: var(--accent);
+}
+
+.wb-baseline-copy b {
+  color: var(--ink);
+}
+
+.wb-baseline-copy span,
+.wb-baseline p,
+.wb-rail-note {
+  color: var(--muted);
+}
+
+.wb-rail-note .wb-icon {
+  color: var(--faint);
+}
+
+.wb-theme-swatch {
+  border-color: var(--line-strong);
+  border-radius: var(--r-control);
+}
+
+/* Editor */
+.wb-type-strip-item {
+  border-color: var(--line);
+  border-radius: var(--r-control);
+  color: var(--muted);
+}
+
+.wb-type-strip-item .wb-type-count-mini {
+  color: var(--faint);
+}
+
+.wb-type-strip-item.is-active {
+  border-color: color-mix(in srgb, var(--type) 30%, var(--line));
+  color: var(--ink);
+  background: color-mix(in srgb, var(--type) 7%, var(--surface));
+}
+
+.wb-editor-head,
+.wb-rules-head,
+.wb-window-head,
+.wb-debug-head {
+  border-bottom-color: var(--line);
+}
+
+.wb-editor-title h3 {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 650;
+  letter-spacing: -.02em;
+}
+
+.wb-editor-copy > p {
+  color: var(--muted);
+}
+
+.wb-coverage {
+  background: transparent;
+}
+
+.wb-coverage-copy {
+  color: var(--muted);
+}
+
+.wb-coverage-copy b {
+  color: var(--ink);
+}
+
+.wb-coverage-copy span,
+.wb-coverage-hint {
+  color: var(--faint);
+}
+
+.wb-coverage-track {
+  border-radius: var(--r-chip);
+  background: var(--surface-3);
+}
+
+.wb-coverage-track span {
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.wb-prop-group {
+  border-bottom-color: var(--line);
+}
+
+.wb-prop-group .wb-group-index,
+.wb-prop-group span:last-child {
+  color: var(--faint);
+}
+
+.wb-prop-group h4 {
+  color: var(--muted);
+}
+
+.wb-prop-row {
+  border-bottom-color: var(--line);
+}
+
+.wb-prop-label {
+  color: var(--ink);
+}
+
+.wb-prop-label small {
+  color: var(--faint);
+}
+
+.wb-state-chip {
+  border-color: var(--line);
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.wb-state-chip:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.wb-state-chip.is-overridden {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+
+.wb-state-chip.is-overridden:hover {
+  color: var(--accent-ink);
+  background: var(--accent-wash);
+}
+
+/* Motion */
+.wb-motion-count {
+  color: var(--ink);
+}
+
+.wb-motion-hint,
+.wb-motion-note,
+.wb-motion-card-head span,
+.wb-motion-label small {
+  color: var(--faint);
+}
+
+.wb-motion-card {
+  border-color: var(--line);
+  background: var(--surface-2);
+}
+
+.wb-motion-card-head b,
+.wb-motion-label {
+  color: var(--ink);
+}
+
+.wb-motion-row {
+  border-top-color: var(--line);
+}
+
+.wb-motion-inherit {
+  background: var(--faint);
+}
+
+.wb-motion-reset {
+  color: var(--accent-ink);
+}
+
+.wb-motion-reset:hover {
+  color: var(--accent);
+}
+
+.wb-motion-advanced {
+  border-color: var(--line);
+  background: var(--surface-2);
+}
+
+.wb-motion-reduced {
+  border-color: color-mix(in srgb, var(--warn) 30%, var(--line));
+  color: var(--warn);
+  background: var(--gold-soft);
+}
+
+.wb-motion-demo {
+  background: var(--surface-3);
+}
+
+.wb-motion-demo-bubble {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+/* Rules / window */
+.wb-rules-table th {
+  color: var(--muted);
+  background: var(--surface-2);
+}
+
+.wb-rules-table td {
+  color: var(--ink);
+  border-bottom-color: var(--line);
+}
+
+.wb-rules-table tr:hover td {
+  background: var(--surface-2);
+}
+
+.wb-form-section,
+.wb-form-row,
+.wb-kv {
+  border-bottom-color: var(--line);
+}
+
+.wb-form-section h4,
+.wb-form-copy b,
+.wb-theme-card b,
+.wb-kv b {
+  color: var(--ink);
+}
+
+.wb-form-hint,
+.wb-form-copy small,
+.wb-field,
+.wb-field-row > span:first-child,
+.wb-field-block,
+.wb-scale-label,
+.wb-inline-hint,
+.wb-section-note,
+.wb-side-note,
+.wb-kv {
+  color: var(--muted);
+}
+
+.wb-theme-card {
+  border-color: var(--line);
+  border-radius: var(--r-control);
+  color: var(--muted);
+  background: var(--surface-2);
+}
+
+.wb-theme-card:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-3);
+}
+
+.wb-theme-card.is-active {
+  border-color: color-mix(in srgb, var(--accent) 36%, var(--line));
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+
+.wb-theme-card span {
+  color: var(--faint);
+}
+
+/* Debug */
+.wb-debug-icon {
+  border-color: color-mix(in srgb, var(--accent) 26%, var(--line));
+  border-radius: var(--r-control);
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+
+.wb-feedback,
+.wb-auto-status {
+  border-color: var(--line);
+  border-radius: var(--r-control);
+  color: var(--muted);
+  background: var(--surface-2);
+}
+
+.wb-feedback.is-success {
+  border-color: color-mix(in srgb, var(--ok) 28%, var(--line));
+  color: var(--ok);
+  background: var(--teal-soft);
+}
+
+.wb-feedback.is-error {
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--line));
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.wb-danger-badge {
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--line));
+  border-radius: var(--r-chip);
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.wb-type-chip {
+  border-color: var(--line);
+  border-radius: var(--r-control);
+  color: var(--muted);
+  background: var(--surface-2);
+}
+
+.wb-type-chip:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.wb-type-chip.is-active {
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+
+.wb-auto-state {
+  border-color: var(--line);
+  border-radius: var(--r-chip);
+  color: var(--muted);
+  background: var(--surface-2);
+}
+
+.wb-auto-state.is-running {
+  border-color: color-mix(in srgb, var(--ok) 28%, var(--line));
+  color: var(--ok);
+  background: var(--teal-soft);
+}
+
+.wb-auto-status-dot {
+  background: var(--faint);
+}
+
+.wb-auto-status.is-running .wb-auto-status-dot {
+  background: var(--ok);
+  box-shadow: none;
+}
+
+.wb-debug-foot {
+  color: var(--faint);
+}
+
+.wb-debug-foot b {
+  color: var(--muted);
+}
+
+.wb-rail-card {
+  border-color: var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+}
+
+.wb-rail-card h3 {
+  color: var(--ink);
+}
+
+.wb-rail-card h3 .wb-icon {
+  color: var(--accent);
+}
+
+.wb-rail-card p,
+.wb-rail-foot {
+  color: var(--muted);
+}
+
+.wb-rail-card p b {
+  color: var(--ink);
+}
+
+.wb-scope-stat {
+  border-bottom-color: var(--line);
+  color: var(--muted);
+}
+
+.wb-scope-stat b {
+  color: var(--ink);
+}
+
+.wb-scope-stat span:last-child {
+  color: var(--faint);
+}
+
+.wb-close-compact {
+  display: none;
+}
+
+@media (max-width: 820px) {
+  .wb-head {
+    display: none;
+  }
+
+  .wb-close-compact {
+    display: inline-flex;
+  }
+}
+
+/* Footer / confirm / toast */
+.wb-foot {
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+
+.wb-foot-note {
+  color: var(--muted);
+}
+
+.wb-foot-note b {
+  color: var(--ink);
+}
+
+.wb-status {
+  color: var(--muted);
+}
+
+.wb-status.is-ok {
+  color: var(--ok);
+}
+
+.wb-status.is-busy {
+  color: var(--warn);
+}
+
+.wb-error {
+  color: var(--danger);
+}
+
+.wb-confirm-mask {
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter: blur(4px);
+}
+
+html[data-theme="light"] .wb-confirm-mask {
+  background: rgba(18, 20, 17, .28);
+}
+
+html[data-theme="dark"] .wb-confirm-mask {
+  background: rgba(0, 0, 0, .62);
+}
+
+.wb-confirm-card {
+  border-color: var(--line-strong);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+}
+
+.wb-confirm-card h3 {
+  color: var(--ink);
+}
+
+.wb-confirm-card p {
+  color: var(--muted);
+}
+
+.wb-toast {
+  border-color: var(--line-strong);
+  border-radius: var(--r-control);
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+}
+
+.wb-toast-dot {
+  background: var(--ok);
+}
+
+.wb-undo-btn {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
+  border-radius: var(--r-control);
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+
+/* Presets layer */
+.wb-preset-guide-body,
+.wb-preset-field,
+.wb-preset-layers label,
+.wb-preset-types label,
+.wb-preset-switch {
+  color: var(--muted);
+}
+
+.wb-preset-section {
+  border-color: var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+}
+
+.wb-preset-section-head b {
+  color: var(--ink);
+}
+
+.wb-preset-section-head span {
+  color: var(--faint);
+}
+
+.wb-preset-status {
+  border-color: var(--line);
+  border-radius: var(--r-control);
+  color: var(--muted);
+  background: var(--surface-3);
+}
+
+.wb-preset-status.is-error {
+  border-color: color-mix(in srgb, var(--danger) 34%, var(--line));
+  color: var(--danger);
+}
+
+.wb-preset-status.is-ok {
+  border-color: color-mix(in srgb, var(--ok) 32%, var(--line));
+  color: var(--ok);
+}
+
+/* Rules: pin table, budget copy and decision cards */
+.wb-summary {
+  border-bottom-color: var(--line);
+  background: var(--surface-2);
+}
+
+.wb-summary-label,
+.wb-summary-chip,
+.wb-summary-note {
+  color: var(--muted);
+}
+
+.wb-summary-chip {
+  border-color: var(--line);
+  border-radius: var(--r-chip);
+  background: var(--surface);
+}
+
+.wb-summary-chip b {
+  color: var(--ink);
+}
+
+.wb-rules-table-wrap,
+.wb-rule-card,
+.wb-budget-card,
+.wb-decision-item {
+  border-color: var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface);
+}
+
+.wb-rules-table th,
+.wb-rules-table td {
+  border-bottom-color: var(--line);
+}
+
+.wb-rules-table th {
+  color: var(--muted);
+  background: var(--surface-2);
+}
+
+.wb-pin-icon {
+  border-color: color-mix(in srgb, var(--type) 30%, var(--line));
+  border-radius: var(--r-control);
+  color: var(--type);
+  background: color-mix(in srgb, var(--type) 8%, var(--surface));
+}
+
+.wb-pin-copy b {
+  color: var(--ink);
+}
+
+.wb-pin-copy b code,
+.wb-pin-copy span,
+.wb-price-wrap .currency,
+.wb-rule-field,
+.wb-budget-copy,
+.wb-budget-legend,
+.wb-lane-row,
+.wb-capacity-note,
+.wb-decision-item span {
+  color: var(--muted);
+}
+
+.wb-price-wrap input {
+  border-color: var(--line-strong);
+  border-radius: var(--r-control);
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.wb-not-applicable,
+.wb-price-wrap .wb-not-applicable,
+.wb-budget-head span:last-child,
+.wb-budget-cap,
+.wb-lane-value,
+.wb-structure-note,
+.wb-structure-scroll {
+  color: var(--faint);
+}
+
+.wb-budget-head,
+.wb-budget-big,
+.wb-lane-name b,
+.wb-budget-copy b,
+.wb-lane-value b,
+.wb-capacity-note b,
+.wb-decision-item b {
+  color: var(--ink);
+}
+
+.wb-budget-bar {
+  border-color: var(--line);
+  border-radius: var(--r-chip);
+  background: var(--surface-3);
+}
+
+.wb-budget-seg {
+  color: #FAFAF6;
+  border-right-color: var(--line);
+}
+
+.wb-budget-seg.is-scroll {
+  color: var(--muted);
+  background: repeating-linear-gradient(135deg, var(--surface-3) 0 5px, var(--surface-2) 5px 10px);
+}
+
+.wb-lane-track {
+  background: var(--surface-3);
+}
+
+/* Structure preview keeps a dark capture surface; surrounding copy follows UI. */
+.wb-structure-stage {
+  border-color: var(--line);
+  border-radius: var(--r-card);
+  background-color: var(--checker-b);
+  background-image:
+    linear-gradient(45deg, var(--checker-a) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--checker-a) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--checker-a) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--checker-a) 75%);
+  background-size: 18px 18px, 18px 18px, 18px 18px, 18px 18px;
+  background-position: 0 0, 0 9px, 9px -9px, -9px 0;
+}
+
+.wb-structure-canvas {
+  border-color: var(--line-strong);
+  border-radius: var(--r-control);
+  background: rgba(0, 0, 0, .5);
+}
+
+.wb-structure-zone {
+  border-bottom-color: color-mix(in srgb, var(--surface) 12%, transparent);
+}
+
+.wb-zone-caption,
+.wb-structure-mini span,
+.wb-structure-scroll {
+  color: #AAB6C8;
+}
+
+.wb-structure-mini {
+  border-color: color-mix(in srgb, var(--c) 25%, var(--line));
+  border-radius: var(--r-chip);
+  color: #E2E9F2;
+  background: color-mix(in srgb, var(--c) 10%, rgba(0, 0, 0, .35));
+}
+
+.wb-structure-mini b,
+.wb-structure-scroll b {
+  color: #F2F6FC;
+}

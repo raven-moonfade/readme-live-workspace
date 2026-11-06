@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>ReadMe</title>
+<script>
+(function () {
+  try {
+    var saved = JSON.parse(localStorage.getItem("mutai-appearance-prod-v1") || "null") || {};
+    var mode = saved.themeMode || saved.theme_mode;
+    if (mode !== "light" && mode !== "system") mode = "dark";
+    var resolved = mode === "system"
+      ? (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+      : mode;
+    document.documentElement.dataset.theme = resolved;
+    document.documentElement.dataset.themeMode = mode;
+    document.documentElement.style.colorScheme = resolved;
+  } catch (e) {}
+})();
+</script>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="appearance.css">
+<link rel="stylesheet" href="shell.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="presets.css">
+<link rel="stylesheet" href="workbench-theme.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ===================== 工作台导航 ===================== -->
+  <aside class="rail" aria-label="工作台导航">
+    <div class="rail-head">
+      <span class="rail-mark" aria-hidden="true">
+        <svg viewBox="0 0 64 64" width="22" height="22" aria-hidden="true">
+          <rect x="15" y="15" width="34" height="7" fill="currentColor"/>
+          <rect x="15" y="28" width="24" height="7" fill="currentColor"/>
+          <rect x="44" y="28" width="6" height="7" fill="var(--accent)"/>
+          <rect x="15" y="41" width="29" height="7" fill="currentColor"/>
+        </svg>
+      </span>
+      <span class="rail-copy"><b>ReadMe</b><small><span id="appVersionLabel">v1.0.0</span> · LIVE</small></span>
+    </div>
+
+    <nav class="rail-nav" aria-label="工作台视图">
+      <button class="rail-item is-active" type="button" data-workspace-view="danmaku" aria-current="page" aria-label="弹幕视图">
+        <span class="rail-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.6 11.7a7.7 7.7 0 0 1-8.3 7.6 8.7 8.7 0 0 1-3-.5L4.2 20.5l1.3-4.4a7.7 7.7 0 0 1-1.4-4.4A7.7 7.7 0 0 1 12.4 4a7.7 7.7 0 0 1 8.2 7.7Z"/></svg></span>
+        <span class="rail-label"><b>弹幕</b><small>互动与朗读</small></span>
+      </button>
+      <button class="rail-item" type="button" data-workspace-view="picture" aria-label="弹幕工作台视图">
+        <span class="rail-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="13.5" height="10.5" rx="2"/><path d="M8.5 19.5h9A2.5 2.5 0 0 0 20 17V8.5"/><path d="M6.5 8.5h7M6.5 11.5h4.5"/></svg></span>
+        <span class="rail-label"><b>弹幕工作台</b><small>浮窗样式与窗口</small></span>
+      </button>
+      <button class="rail-item" type="button" data-workspace-view="data" aria-label="数据视图">
+        <span class="rail-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19.5V14M9.3 19.5V9.5M14.7 19.5V12M20 19.5V5.5"/><path d="M3 19.5h18"/></svg></span>
+        <span class="rail-label"><b>数据</b><small>本场实时观测</small></span>
+      </button>
+      <button class="rail-item" type="button" data-workspace-view="settings" aria-label="设置视图">
+        <span class="rail-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg></span>
+        <span class="rail-label"><b>设置</b><small>语音与过滤</small></span>
+      </button>
+    </nav>
+
+    <div class="rail-spacer"></div>
+    <div class="rail-session" title="本场连接状态">
+      <span class="rail-live-dot" id="railLiveDot" aria-hidden="true"></span>
+      <span class="rail-session-copy"><b id="railSessionState">未连接</b><small id="railQueueText">队列 0</small></span>
+    </div>
+  </aside>
+
+  <div class="shell-main">
+
+  <!-- ===================== 顶栏 ===================== -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 64 64" width="22" height="22" aria-hidden="true">
+          <rect x="15" y="15" width="34" height="7" fill="currentColor"/>
+          <rect x="15" y="28" width="24" height="7" fill="currentColor"/>
+          <rect x="44" y="28" width="6" height="7" fill="var(--accent)"/>
+          <rect x="15" y="41" width="29" height="7" fill="currentColor"/>
+        </svg>
+      </span>
+      <div class="brand-text">
+        <h1>ReadMe</h1>
+        <p>B站 / 抖音直播弹幕 · 实时语音播报</p>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <button id="accountBtn" class="account-btn is-off" type="button" title="登录B站账号（扫码）" aria-label="登录B站账号">
+        <span class="account-icon account-icon-scan" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 9V6.5A2.5 2.5 0 0 1 6.5 4H9"/>
+            <path d="M15 4h2.5A2.5 2.5 0 0 1 20 6.5V9"/>
+            <path d="M20 15v2.5a2.5 2.5 0 0 1-2.5 2.5H15"/>
+            <path d="M9 20H6.5A2.5 2.5 0 0 1 4 17.5V15"/>
+            <circle cx="12" cy="10.4" r="2.1"/>
+            <path d="M8.4 15.9a4.7 4.7 0 0 1 7.2 0"/>
+          </svg>
+        </span>
+        <span class="account-icon account-icon-user" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8.2" r="3.6"/>
+            <path d="M5.3 19.7a6.7 6.7 0 0 1 13.4 0"/>
+          </svg>
+        </span>
+        <span id="accountText" class="account-label">扫码登录</span>
+        <span id="accountShort" class="account-short" aria-hidden="true">登录</span>
+        <span class="account-caret" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9.8l5 5 5-5"/></svg>
+        </span>
+      </button>
+      <button id="monitorBtn" class="account-btn overlay-btn" type="button" title="打开/关闭弹幕监看窗口" aria-label="打开弹幕监看窗口">
+        <span class="overlay-btn-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="12" rx="2"/>
+            <path d="M8 20h8M12 16v4"/>
+            <path d="M7 8h6M7 11h10"/>
+          </svg>
+        </span>
+        <span class="overlay-btn-label">监看</span>
+      </button>
+      <span id="roomTitle" class="room-title" title="当前直播间" hidden>未连接</span>
+      <div id="statusPill" class="pill is-off" role="status" aria-live="polite" title="连接状态">
+        <span class="pill-dot" aria-hidden="true"></span>
+        <span id="statusText">未连接</span>
+      </div>
+      <div class="select-wrap platform-field">
+        <select id="platformSelect" class="input select platform-select" aria-label="直播平台">
+          <option value="bilibili">B站</option>
+          <option value="douyin">抖音</option>
+        </select>
+      </div>
+      <div class="room-field">
+        <input id="roomInput" class="input room-input" type="text" inputmode="text" placeholder="直播间号 / 抖音链接" autocomplete="off" spellcheck="false" aria-label="直播间号或链接" aria-describedby="roomError">
+        <span id="roomError" class="room-error" role="alert" hidden></span>
+      </div>
+      <button id="connectBtn" class="btn btn-primary" type="button">连接</button>
+      <button id="cancelBtn" class="btn btn-danger" type="button" title="取消连接" hidden>取消</button>
+    </div>
+  </header>
+
+  <!-- ===================== 跨页直播状态条 ===================== -->
+  <footer class="statusbar" aria-label="直播状态">
+    <div class="status-item" title="待朗读队列长度">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 6.5h12M8 12h12M8 17.5h12"/>
+          <path d="M3.6 6.5h.01M3.6 12h.01M3.6 17.5h.01"/>
+        </svg>
+      </span>
+      队列 <b id="barQueue">0</b>
+    </div>
+    <div class="status-item status-now" title="当前正在朗读的内容">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="3" width="6" height="11" rx="3"/>
+          <path d="M5 11a7 7 0 0 0 14 0"/>
+          <path d="M12 18v3"/>
+        </svg>
+      </span>
+      正在朗读：<b id="barNow" class="truncate">—</b>
+    </div>
+    <div class="status-item status-log" title="最近一条日志">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/>
+          <path d="M7.5 9.5l2.2 2.2-2.2 2.2M12.5 14h4"/>
+        </svg>
+      </span>
+      <span id="barLog" class="truncate">初始化中…</span>
+    </div>
+  </footer>
+
+  <main class="workspace-main">
+  <section class="workspace-view is-active" id="view-danmaku" data-workspace-panel="danmaku" aria-labelledby="workspaceDanmakuTitle">
+    <div class="view-head">
+      <div class="view-head-copy">
+        <h1 id="workspaceDanmakuTitle">弹幕</h1>
+        <p>实时消息、朗读与过滤；切到其他视图不会中断接收。</p>
+      </div>
+      <div class="view-head-actions">
+        <button id="wsTopOverlayToggle" class="btn btn-ghost btn-sm" type="button" data-workspace-action="overlay-toggle">显示弹幕</button>
+      </div>
+    </div>
+  <section class="live-session-card live-hero" aria-labelledby="wsRoomTitle">
+    <div class="live-hero-main">
+      <div class="live-session-head">
+        <span class="live-hero-kicker"><span class="live-dot" aria-hidden="true"></span>本场直播</span>
+        <span class="live-session-state" id="wsLiveState">未连接</span>
+      </div>
+      <h3 class="live-room-title" id="wsRoomTitle">等待连接</h3>
+      <p class="live-room-meta" id="wsRoomMeta">输入直播间号并连接，开始接收弹幕。</p>
+    </div>
+    <aside class="live-hero-side" aria-label="直播时长与本场统计">
+      <div class="live-hero-clock">
+        <strong id="wsHeroClock">—</strong>
+        <small id="wsHeroHint">连接后开始计时</small>
+      </div>
+      <div class="live-hero-stats">
+        <div><span>本场收到</span><b id="wsReceived">0</b></div>
+        <div><span>已朗读</span><b id="wsSpoken">0</b></div>
+        <div><span>队列</span><b id="wsQueue">0</b></div>
+        <div hidden><span>丢弃</span><b id="wsDropped">0</b></div>
+      </div>
+    </aside>
+  </section>
+  <div class="layout">
+
+    <!-- 左：弹幕流 -->
+    <section class="card stream-card">
+      <div class="card-head">
+        <h2 class="card-title" id="streamTitle" aria-label="弹幕流，共 0 条">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.6 11.7a7.7 7.7 0 0 1-8.3 7.6 8.7 8.7 0 0 1-3-.5L4.2 20.5l1.3-4.4a7.7 7.7 0 0 1-1.4-4.4A7.7 7.7 0 0 1 12.4 4a7.7 7.7 0 0 1 8.2 7.7Z"/>
+            </svg>
+          </span>
+          弹幕流
+          <span id="streamCount" class="count-chip" aria-hidden="true" title="当前列表条数（最多保留 500 条）">0</span>
+        </h2>
+        <div class="card-actions">
+          <div class="stats-grid" id="runStats" role="group" aria-label="运行统计">
+            <div class="stat">
+              <span class="stat-label">收到</span>
+              <span class="stat-value" id="statReceived">0</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">已朗读</span>
+              <span class="stat-value" id="statSpoken">0</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">硬丢弃</span>
+              <span class="stat-value" id="statDropped">0</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">队列</span>
+              <span class="stat-value" id="statQueue">0</span>
+            </div>
+          </div>
+          <button id="toBottomBtn" class="btn btn-ghost btn-sm head-jump is-hidden" type="button" title="回到底部" aria-label="回到底部">
+            <span class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></svg>
+            </span><span class="jump-label">回到底部</span>
+          </button>
+          <button id="clearBtn" class="btn btn-ghost btn-sm" type="button">
+            <span class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 7h16"/>
+                <path d="M9.5 7V5.5A1.5 1.5 0 0 1 11 4h2a1.5 1.5 0 0 1 1.5 1.5V7"/>
+                <path d="M6.5 7l.9 11.1A2 2 0 0 0 9.4 20h5.2a2 2 0 0 0 2-1.9L17.5 7"/>
+                <path d="M10.5 11v5M13.5 11v5"/>
+              </svg>
+            </span>清空
+          </button>
+        </div>
+      </div>
+
+      <div class="stream-body">
+        <div class="stream-head" aria-hidden="true">
+          <span>时间</span>
+          <span>类型</span>
+          <span>用户</span>
+          <span>内容</span>
+          <span>朗读</span>
+        </div>
+        <div id="streamList" class="stream-list" role="log" aria-live="off" aria-label="弹幕消息列表"></div>
+
+        <div id="emptyState" class="empty-state">
+          <svg class="empty-art" viewBox="0 0 120 84" width="132" height="92" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="14" y="14" width="92" height="46" rx="12"/>
+            <path d="M34 60l-4 13 14-10"/>
+            <path d="M36 31h40M36 41h26"/>
+            <path d="M92 32c2.6 1.7 2.6 6.3 0 8" opacity=".7"/>
+            <path d="M99 28c5 3.4 5 12.6 0 16" opacity=".45"/>
+          </svg>
+          <p class="empty-title" id="emptyTitle">还没有弹幕</p>
+          <p class="empty-sub" id="emptySub">输入直播间号并点击「连接」开始朗读</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 右：本场直播与朗读状态 -->
+    <aside class="live-side" aria-label="本场直播与朗读状态">
+      <section class="card live-now-card">
+        <div class="live-card-head"><h3>正在朗读</h3><span id="wsNowState">空闲</span></div>
+        <div class="live-now-user" id="wsNowUser">—</div>
+        <p class="live-now-text" id="wsNowText">连接直播间后，最新一条待朗读消息会显示在这里。</p>
+      </section>
+
+    </aside>
+
+    <!-- 设置控件源：由 shell.js 移入设置视图，节点与事件监听保持不变。 -->
+    <aside class="side" data-settings-source hidden>
+
+      <!-- TTS -->
+      <section class="card" id="settingsVoiceCard" data-settings-pane="voice">
+        <div class="card-head">
+          <h2 class="card-title">
+            <span class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="3" width="6" height="11" rx="3"/>
+                <path d="M5 11a7 7 0 0 0 14 0"/>
+                <path d="M12 18v3"/>
+              </svg>
+            </span>
+            语音朗读
+          </h2>
+          <button id="voiceRefreshBtn" class="icon-btn" type="button" title="刷新音色列表" aria-label="刷新音色列表">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.5 12a8.5 8.5 0 1 1-2.5-6"/>
+              <path d="M20.5 3.5V10H14"/>
+            </svg>
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <div class="field-row">
+              <label class="field-label" for="voiceSelect">音色</label>
+              <span id="voiceLangHint" class="field-hint" hidden></span>
+            </div>
+            <div class="select-wrap">
+              <select id="voiceSelect" class="input select" aria-label="TTS 音色"></select>
+            </div>
+          </div>
+
+          <div class="slider-grid">
+            <div class="field">
+              <div class="field-row">
+                <label class="field-label" for="rateSlider">语速</label>
+                <output id="rateValue" class="field-value" for="rateSlider">+0%</output>
+              </div>
+              <input id="rateSlider" class="slider" type="range" min="-50" max="50" step="1" value="0">
+            </div>
+
+            <div class="field">
+              <div class="field-row">
+                <label class="field-label" for="pitchSlider">音调</label>
+                <output id="pitchValue" class="field-value" for="pitchSlider">+0Hz</output>
+              </div>
+              <input id="pitchSlider" class="slider" type="range" min="-20" max="20" step="1" value="0">
+            </div>
+
+            <div class="field">
+              <div class="field-row">
+                <label class="field-label" for="volumeSlider">音量</label>
+                <output id="volumeValue" class="field-value" for="volumeSlider">+0%</output>
+              </div>
+              <input id="volumeSlider" class="slider" type="range" min="-50" max="50" step="1" value="0">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="previewText">试听文本</label>
+            <div class="preview-row">
+              <input id="previewText" class="input" type="text" placeholder="留空则朗读示例文本" autocomplete="off" spellcheck="false">
+              <button id="previewBtn" class="btn btn-secondary" type="button">
+                <span class="icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 5 6.5 8.8H3.5v6.4h3L11 19V5Z"/>
+                    <path d="M15.5 9.2a4 4 0 0 1 0 5.6"/>
+                  </svg>
+                </span>试听
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 读取规则 -->
+      <section class="card" id="settingsRulesCard" data-settings-pane="rules">
+        <div class="card-head">
+          <h2 class="card-title">
+            <span class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 7h8M16 7h4M4 12h3M11 12h9M4 17h10M18 17h2"/>
+                <circle cx="14" cy="7" r="2"/>
+                <circle cx="9" cy="12" r="2"/>
+                <circle cx="16" cy="17" r="2"/>
+              </svg>
+            </span>
+            读取规则
+          </h2>
+        </div>
+        <div class="card-body">
+          <div class="switch-list">
+            <label class="switch-row">
+              <span class="switch-text">弹幕</span>
+              <input class="switch-input" type="checkbox" data-path="read.danmaku" checked>
+              <span class="switch-track"><span class="switch-knob"></span></span>
+            </label>
+            <label class="switch-row">
+              <span class="switch-text">礼物</span>
+              <input class="switch-input" type="checkbox" data-path="read.gift" checked>
+              <span class="switch-track"><span class="switch-knob"></span></span>
+            </label>
+            <label class="switch-row">
+              <span class="switch-text">醒目留言</span>
+              <input class="switch-input" type="checkbox" data-path="read.super_chat" checked>
+              <span class="switch-track"><span class="switch-knob"></span></span>
+            </label>
+            <label class="switch-row">
+              <span class="switch-text">上舰</span>
+              <input class="switch-input" type="checkbox" data-path="read.guard" checked>
+              <span class="switch-track"><span class="switch-knob"></span></span>
+            </label>
+            <label class="switch-row">
+              <span class="switch-text">入场</span>
+              <input class="switch-input" type="checkbox" data-path="read.enter">
+              <span class="switch-track"><span class="switch-knob"></span></span>
+            </label>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="giftMinInput">礼物最低价值</label>
+            <div class="input-affix">
+              <input id="giftMinInput" class="input" type="number" min="0" step="1" value="0" data-num="filters.gift_min_price">
+              <span class="affix">元</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="blacklistInput">屏蔽词</label>
+            <textarea id="blacklistInput" class="input textarea" rows="3" placeholder="一行一个，命中后不朗读" spellcheck="false"></textarea>
+          </div>
+
+          <details class="advanced">
+            <summary>
+              <span class="adv-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg>
+              </span>高级设置
+            </summary>
+            <div class="advanced-body">
+              <div class="field field-compact">
+                <label class="field-label" for="dedupInput">去重窗口</label>
+                <div class="input-affix">
+                  <input id="dedupInput" class="input" type="number" min="0" step="1" value="5" data-num="filters.dedup_seconds">
+                  <span class="affix">秒</span>
+                </div>
+              </div>
+              <div class="field field-compact">
+                <label class="field-label" for="maxLenInput">最大长度</label>
+                <div class="input-affix">
+                  <input id="maxLenInput" class="input" type="number" min="1" step="5" value="80" data-num="filters.max_len">
+                  <span class="affix">字</span>
+                </div>
+              </div>
+              <div class="field field-compact">
+                <label class="field-label" for="userCdInput">同人冷却</label>
+                <div class="input-affix">
+                  <input id="userCdInput" class="input" type="number" min="0" step="1" value="3" data-num="filters.user_cooldown">
+                  <span class="affix">秒</span>
+                </div>
+              </div>
+              <div class="field field-compact">
+                <label class="field-label" for="globalCdInput">全局冷却</label>
+                <div class="input-affix">
+                  <input id="globalCdInput" class="input" type="number" min="0" step="0.5" value="0.5" data-num="filters.global_cooldown">
+                  <span class="affix">秒</span>
+                </div>
+              </div>
+              <div class="field field-compact">
+                <label class="field-label" for="queueMaxInput">队列上限</label>
+                <div class="input-affix">
+                  <input id="queueMaxInput" class="input" type="number" min="1" step="5" value="30" data-num="queue.max_size">
+                  <span class="affix">条</span>
+                </div>
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+    </aside>
+  </div>
+  </section>
+
+  <!-- ===================== 弹幕工作台 ===================== -->
+  <section class="workspace-view" id="view-picture" data-workspace-panel="picture" aria-labelledby="workspacePictureTitle" hidden>
+    <div class="view-head">
+      <div class="view-head-copy">
+        <h1 id="workspacePictureTitle">弹幕工作台</h1>
+        <p>弹幕浮窗的样式、预设、规则与窗口设置。</p>
+      </div>
+      <div class="view-head-actions">
+        <button class="workspace-state is-neutral" id="wsWorkbenchOverlayState" type="button" aria-pressed="false">显示弹幕</button>
+      </div>
+    </div>
+
+    <div class="workbench-page" id="wsWorkbenchMount">
+      <div class="workbench-loading" id="wsWorkbenchLoading">
+        <span class="workbench-loading-dot" aria-hidden="true"></span>
+        正在载入弹幕工作台…
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 数据 ===================== -->
+  <section class="workspace-view" id="view-data" data-workspace-panel="data" aria-labelledby="workspaceDataTitle" hidden>
+    <div class="view-head">
+      <div class="view-head-copy">
+        <h1 id="workspaceDataTitle">数据</h1>
+        <div class="data-head-sub">
+          <p>本场实时快照与历史场次；只展示本机能够证明的数据，不虚构平台热度或营收。</p>
+          <button class="data-help" type="button" aria-label="数据口径：本场收到包含弹幕、礼物、SC、舰长与入场；模拟事件全部隔离；观众总数与在线人数未接入，不计算观众活跃率；礼物金额为本机观测流水，非平台结算。" data-tip="本场收到包含弹幕、礼物、SC、舰长与入场；模拟事件全部隔离。直播间信息与队列来自当前连接；消息与金额来自本机事件流。硬丢弃只计队列/播放前失败；关闭类型、去重、冷却、长度等规则过滤单独显示，不当作丢失。观众总数 / 在线人数未接入，不计算观众活跃率。礼物金额为本机观测流水，非平台结算；免费礼物与银瓜子不折成人民币。">?</button>
+        </div>
+      </div>
+      <div class="view-head-actions data-head-actions">
+        <div class="data-tabs" role="tablist" aria-label="数据视图">
+          <button class="data-tab is-active" id="wsDataTabLive" type="button" role="tab" data-data-tab="live" aria-selected="true" aria-controls="dataLivePanel">本场</button>
+          <button class="data-tab" id="wsDataTabHistory" type="button" role="tab" data-data-tab="history" aria-selected="false" aria-controls="dataHistoryPanel" tabindex="-1">历史场次 <span id="wsHistoryCount" hidden>0</span></button>
+        </div>
+        <span class="workspace-state is-neutral" id="wsDataMode">未连接</span>
+      </div>
+    </div>
+
+    <div class="workspace-scroll">
+      <div class="data-tab-panel" id="dataLivePanel" role="tabpanel" aria-labelledby="wsDataTabLive">
+      <div class="data-live-dashboard">
+        <span class="data-legacy" id="wsPulseState" hidden>等待连接</span>
+        <section class="data-kpi-band" aria-label="本场关键指标">
+          <div class="data-kpi">
+            <div class="data-kpi-label">
+              <span class="data-kpi-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2.5 3.5h11v7h-6l-3 2v-2h-2z"/></svg></span>
+              本场收到
+            </div>
+            <div class="data-kpi-value"><b id="wsDataReceived">0</b><small>条</small></div>
+            <div class="data-kpi-foot"><span id="wsDataAvgRate">—</span><span>含全部消息类型</span></div>
+          </div>
+          <div class="data-kpi">
+            <div class="data-kpi-label">
+              <span class="data-kpi-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M3 8.5l3 3 7-7"/></svg></span>
+              朗读覆盖
+            </div>
+            <div class="data-kpi-value"><b id="wsDataCoverage">—</b></div>
+            <div class="data-kpi-foot"><span id="wsDataCoverageHint">已朗读 0 条</span></div>
+          </div>
+          <div class="data-kpi">
+            <div class="data-kpi-label">
+              <span class="data-kpi-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="6" cy="6" r="2.4"/><path d="M2 13c.4-2.4 1.8-3.6 4-3.6S9.6 10.6 10 13M11 5.2a2 2 0 0 1 0 3.8M12.5 13c-.1-1.2-.5-2.2-1.2-2.9"/></svg></span>
+              互动用户
+            </div>
+            <div class="data-kpi-value"><b id="wsDataUsers">0</b><small>人</small></div>
+            <div class="data-kpi-foot"><span id="wsDataUsersAvg">人均 — 条</span><span>UID 去重</span></div>
+          </div>
+          <div class="data-kpi">
+            <div class="data-kpi-label">
+              <span class="data-kpi-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2.5 5.5h11v8h-11zM5 5.5V3.8h6v1.7M5.5 9h5"/></svg></span>
+              <span id="wsDataRevenueLabel">本机流水</span>
+            </div>
+            <div class="data-kpi-value"><b id="wsDataRevenue">¥0.00</b></div>
+            <div class="data-kpi-foot"><span><span id="wsDataRevenueGiftLabel">礼物</span> <b id="wsDataRevenueGift">¥0.00</b> · <span id="wsDataRevenueScLabel">SC</span> <b id="wsDataRevenueSc">¥0.00</b></span><span>本机观测</span></div>
+          </div>
+        </section>
+        <section class="data-ledger-band" aria-label="本场账本">
+          <div class="data-ledger-cell"><span>已朗读</span><b id="wsDataSpoken">0</b><small>覆盖 <i id="wsDataSpokenRate">—</i></small></div>
+          <div class="data-ledger-cell"><span>硬丢弃</span><b id="wsDataDropped">0</b><small><i id="wsDataDropRate">—</i> · 仅队列 / 失败 · 过滤 <b id="wsDataFiltered">0</b></small></div>
+          <div class="data-ledger-cell"><span>到达 / 小时</span><b id="wsDataRate">—</b><small id="wsDataRateHint">采样中</small></div>
+          <div class="data-ledger-cell"><span>峰值 5 分钟</span><b id="wsDataPeak">—</b><small id="wsDataPeakHint">满 5 分钟后计算</small></div>
+          <div class="data-ledger-cell"><span>本场时长</span><b id="wsDataDuration">—</b><small id="wsDataDurationHint">本场观测</small></div>
+        </section>
+
+        <div class="data-notices" id="wsDataNotices" role="status" aria-live="polite" aria-atomic="true"></div>
+
+        <div class="data-postlude" id="wsDataPostlude" hidden>
+          <span id="wsDataPostludeText">本场已结束 · 可在历史场次查看</span>
+          <div class="data-postlude-actions">
+            <button class="btn btn-ghost btn-sm" type="button" id="wsDataOpenHistory">查看本场历史</button>
+            <button class="btn btn-ghost btn-sm" type="button" id="wsDataComparePrevious">对比上一场</button>
+            <button class="btn btn-ghost btn-sm" type="button" data-postlude-export="json">导出 JSON</button>
+            <button class="btn btn-ghost btn-sm" type="button" data-postlude-export="csv">导出 CSV</button>
+          </div>
+          <p class="data-postlude-status" id="wsDataPostludeStatus" role="status" aria-live="polite" tabindex="-1" hidden></p>
+        </div>
+
+        <div class="data-trend-band">
+          <section class="data-trend-main" aria-labelledby="wsRhythmTitle">
+            <div class="data-section-head"><div><span class="data-kicker">节奏</span><h2 id="wsRhythmTitle">现场趋势</h2></div><span>最近 20 分钟 · 1 分钟桶</span></div>
+            <div class="activity-chart" id="wsActivityChart" role="img" aria-label="最近 20 分钟消息量"></div>
+            <div class="data-trend-facts">
+              <span><span id="wsRecentLabel">近 5 分钟</span> <b id="wsDataRecent">—</b><span>条</span></span>
+              <span>本场均值 <b id="wsActivityAverage">—</b></span>
+              <span class="spacer"></span>
+              <span>空分钟不补数据</span>
+            </div>
+            <small id="wsDataRecentHint" hidden>连接后开始记录</small>
+            <p class="workspace-note" id="wsDataEmpty">本场数据不足，继续接收后生成趋势。</p>
+          </section>
+
+          <aside class="data-structure" aria-labelledby="wsStructureTitle">
+            <div class="data-section-head"><div><span class="data-kicker">结构</span><h2 id="wsStructureTitle">消息类型</h2></div><span id="wsTypeTotal">0 条</span></div>
+            <div class="type-segments" id="wsTypeSegments" role="img" aria-label="消息类型占比"></div>
+            <div class="type-bars" id="wsTypeBars"></div>
+            <p class="workspace-note" id="wsTypeNote">按本机已识别类型统计；模拟事件不计入。</p>
+          </aside>
+        </div>
+
+        <section class="data-source-band" aria-labelledby="wsSourceTitle">
+          <div class="data-source-head">
+            <h2 id="wsSourceTitle">来源与新鲜度</h2>
+            <span class="data-source-summary is-ok" id="wsSourceSummary">本机来源正常</span>
+            <span class="data-source-note">2 项未接入</span>
+            <span class="spacer"></span>
+          </div>
+          <table class="data-source-table">
+            <thead><tr><th>数据</th><th>来源</th><th>刷新</th><th>最近成功</th><th>状态</th></tr></thead>
+            <tbody>
+              <tr><td>直播间信息</td><td>当前平台适配器</td><td>连接时</td><td id="wsSourceRoomTime">—</td><td id="wsSourceRoomState">未连接</td></tr>
+              <tr><td>消息 / 礼物 / SC</td><td>本机事件流</td><td>连续</td><td id="wsSourceStreamTime">—</td><td id="wsSourceStreamState">未连接</td></tr>
+              <tr><td>朗读 / 浮窗</td><td>本机进程</td><td>实时</td><td id="wsSourceProcessTime">刚刚</td><td id="wsSourceProcessState">正常</td></tr>
+              <tr><td>历史存储</td><td>本机历史库</td><td>每场结束</td><td id="wsSourceHistoryTime">—</td><td id="wsSourceHistoryState">未开始</td></tr>
+              <tr class="is-muted"><td>平台人气 / 观众总数</td><td>未接入</td><td>—</td><td>—</td><td class="is-warn">不可用</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <details class="data-runtime">
+          <summary>运行详情</summary>
+          <dl class="data-kv">
+            <div><dt>直播间</dt><dd id="wsDataRoom">—</dd></div>
+            <div><dt>开始观测</dt><dd id="wsDataStarted">—</dd></div>
+            <div><dt>最后消息</dt><dd id="wsDataLastEvent">—</dd></div>
+            <div><dt>连接状态</dt><dd id="wsDataConnection">未连接</dd></div>
+            <div><dt>礼物金额</dt><dd id="wsDataGiftValue">本机字段 ¥0</dd></div>
+            <div><dt>SC 金额</dt><dd id="wsDataScValue">本机字段 ¥0</dd></div>
+            <div><dt>历史存储</dt><dd id="wsDataSaveState">未开始</dd></div>
+          </dl>
+        </details>
+      </div>
+      </div>
+
+      <div class="data-tab-panel history-panel" id="dataHistoryPanel" role="tabpanel" aria-labelledby="wsDataTabHistory" hidden>
+        <div class="history-layout" id="wsHistoryLayout">
+          <aside class="card history-list-pane" aria-label="历史场次列表">
+            <div class="history-list-head">
+              <div><span class="workspace-eyebrow">本机存储</span><h2>历史场次</h2></div>
+              <div class="history-list-actions">
+                <button class="btn btn-ghost btn-sm" type="button" id="wsHistoryTrendBtn" aria-pressed="false">趋势</button>
+                <button class="btn btn-ghost btn-sm" type="button" id="wsHistoryManage">管理</button>
+                <button class="btn btn-ghost btn-sm" type="button" id="wsHistoryReload">刷新</button>
+              </div>
+            </div>
+            <div class="history-filter-bar">
+              <label class="history-search-box" for="wsHistorySearch">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
+                <input id="wsHistorySearch" type="search" placeholder="搜索标题或房间号" aria-label="搜索历史场次标题或房间号" autocomplete="off" spellcheck="false">
+              </label>
+              <div class="history-filter-row">
+                <select id="wsHistoryRange" aria-label="按开播日期筛选">
+                  <option value="all">全部时间</option>
+                  <option value="today">今天</option>
+                  <option value="7d">近 7 天</option>
+                  <option value="30d">近 30 天</option>
+                  <option value="90d">近 90 天</option>
+                  <option value="365d">近 365 天</option>
+                  <option value="custom">自定义日期</option>
+                </select>
+                <select id="wsHistoryPlatform" aria-label="按平台筛选" hidden>
+                  <option value="">全部平台</option>
+                </select>
+                <button class="history-filter-reset" id="wsHistoryFilterReset" type="button" hidden>重置</button>
+              </div>
+              <div class="history-custom-range" id="wsHistoryCustomRange" hidden>
+                <input id="wsHistoryFrom" type="date" aria-label="开始日期">
+                <span aria-hidden="true">至</span>
+                <input id="wsHistoryTo" type="date" aria-label="结束日期">
+                <button class="history-filter-apply" id="wsHistoryCustomApply" type="button">应用</button>
+              </div>
+            </div>
+            <p class="history-list-summary" id="wsHistorySummary" role="status" aria-live="polite">仅显示已结束场次。</p>
+            <div class="history-list" id="wsHistoryList"></div>
+            <button class="history-more" id="wsHistoryMore" type="button" hidden>加载更多</button>
+            <div class="history-empty" id="wsHistoryEmpty" role="status" hidden>
+              <b>还没有历史场次</b>
+              <span>结束一场直播后，会在这里看到本机聚合记录。</span>
+            </div>
+            <div class="history-error" id="wsHistoryError" role="alert" hidden>
+              <b>无法读取历史记录</b>
+              <span id="wsHistoryErrorText">本场实时数据仍可用。</span>
+            </div>
+          </aside>
+
+          <section class="card history-detail-pane" id="wsHistoryDetailPane">
+            <div class="history-detail-empty" id="wsHistoryNoSelection">
+              <b>选择一场直播</b>
+              <span>查看聚合指标、类型分布、节奏和金额口径。</span>
+            </div>
+            <div class="history-detail" id="wsHistoryDetail" hidden></div>
+          </section>
+        </div>
+        <p class="history-privacy">历史记录仅保存在本机，不上传；只保存聚合统计，不保存弹幕正文、用户名或 UID。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 设置 ===================== -->
+  <section class="workspace-view" id="view-settings" data-workspace-panel="settings" aria-labelledby="workspaceSettingsTitle" hidden>
+    <div class="view-head">
+      <div class="view-head-copy">
+        <h1 id="workspaceSettingsTitle">设置</h1>
+        <p>语音、读取规则、账号、外观和窗口入口；保存逻辑沿用现有后端配置。</p>
+      </div>
+    </div>
+
+    <nav class="settings-nav" aria-label="设置分区">
+      <button class="settings-tab is-active" type="button" data-settings-jump="settingsAccountCard" data-settings-pane="account">账号</button>
+      <button class="settings-tab" type="button" data-settings-jump="settingsVoiceCard" data-settings-pane="voice">语音朗读</button>
+      <button class="settings-tab" type="button" data-settings-jump="settingsRulesCard" data-settings-pane="rules">过滤与队列</button>
+      <button class="settings-tab" type="button" data-settings-jump="settingsPrivacyCard" data-settings-pane="privacy">高级与隐私</button>
+    </nav>
+
+    <p class="settings-security-note settings-security-banner" id="settingsCredentialSecurity" role="status" hidden></p>
+
+    <div class="workspace-scroll">
+      <div class="settings-layout" data-settings-pane="account">
+        <div class="settings-controls-host" id="settingsControlsHost"></div>
+        <aside class="settings-side">
+          <section class="card settings-summary" id="settingsAccountCard" data-settings-pane="account">
+            <div class="workspace-card-head"><div><span class="workspace-eyebrow">账号</span><h2 id="settingsAccountTitle">账号登录态</h2></div></div>
+            <p class="settings-account-state" id="settingsAccountState">未登录 · 用户名可能显示为星号</p>
+          </section>
+          <section class="card settings-summary" id="settingsPrivacyCard" data-settings-pane="privacy">
+            <div class="workspace-card-head"><div><span class="workspace-eyebrow">本机</span><h2>数据与隐私</h2></div></div>
+            <p class="workspace-note">配置、登录凭证与场次历史均保存在本机，不上传云端；历史只保存聚合统计，不保存弹幕正文、用户名或 UID。导出文件也保存在本机，可统计、打开目录或手动清理。</p>
+            <button class="btn btn-ghost btn-sm" type="button" data-workspace-action="export-manage" id="wsExportManageBtn" hidden>管理导出文件</button>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  </main>
+  </div>
+</div>
+
+<!-- ===================== 登录弹窗 ===================== -->
+<div id="loginModal" class="modal-mask" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-label="登录B站账号">
+    <div class="modal-head">
+      <h3 class="modal-title">
+        <span class="modal-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 9V6.5A2.5 2.5 0 0 1 6.5 4H9"/>
+            <path d="M15 4h2.5A2.5 2.5 0 0 1 20 6.5V9"/>
+            <path d="M20 15v2.5a2.5 2.5 0 0 1-2.5 2.5H15"/>
+            <path d="M9 20H6.5A2.5 2.5 0 0 1 4 17.5V15"/>
+            <circle cx="12" cy="10.4" r="2.1"/>
+            <path d="M8.4 15.9a4.7 4.7 0 0 1 7.2 0"/>
+          </svg>
+        </span>
+        登录 B 站账号
+      </h3>
+      <button id="loginCloseBtn" class="icon-btn" type="button" title="关闭" aria-label="关闭">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="qrBox" class="qr-box" data-state="loading">
+        <img id="qrImg" alt="登录二维码" hidden>
+        <span class="qr-spinner" aria-hidden="true"></span>
+      </div>
+      <p id="loginStatus" class="login-status" role="status">正在获取二维码…</p>
+      <ol class="login-steps">
+        <li><span class="login-step-num" aria-hidden="true">1</span>打开 <b>B站手机 App</b>，点右上角「扫一扫」</li>
+        <li><span class="login-step-num" aria-hidden="true">2</span>扫描上方二维码，在手机上点击确认</li>
+      </ol>
+      <p class="login-note">登录后弹幕用户名不再打码</p>
+      <div class="modal-actions">
+        <button id="qrRefreshBtn" class="btn btn-secondary" type="button">刷新二维码</button>
+        <button id="logoutBtn" class="btn btn-danger" type="button" hidden>退出登录</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="douyinLoginModal" class="modal-mask" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-label="登录抖音账号">
+    <div class="modal-head">
+      <h3 class="modal-title">登录抖音账号</h3>
+      <button id="douyinLoginCloseBtn" class="icon-btn" type="button" title="关闭" aria-label="关闭">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p id="douyinLoginStatus" class="login-status" role="status">正在打开抖音登录窗口…</p>
+      <ol class="login-steps">
+        <li><span class="login-step-num" aria-hidden="true">1</span>在弹出的窗口中扫码，或使用抖音账号登录</li>
+        <li><span class="login-step-num" aria-hidden="true">2</span>登录成功后窗口会自动关闭，ReadMe 会保存登录态</li>
+      </ol>
+      <p class="login-note">登录后可接收需要账号态才会推送的礼物等消息；不会在界面中显示 Cookie。</p>
+      <div class="modal-actions">
+        <button id="douyinLoginStartBtn" class="btn btn-secondary" type="button">打开登录窗口</button>
+        <button id="douyinLogoutBtn" class="btn btn-danger" type="button" hidden>退出登录</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 历史场次管理弹窗 ===================== -->
+<div id="historyManageModal" class="modal-mask" hidden>
+  <div class="modal-card history-manage-card" role="dialog" aria-modal="true" aria-labelledby="historyManageTitle" tabindex="-1">
+    <div class="modal-head">
+      <h3 class="modal-title" id="historyManageTitle">历史场次管理</h3>
+      <button id="wsHistoryManageClose" class="icon-btn" type="button" title="关闭" aria-label="关闭历史管理">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p class="history-manage-lead">清理本机聚合历史，不影响已导出文件、当前直播和 TTS。执行前会自动生成 SQLite 备份。</p>
+      <div class="history-manage-facts" id="wsHistoryManageFacts">正在读取历史统计…</div>
+      <label class="history-manage-row" for="wsHistoryKeepDays">
+        <span>保留最近</span>
+        <select id="wsHistoryKeepDays">
+          <option value="30">30 天</option>
+          <option value="90" selected>90 天</option>
+          <option value="180">180 天</option>
+          <option value="365">365 天</option>
+        </select>
+      </label>
+      <p class="history-manage-note">至少保留最近 1 场已结束记录；进行中的场次不会被清理。清理只从 ReadMe 历史中删除，不代表物理擦除磁盘。</p>
+      <section class="history-auto-section" aria-labelledby="wsHistoryAutoTitle">
+        <div class="history-auto-head">
+          <div><b id="wsHistoryAutoTitle">启动时自动清理</b><small>默认关闭；开启后每次启动自动清理旧场次，并先备份。</small></div>
+          <button id="wsHistoryAutoToggle" class="history-auto-switch" type="button" role="switch" aria-checked="false">关闭</button>
+        </div>
+        <div class="history-auto-row">
+          <label for="wsHistoryAutoDays">自动保留最近</label>
+          <select id="wsHistoryAutoDays">
+            <option value="30">30 天</option>
+            <option value="90" selected>90 天</option>
+            <option value="180">180 天</option>
+            <option value="365">365 天</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" id="wsHistoryAutoSave" type="button">保存设置</button>
+        </div>
+        <p class="history-auto-status" id="wsHistoryAutoStatus" role="status">读取设置…</p>
+      </section>
+      <div class="history-prune-preview" id="wsHistoryPrunePreview" role="status">选择时间范围后点击预览。</div>
+      <label class="history-manage-confirm" for="wsHistoryPruneConfirm">输入「清理」确认
+        <input id="wsHistoryPruneConfirm" type="text" autocomplete="off" spellcheck="false" placeholder="清理">
+      </label>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" type="button" id="wsHistoryPrunePreviewBtn">预览</button>
+        <button class="btn btn-danger" type="button" id="wsHistoryPruneBtn" disabled>清理历史</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 导出文件管理弹窗 ===================== -->
+<div id="exportManageModal" class="modal-mask" hidden>
+  <div class="modal-card export-manage-card" role="dialog" aria-modal="true" aria-labelledby="exportManageTitle" tabindex="-1">
+    <div class="modal-head">
+      <div>
+        <span class="workspace-eyebrow">本机存储</span>
+        <h3 class="modal-title" id="exportManageTitle">导出文件</h3>
+      </div>
+      <button id="wsExportManageClose" class="icon-btn" type="button" title="关闭" aria-label="关闭导出文件管理">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body export-manage-body">
+      <p class="export-manage-lead">导出文件只保存在本机。清理前先预览，只处理 ReadMe 生成的 JSON / CSV；未知文件、子目录和链接不会处理。</p>
+      <div class="export-manage-path">
+        <code id="wsExportManageDirectory">正在读取导出目录…</code>
+        <button class="btn btn-ghost btn-sm" type="button" id="wsExportOpenDir">打开文件夹</button>
+      </div>
+      <div class="export-manage-stats" id="wsExportStats">正在读取文件统计…</div>
+      <section class="export-manage-policy" aria-label="导出清理策略">
+        <div class="export-manage-policy-row">
+          <label for="wsExportWeek">时间范围</label>
+          <select id="wsExportWeek">
+            <option value="">全部时间</option>
+          </select>
+        </div>
+        <div class="export-manage-policy-row">
+          <label for="wsExportKeepDays">保留最近</label>
+          <select id="wsExportKeepDays">
+            <option value="7">7 天</option>
+            <option value="30">30 天</option>
+            <option value="90" selected>90 天</option>
+            <option value="180">180 天</option>
+            <option value="365">365 天</option>
+          </select>
+        </div>
+        <div class="export-manage-policy-row">
+          <label for="wsExportKeepLatest">至少保留最近</label>
+          <select id="wsExportKeepLatest">
+            <option value="20">20 个</option>
+            <option value="50" selected>50 个</option>
+            <option value="100">100 个</option>
+            <option value="200">200 个</option>
+          </select>
+        </div>
+      </section>
+      <div class="export-manage-preview" id="wsExportPreview" role="status">点击预览后查看将删除的文件。</div>
+      <div class="export-manage-samples" id="wsExportSamples" hidden></div>
+      <label class="export-manage-confirm" for="wsExportPruneConfirm">输入「删除导出」确认
+        <input id="wsExportPruneConfirm" type="text" autocomplete="off" spellcheck="false" placeholder="删除导出">
+      </label>
+      <div class="modal-actions export-manage-actions">
+        <button class="btn btn-secondary" type="button" id="wsExportPreviewBtn">预览</button>
+        <button class="btn btn-danger" type="button" id="wsExportPruneBtn" disabled>删除旧导出</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 基准场选择弹窗 ===================== -->
+<div id="historyBaselineModal" class="modal-mask" hidden>
+  <div class="modal-card history-baseline-card" role="dialog" aria-modal="true" aria-labelledby="historyBaselineTitle" aria-describedby="wsHistoryBaselineScope" tabindex="-1">
+    <div class="modal-head">
+      <h3 class="modal-title" id="historyBaselineTitle">选择基准场</h3>
+      <button id="wsHistoryBaselineClose" class="icon-btn" type="button" title="关闭" aria-label="关闭基准场选择">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body history-baseline-body">
+      <p class="history-baseline-scope" id="wsHistoryBaselineScope">仅显示同平台、同房间的已结束场次。</p>
+      <div class="history-baseline-mode" id="historyBaselineModeTabs" role="tablist" aria-label="对比场选择模式" hidden>
+        <button class="is-active" type="button" role="tab" data-baseline-mode="single" aria-selected="true">单场</button>
+        <button type="button" role="tab" data-baseline-mode="multi" aria-selected="false">多场</button>
+      </div>
+      <div class="history-baseline-current" id="wsHistoryBaselineCurrent"></div>
+      <div class="history-baseline-selected" id="wsHistoryBaselineChips" aria-live="polite" hidden></div>
+      <div class="history-baseline-list-head">
+        <b>同房间候选</b>
+        <button class="history-baseline-recent" id="wsHistoryBaselineRecent" type="button" hidden>选最近 3 场</button>
+        <span id="wsHistoryBaselineCount" role="status" aria-live="polite">正在读取…</span>
+      </div>
+      <div class="history-baseline-list" id="wsHistoryBaselineList" role="radiogroup" aria-label="同房间基准场候选"></div>
+      <button class="history-more history-baseline-more" id="wsHistoryBaselineMore" type="button" hidden>加载更多</button>
+      <p class="history-baseline-status" id="wsHistoryBaselineStatus" role="status" aria-live="polite" tabindex="-1"></p>
+      <div class="modal-actions history-baseline-actions">
+        <span class="history-baseline-hint">当前场不可作为基准</span>
+        <button class="btn btn-primary" type="button" id="wsHistoryBaselineApply" disabled>用此场对比</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 浮窗工作台 v2（B 工作台） ===================== -->
+<div id="wbModal" class="wb-mask" hidden>
+  <section id="wbCard" class="wb-card" role="dialog" aria-modal="true" aria-labelledby="wbTitle" tabindex="-1">
+    <svg class="wb-svg-defs" aria-hidden="true" focusable="false">
+      <symbol id="wb-i-brand" viewBox="0 0 64 64">
+        <rect x="15" y="15" width="34" height="7" fill="currentColor"/>
+        <rect x="15" y="28" width="24" height="7" fill="currentColor"/>
+        <rect x="44" y="28" width="6" height="7" fill="#F0441C"/>
+        <rect x="15" y="41" width="29" height="7" fill="currentColor"/>
+      </symbol>
+      <symbol id="wb-i-layers" viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 12 9 5 9-5"/><path d="m3 16 9 5 9-5"/></symbol>
+      <symbol id="wb-i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18h1.2a1.8 1.8 0 0 0 0-3.6h-.7a1.7 1.7 0 0 1 0-3.4H15A6 6 0 0 0 21 8c0-2.8-4-5-9-5Z"/><circle cx="7.5" cy="9.5" r=".8"/><circle cx="10" cy="6.7" r=".8"/><circle cx="14" cy="6.5" r=".8"/><circle cx="17" cy="8.8" r=".8"/></symbol>
+      <symbol id="wb-i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="7" cy="17" r="2"/></symbol>
+      <symbol id="wb-i-window" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M3 9h18M7 6.7h.01M10 6.7h.01"/></symbol>
+      <symbol id="wb-i-terminal" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="m7 9 3 3-3 3M12.5 15h4"/></symbol>
+      <symbol id="wb-i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+      <symbol id="wb-i-reset" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4.6V10h-5.4"/></symbol>
+      <symbol id="wb-i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.2 4.2L19 7"/></symbol>
+      <symbol id="wb-i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 10.5V17M12 7.3v.01"/></symbol>
+      <symbol id="wb-i-chat" viewBox="0 0 24 24"><path d="M20.6 11.7a7.7 7.7 0 0 1-8.3 7.6 8.7 8.7 0 0 1-3-.5L4.2 20.5l1.3-4.4a7.7 7.7 0 0 1-1.4-4.4A7.7 7.7 0 0 1 12.4 4a7.7 7.7 0 0 1 8.2 7.7Z"/></symbol>
+      <symbol id="wb-i-gift" viewBox="0 0 24 24"><rect x="3.5" y="8.5" width="17" height="12" rx="2"/><path d="M2.8 8.5h18.4V5.8H2.8zM12 5.8v14.7"/><path d="M12 5.8C9.5 5.8 7 4.8 7 3.2c0-.9.8-1.4 1.6-1.1 1.5.5 2.8 2 3.4 3.7ZM12 5.8c2.5 0 5-1 5-2.6 0-.9-.8-1.4-1.6-1.1-1.5.5-2.8 2-3.4 3.7Z"/></symbol>
+      <symbol id="wb-i-star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.4l6.1-.9L12 3Z"/></symbol>
+      <symbol id="wb-i-crown" viewBox="0 0 24 24"><path d="m3 7 4.5 3.5L12 4l4.5 6.5L21 7l-1.5 11h-15L3 7Z"/><path d="M6.5 15h11"/></symbol>
+      <symbol id="wb-i-enter" viewBox="0 0 24 24"><path d="M14 4h4.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14"/><path d="M4 12h11M11 8l4 4-4 4"/></symbol>
+      <symbol id="wb-i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z"/></symbol>
+      <symbol id="wb-i-bolt" viewBox="0 0 24 24"><path d="m13 2-8 12h6l-1 8 9-13h-6V2Z"/></symbol>
+      <symbol id="wb-i-warning" viewBox="0 0 24 24"><path d="M12 3 2.8 19h18.4L12 3Z"/><path d="M12 9v5M12 17.2v.01"/></symbol>
+      <symbol id="wb-i-undo" viewBox="0 0 24 24"><path d="M9 7 4 12l5 5"/><path d="M4 12h9a6 6 0 0 1 6 6"/></symbol>
+    </svg>
+
+    <header class="wb-head">
+      <div class="wb-brand">
+        <span class="wb-brand-mark" aria-hidden="true"><svg class="wb-icon"><use href="#wb-i-brand"></use></svg></span>
+        <div class="wb-brand-copy">
+          <div class="wb-title-line">
+            <h2 id="wbTitle">弹幕工作台</h2>
+            <span class="wb-badge">弹幕工作台</span>
+          </div>
+          <p>样式 · 预设 · 规则 · 窗口 · 调试 <span class="wb-dot" aria-hidden="true">·</span> schema v3</p>
+        </div>
+      </div>
+      <div class="wb-head-right">
+        <span id="wbSync" class="wb-sync"><i aria-hidden="true"></i><span id="wbSyncText">读取中…</span></span>
+        <button id="wbCloseBtn" class="wb-icon-btn" type="button" title="关闭工作台" aria-label="关闭弹幕工作台">
+          <svg class="wb-icon" aria-hidden="true"><use href="#wb-i-close"></use></svg>
+        </button>
+      </div>
+    </header>
+
+    <nav id="wbTabs" class="wb-tabs" role="tablist" aria-label="工作台一级导航">
+      <button id="wbTabStyle" class="wb-tab is-active" type="button" role="tab" data-wb-tab="style" aria-selected="true" aria-controls="wbPanelStyle" tabindex="0">
+        <svg class="wb-icon" aria-hidden="true"><use href="#wb-i-palette"></use></svg>样式
+      </button>
+      <button id="wbTabPresets" class="wb-tab" type="button" role="tab" data-wb-tab="presets" aria-selected="false" aria-controls="wbPanelPresets" tabindex="-1">
+        <svg class="wb-icon" aria-hidden="true"><use href="#wb-i-layers"></use></svg>预设
+      </button>
+      <button id="wbTabRules" class="wb-tab" type="button" role="tab" data-wb-tab="rules" aria-selected="false" aria-controls="wbPanelRules" tabindex="-1">
+        <svg class="wb-icon" aria-hidden="true"><use href="#wb-i-sliders"></use></svg>规则
+      </button>
+      <button id="wbTabWindow" class="wb-tab" type="button" role="tab" data-wb-tab="window" aria-selected="false" aria-controls="wbPanelWindow" tabindex="-1">
+        <svg class="wb-icon" aria-hidden="true"><use href="#wb-i-window"></use></svg>窗口
+      </button>
+      <button id="wbTabDebug" class="wb-tab" type="button" role="tab" data-wb-tab="debug" aria-selected="false" aria-controls="wbPanelDebug" tabindex="-1">
+        <svg class="wb-icon" aria-hidden="true"><use href="#wb-i-terminal"></use></svg>调试
+      </button>
+      <div class="wb-tabs-right">
+        <span class="wb-runtime"><i aria-hidden="true"></i>本地配置 · 保存后继续编辑</span>
+        <kbd>Ctrl+S</kbd>
+      </div>
+    </nav>
+
+    <main id="wbBody" class="wb-body">
+      <!-- 样式 -->
+      <section id="wbPanelStyle" class="wb-view wb-style-view" role="tabpanel" data-wb-panel="style" aria-labelledby="wbTabStyle">
+        <aside class="wb-panel wb-type-panel">
+          <header class="wb-panel-head">
+            <h3>消息类型</h3>
+            <p>五类消息各自覆盖；未覆盖字段跟随全局。</p>
+          </header>
+          <div id="wbTypeList" class="wb-type-list" role="group" aria-label="消息类型"></div>
+          <div class="wb-baseline">
+            <div class="wb-baseline-head">
+              <svg class="wb-icon" aria-hidden="true"><use href="#wb-i-layers"></use></svg>主题基线
+            </div>
+            <div class="wb-baseline-row">
+              <span id="wbBaselineSwatch" class="wb-theme-swatch" aria-hidden="true"></span>
+              <div class="wb-baseline-copy">
+                <b id="wbBaselineName">经典夜色</b>
+                <span id="wbBaselineCode">classic · 深色直播场景</span>
+              </div>
+            </div>
+            <p>未覆盖字段随主题更新；已覆盖字段不会被主题切换冲掉。</p>
+          </div>
+          <div class="wb-rail-note">
+            <svg class="wb-icon" aria-hidden="true"><use href="#wb-i-info"></use></svg>
+            <span>只影响透明浮窗外观，不改变 TTS 发音、朗读队列与主界面。</span>
+          </div>
+        </aside>
+
+        <section class="wb-panel wb-editor">
+          <div id="wbTypeStrip" class="wb-type-strip" role="group" aria-label="消息类型"></div>
+          <header class="wb-editor-head">
+            <div class="wb-editor-identity">
+              <span id="wbTypeIcon" class="wb-type-icon" aria-hidden="true"></span>
+              <div class="wb-editor-copy">
+                <div class="wb-editor-title">
+                  <h3 id="wbTypeTitle">弹幕</h3>
+                  <span id="wbTypeCode" class="wb-code">DANMAKU</span>
+                  <span class="wb-chip"><i aria-hidden="true"></i>独立样式</span>
+                </div>
+                <p id="wbTypeSub">普通文字消息 · 字号与底板可单独调整</p>
+              </div>
+            </div>
+            <div class="wb-editor-actions">
+              <div id="wbStyleDomain" class="wb-seg wb-domain-seg" role="group" aria-label="样式编辑范围">
+                <button class="is-active" type="button" data-wb-style-domain="style" aria-pressed="true">外观</button>
+                <button type="button" data-wb-style-domain="typography" aria-pressed="false">排版</button>
+                <button type="button" data-wb-style-domain="motion" aria-pressed="false">动效</button>
+              </div>
+              <button id="wbRestoreType" class="wb-btn" type="button">
+                <svg class="wb-icon" aria-hidden="true"><use href="#wb-i-reset"></use></svg>恢复本类
+              </button>
+              <button id="wbRestoreAll" class="wb-btn wb-danger-ghost" type="button">全部恢复</button>
+            </div>
+          </header>
+          <div class="wb-coverage">
+            <span class="wb-coverage-dot" aria-hidden="true"></span>
+            <span id="wbCoverageText" class="wb-coverage-copy"><b>本类覆盖 0 / 12 项</b> <span>12 项跟随全局</span></span>
+            <span class="wb-coverage-track" aria-hidden="true"><span id="wbCoverageBar"></span></span>
+            <span class="wb-coverage-hint">修改即覆盖 · 单字段可恢复</span>
+          </div>
+          <div id="wbMatrix" class="wb-matrix"></div>
+          <div id="wbTypographyPanel" class="wb-motion-panel" hidden>
+            <div class="wb-motion-toolbar">
+              <span id="wbTypographyCount" class="wb-motion-count">排版 · 3 项</span>
+              <span class="wb-motion-hint">字体族 / 行高 / 字距</span>
+              <button id="wbTypographyPreview" class="wb-btn wb-motion-try" type="button">
+                <svg class="wb-icon" aria-hidden="true"><use href="#wb-i-play"></use></svg>预览
+              </button>
+            </div>
+            <div id="wbTypographyGrid" class="wb-motion-grid"></div>
+            <div id="wbTypographyDemo" class="wb-motion-demo" hidden>
+              <div class="wb-motion-demo-head">
+                <span>排版近似预览</span>
+                <button id="wbTypographyDemoClose" class="wb-mini-link" type="button">收起</button>
+              </div>
+              <div class="wb-motion-demo-stage">
+                <div id="wbTypographyDemoBubble" class="wb-motion-demo-bubble">夜色微凉：今晚的选曲太稳了。</div>
+              </div>
+            </div>
+            <p id="wbTypographyBaseline" class="wb-motion-note">主题基线：Microsoft YaHei UI · 1.55× · 0px</p>
+            <p class="wb-motion-note">字号、字重仍在外观中调整；排版域只负责字体族、行高与字距。</p>
+            <p class="wb-motion-note">字体建议仅作输入提示，保存时会校验本机是否安装；不可用时浮窗回退到安全字体。</p>
+          </div>
+          <div id="wbMotionPanel" class="wb-motion-panel" hidden>
+            <div class="wb-motion-toolbar">
+              <span id="wbMotionCount" class="wb-motion-count">动效 · 6 项核心 + 6 项高级</span>
+              <span class="wb-motion-hint">只影响新消息</span>
+            </div>
+            <div id="wbMotionCore" class="wb-motion-grid"></div>
+            <details id="wbMotionAdvanced" class="wb-motion-advanced">
+              <summary><span>高级 · 6 项</span><em>位移 / 缩放 / 透明度</em></summary>
+              <div id="wbMotionAdvancedGrid" class="wb-motion-grid"></div>
+            </details>
+            <p class="wb-motion-note">入场方向/位移仅在滑入时生效；退场方向/位移在非「无」退场时作为附加偏移生效。</p>
+            <p class="wb-motion-note">固定区（礼物 / SC / 舰长）到期只做 ≤120ms 纯淡出，不占布局；取本类退场开关与时长，方向/位移/缩放不生效，选「无」则不淡出。</p>
+            <p class="wb-motion-note">高密度保护：约 ≥24 条/秒持续 1 秒，或单批达到同屏行数时，新滚动消息自动降为 ≤80ms 淡入/淡出；不写入设置，「无」保持无；低于 8 条/秒稳定 3 秒后恢复。</p>
+            <p id="wbMotionReduced" class="wb-motion-reduced" hidden>系统已启用减少动态效果：滑入改为 80ms 淡入，位移停用。设置值不会被改写。</p>
+          </div>
+        </section>
+
+      </section>
+
+      <!-- 预设包 / 六层入口 -->
+      <section id="wbPanelPresets" class="wb-view wb-presets-view" role="tabpanel" data-wb-panel="presets" aria-labelledby="wbTabPresets" hidden>
+        <aside class="wb-panel wb-preset-guide">
+          <header class="wb-panel-head">
+            <h3>六层预设</h3>
+            <p>内容 · 样式 · 布局 · 动画 · 模板 · 预设包</p>
+          </header>
+          <div class="wb-preset-guide-body">
+            <p>预设包只替换你勾选的层，不修改账号、房间、监控与窗口几何。</p>
+            <p>模板 v1 支持气泡、紧凑、专注三种原生模板；HTML/CSS 模板包留作后续可选渲染器。</p>
+            <p>AI 生成的 JSON 先校验再预览，应用后仍需点底部“保存”。</p>
+            <div class="wb-preset-import-row">
+              <button id="wbPresetChoose" class="wb-btn" type="button">选择 JSON 文件</button>
+              <button id="wbPresetExport" class="wb-btn" type="button">导出当前</button>
+              <input id="wbPresetFile" type="file" accept="application/json,.json" hidden>
+            </div>
+            <label class="wb-preset-field">
+              <span>粘贴 AI 生成的 JSON</span>
+              <textarea id="wbPresetText" class="input" rows="10" spellcheck="false" placeholder='{"format":"readme.danmaku-preset","format_version":1,"name":"示例","layers":{...}}'></textarea>
+            </label>
+            <div id="wbPresetLayers" class="wb-preset-layers" role="group" aria-label="应用的预设层">
+              <label><input type="checkbox" data-wb-preset-layer="content" checked>内容</label>
+              <label><input type="checkbox" data-wb-preset-layer="style" checked>样式</label>
+              <label><input type="checkbox" data-wb-preset-layer="layout" checked>布局</label>
+              <label><input type="checkbox" data-wb-preset-layer="animation" checked>动画</label>
+              <label><input type="checkbox" data-wb-preset-layer="template" checked>模板</label>
+            </div>
+            <div class="wb-preset-actions">
+              <button id="wbPresetValidate" class="wb-btn wb-btn-primary" type="button">校验并预览</button>
+              <button id="wbPresetApply" class="wb-btn" type="button" disabled>应用所选层</button>
+            </div>
+            <pre id="wbPresetStatus" class="wb-preset-status" aria-live="polite">等待导入预设包。</pre>
+          </div>
+        </aside>
+        <section class="wb-panel wb-preset-form">
+          <header class="wb-panel-head">
+            <h3>内容与布局</h3>
+            <p>这些字段会随预设包一起导出。</p>
+          </header>
+          <div class="wb-preset-form-body">
+            <section class="wb-preset-section">
+              <div class="wb-preset-section-head"><b>内容层</b><span>显示什么</span></div>
+              <label class="wb-preset-switch"><input id="wbPresetShowName" type="checkbox">显示用户名</label>
+              <label class="wb-preset-field"><span>用户名分隔符</span><input id="wbPresetNameSep" class="input" maxlength="4" value="："></label>
+              <label class="wb-preset-field"><span>用户名长度上限</span><input id="wbPresetNameMax" class="input" type="number" min="4" max="24" step="1" value="12"></label>
+              <label class="wb-preset-field"><span>正文长度上限</span><input id="wbPresetTextMax" class="input" type="number" min="1" max="10000" step="1" value="100"></label>
+              <label class="wb-preset-field"><span>最多行数</span><input id="wbPresetMaxLines" class="input" type="number" min="1" max="30" step="1" value="8"></label>
+            </section>
+            <section class="wb-preset-section">
+              <div class="wb-preset-section-head"><b>布局层</b><span>怎么排</span></div>
+              <label class="wb-preset-field"><span>条间距</span><input id="wbPresetGap" class="input" type="number" min="0" max="40" step="1" value="8"></label>
+              <label class="wb-preset-field"><span>对齐</span><select id="wbPresetAlign" class="input"><option value="left">左对齐</option><option value="center">居中</option><option value="right">右对齐</option></select></label>
+              <div id="wbPresetTypes" class="wb-preset-types" role="group" aria-label="显示消息类型">
+                <label><input type="checkbox" data-wb-preset-type="danmaku" checked>弹幕</label>
+                <label><input type="checkbox" data-wb-preset-type="gift" checked>礼物</label>
+                <label><input type="checkbox" data-wb-preset-type="super_chat" checked>SC</label>
+                <label><input type="checkbox" data-wb-preset-type="guard" checked>舰长</label>
+                <label><input type="checkbox" data-wb-preset-type="enter">入场</label>
+              </div>
+            </section>
+            <section class="wb-preset-section">
+              <div class="wb-preset-section-head"><b>模板层</b><span>原生结构</span></div>
+              <label class="wb-preset-field"><span>模板</span><select id="wbPresetTemplate" class="input"><option value="bubble">气泡 · 标准</option><option value="compact">气泡 · 紧凑</option><option value="focus">气泡 · 专注</option></select></label>
+            </section>
+          </div>
+        </section>
+      </section>
+
+      <!-- 规则 -->
+      <section id="wbPanelRules" class="wb-view wb-rules-view" role="tabpanel" data-wb-panel="rules" aria-labelledby="wbTabRules" hidden>
+        <section class="wb-panel wb-rules-main">
+          <header class="wb-rules-head">
+            <div>
+              <div class="wb-rules-title"><h3>置顶与置底</h3><span class="wb-chip"><i aria-hidden="true"></i>三类 lane 独立</span></div>
+              <p>固定项不进滚动流；容量预算按窗口真实高度计算。</p>
+            </div>
+            <div class="wb-rules-actions">
+              <div id="wbRulesViewSwitch" class="wb-seg" role="group" aria-label="规则视图">
+                <button class="is-active" type="button" data-wb-rules-view="table" aria-pressed="true">表格</button>
+                <button type="button" data-wb-rules-view="cards" aria-pressed="false">卡片</button>
+              </div>
+              <button id="wbRestoreRules" class="wb-btn" type="button">
+                <svg class="wb-icon" aria-hidden="true"><use href="#wb-i-reset"></use></svg>恢复规则默认
+              </button>
+            </div>
+          </header>
+          <div class="wb-summary">
+            <span class="wb-summary-label">当前预算</span>
+            <span class="wb-summary-chip">固定 <b id="wbSummaryFixed">0px · 0%</b></span>
+            <span class="wb-summary-chip">滚动 <b id="wbSummaryScroll">0px · 0%</b></span>
+            <span class="wb-summary-chip">采用 <b id="wbSummaryLanes">0 行</b></span>
+            <span id="wbSummaryNote" class="wb-summary-note">L0 间距 8px · 无淘汰</span>
+          </div>
+          <div id="wbRulesTableWrap" class="wb-rules-table-wrap">
+            <table class="wb-rules-table" aria-label="固定规则">
+              <thead>
+                <tr><th>消息类型</th><th>启用</th><th>停靠位置</th><th>停留时长</th><th>同屏条数</th><th>最低价值</th></tr>
+              </thead>
+              <tbody id="wbRulesBody"></tbody>
+            </table>
+          </div>
+          <div id="wbRulesCards" class="wb-rules-cards" hidden></div>
+          <section class="wb-budget-card" aria-label="固定区容量预算">
+            <div class="wb-budget-head"><span>固定区容量预算</span><span id="wbBudgetHeadMeta">H=620 · font 22px · item 48px</span></div>
+            <div class="wb-budget-top">
+              <span id="wbBudgetUsedBig" class="wb-budget-big">0px</span>
+              <div class="wb-budget-copy"><b id="wbBudgetFormula">min(620 × 50%, 需求 0px) = 0px</b><br><span id="wbBudgetUsedLine">采用 0px · 0%</span> · <span id="wbScrollUsedLine">滚动 0px · 0%</span></div>
+              <span id="wbBudgetCapLine" class="wb-budget-cap">单 lane 上限 0px · 40%</span>
+            </div>
+            <div id="wbBudgetBar" class="wb-budget-bar"></div>
+            <div class="wb-budget-legend">
+              <span><i style="--c:var(--wb-sc)"></i>SC</span>
+              <span><i style="--c:var(--wb-gift)"></i>礼物</span>
+              <span><i style="--c:var(--wb-guard)"></i>舰长</span>
+              <span><i style="--c:#566378"></i>滚动区</span>
+            </div>
+            <div id="wbLaneRows" class="wb-lane-rows"></div>
+            <p id="wbCapacityNote" class="wb-capacity-note">压缩顺序：间距 8→6→4px；仍超预算时先淘汰 guard，再 gift，最后 SC。固定项不复制进滚动流。</p>
+            <div class="wb-decision-grid">
+              <div class="wb-decision-item"><b>1 · PIN</b><span>启用、位置合法、礼物达到门槛；进入本类 lane，不复制进滚动流。</span></div>
+              <div class="wb-decision-item"><b>2 · SCROLL</b><span>普通消息，或固定关闭 / 低于门槛；进入普通滚动流。</span></div>
+              <div class="wb-decision-item"><b>3 · DROP</b><span>合格但硬预算不足；只从浮窗丢弃，journal / 监看 / TTS 保留。</span></div>
+            </div>
+          </section>
+        </section>
+
+        <aside class="wb-panel wb-structure-panel">
+          <header class="wb-panel-head">
+            <h3>结构预览</h3>
+            <p>按当前预算实时重排；固定项不进入滚动流。</p>
+          </header>
+          <div id="wbStructureStage" class="wb-structure-stage">
+            <div id="wbStructureCanvas" class="wb-structure-canvas">
+              <div id="wbStructureTop" class="wb-structure-zone is-top">
+                <div class="wb-zone-caption"><span>TOP · 固定区</span><span id="wbStructureTopMeta">0px · 0%</span></div>
+                <div id="wbStructureTopLanes" class="wb-structure-lanes"></div>
+                <div id="wbStructureTopCards" class="wb-structure-mini-list"></div>
+              </div>
+              <div id="wbStructureScroll" class="wb-structure-scroll">
+                <b>NORMAL · 滚动流</b>
+                <span id="wbStructureScrollMeta">0px · 0 行 · 0%</span>
+              </div>
+              <div id="wbStructureBottom" class="wb-structure-zone is-bottom">
+                <div class="wb-zone-caption"><span>BOTTOM · 固定区</span><span id="wbStructureBottomMeta">0px · 0%</span></div>
+                <div id="wbStructureBottomLanes" class="wb-structure-lanes"></div>
+                <div id="wbStructureBottomCards" class="wb-structure-mini-list"></div>
+              </div>
+            </div>
+          </div>
+          <p id="wbStructureNote" class="wb-structure-note">修改同屏条数、启用或停靠位置会立即重算。</p>
+        </aside>
+      </section>
+
+      <!-- 窗口 -->
+      <section id="wbPanelWindow" class="wb-view wb-window-view" role="tabpanel" data-wb-panel="window" aria-labelledby="wbTabWindow" hidden>
+        <section class="wb-panel wb-window-main">
+          <header class="wb-panel-head wb-window-head">
+            <h3>窗口与捕获</h3>
+            <p>浮窗几何、鼠标交互与主题基线。工作台打开时会实时回读实际浮窗位置和尺寸。</p>
+          </header>
+          <div class="wb-form-scroll">
+            <section class="wb-form-section">
+              <h4>显示与交互</h4>
+              <div class="wb-form-row">
+                <span class="wb-form-copy"><b>显示浮窗</b><small>关闭后立即隐藏；保存前也可先隐藏</small></span>
+                <button id="wbOverlayEnabled" class="wb-switch" type="button" role="switch" aria-checked="false"><span class="track"></span><span class="wb-switch-label">关</span></button>
+              </div>
+              <div class="wb-form-row">
+                <span class="wb-form-copy"><b>鼠标穿透</b><small>开启后鼠标事件穿过浮窗，不影响桌面操作</small></span>
+                <button id="wbClickThrough" class="wb-switch is-on" type="button" role="switch" aria-checked="true"><span class="track"></span><span class="wb-switch-label">开</span></button>
+              </div>
+              <div class="wb-form-row">
+                <span class="wb-form-copy"><b>始终置顶</b><small>让浮窗保持在普通窗口之上</small></span>
+                <button id="wbAlwaysOnTop" class="wb-switch is-on" type="button" role="switch" aria-checked="true"><span class="track"></span><span class="wb-switch-label">开</span></button>
+              </div>
+            </section>
+            <section class="wb-form-section">
+              <h4>位置与尺寸 <span class="wb-form-hint">逻辑 px</span></h4>
+              <div class="wb-geometry-grid">
+                <label class="wb-field"><span>宽度</span><span class="wb-input-affix"><input id="wbGeoWidth" type="number" min="200" max="3840" step="1"><em>px</em></span></label>
+                <label class="wb-field"><span>高度</span><span class="wb-input-affix"><input id="wbGeoHeight" type="number" min="200" max="2160" step="1"><em>px</em></span></label>
+                <label class="wb-field"><span>X 坐标</span><span class="wb-input-affix"><input id="wbGeoX" type="number" min="-10000" max="10000" step="1"><em>px</em></span></label>
+                <label class="wb-field"><span>Y 坐标</span><span class="wb-input-affix"><input id="wbGeoY" type="number" min="-10000" max="10000" step="1"><em>px</em></span></label>
+              </div>
+              <div class="wb-scale-row">
+                <span class="wb-scale-label">整体缩放</span>
+                <input id="wbGeoScale" class="wb-range" type="range" min="50" max="400" step="1" value="100" aria-label="浮窗整体缩放">
+                <output id="wbGeoScaleValue" class="wb-range-output" for="wbGeoScale">100%</output>
+              </div>
+              <div class="wb-quick-row">
+                <button id="wbCenterBtn" class="wb-btn" type="button">一键居中</button>
+                <button id="wbFillRightBtn" class="wb-btn" type="button">铺满右侧</button>
+                <span id="wbGeoHint" class="wb-inline-hint">当前 520 × 620 px</span>
+              </div>
+            </section>
+            <section class="wb-form-section">
+              <h4>主题基线</h4>
+              <div id="wbThemeGrid" class="wb-theme-grid"></div>
+              <p class="wb-section-note">主题切换只更新未覆盖字段；已覆盖字段保持不变，也不会清空五类覆盖。</p>
+            </section>
+          </div>
+        </section>
+        <aside class="wb-panel wb-window-side">
+          <header class="wb-panel-head"><h3>窗口捕获</h3><p>适用于 OBS、Streamlabs、直播伴侣等直播软件。</p></header>
+          <div class="wb-side-body">
+            <div class="wb-kv"><span>浮窗逻辑尺寸</span><b id="wbCaptureSize">520 × 620</b></div>
+            <div class="wb-kv"><span>逻辑字号</span><b id="wbCaptureFont">22px</b></div>
+            <div class="wb-kv"><span>整体缩放</span><b id="wbCaptureScale">100%</b></div>
+            <p class="wb-side-note">整体缩放会按比例影响实际浮窗的字号、描边和间距；窗口尺寸仍由上方几何字段控制。</p>
+          </div>
+        </aside>
+      </section>
+
+      <!-- 调试 -->
+      <section id="wbPanelDebug" class="wb-view wb-debug-view" role="tabpanel" data-wb-panel="debug" aria-labelledby="wbTabDebug" hidden>
+        <section id="wbDebugMock" class="wb-debug-page" data-wb-debug-panel="mock">
+          <div class="wb-debug-grid">
+            <section class="wb-panel wb-debug-card">
+              <header class="wb-debug-head">
+                <div class="wb-debug-title"><span class="wb-debug-icon"><svg class="wb-icon" aria-hidden="true"><use href="#wb-i-chat"></use></svg></span><div><h3>手动注入</h3><p>走与真实弹幕相同的管线；默认只上屏、不发声。</p></div></div>
+                <span class="wb-chip wb-chip-debug"><i aria-hidden="true"></i>调试</span>
+              </header>
+              <div class="wb-debug-body">
+                <label class="wb-field wb-field-row"><span>消息类型</span><select id="wbMockKind" class="wb-input">
+                  <option value="danmaku">弹幕</option>
+                  <option value="gift">礼物</option>
+                  <option value="super_chat">醒目留言</option>
+                  <option value="guard">上舰</option>
+                  <option value="enter">入场</option>
+                  <option value="mixed">随机混合</option>
+                </select></label>
+                <label class="wb-field wb-field-row"><span>用户名</span><input id="wbMockUser" class="wb-input" type="text" placeholder="留空自动填充" maxlength="24"></label>
+                <label class="wb-field wb-field-row"><span>内容</span><input id="wbMockText" class="wb-input" type="text" placeholder="留空自动填充" maxlength="200"></label>
+                <div class="wb-form-row wb-form-row-compact">
+                  <span class="wb-form-copy"><b>朗读这条消息 <span id="wbMockSpeakFlag" class="wb-danger-badge" hidden>真实发声</span></b><small>开启后进入真实 TTS 管线</small></span>
+                  <button id="wbMockSpeak" class="wb-switch" type="button" role="switch" aria-checked="false"><span class="track"></span><span class="wb-switch-label">关</span></button>
+                </div>
+                <div class="wb-mock-actions">
+                  <button id="wbMockSend" class="wb-btn wb-primary" type="button"><svg class="wb-icon" aria-hidden="true"><use href="#wb-i-play"></use></svg>发送 1 条</button>
+                  <button id="wbMockBurst10" class="wb-btn" type="button">连发 10 条</button>
+                  <button id="wbMockStorm30" class="wb-btn" type="button"><svg class="wb-icon" aria-hidden="true"><use href="#wb-i-bolt"></use></svg>风暴 30 条</button>
+                </div>
+                <p id="wbMockFeedback" class="wb-feedback" role="status" aria-live="polite">尚未注入消息</p>
+              </div>
+            </section>
+
+            <section class="wb-panel wb-debug-card">
+              <header class="wb-debug-head">
+                <div class="wb-debug-title"><span class="wb-debug-icon"><svg class="wb-icon" aria-hidden="true"><use href="#wb-i-bolt"></use></svg></span><div><h3>自动发送</h3><p>按频率持续注入；关闭工作台后仍会继续运行。</p></div></div>
+                <span id="wbMockAutoState" class="wb-auto-state">已停止</span>
+              </header>
+              <div class="wb-debug-body">
+                <div class="wb-form-row wb-form-row-compact">
+                  <span class="wb-form-copy"><b>自动发送</b><small id="wbMockAutoNote">按设定频率持续注入模拟消息</small></span>
+                  <button id="wbMockAutoEnabled" class="wb-switch" type="button" role="switch" aria-checked="false"><span class="track"></span><span class="wb-switch-label">关</span></button>
+                </div>
+                <div class="wb-range-row">
+                  <span class="wb-range-label">发送频率</span>
+                  <input id="wbMockInterval" class="wb-range" type="range" min="200" max="10000" step="100" value="1500" aria-label="自动发送间隔">
+                  <output id="wbMockIntervalValue" class="wb-range-output" for="wbMockInterval">每 1.5 秒</output>
+                </div>
+                <label class="wb-field wb-field-row"><span>每次条数</span><span class="wb-input-affix wb-input-affix-short"><input id="wbMockPerTick" type="number" min="1" max="10" step="1" value="1"><em>条</em></span></label>
+                <div class="wb-field wb-field-block">
+                  <span>数据类型 <small>至少选择一种</small></span>
+                  <div id="wbMockTypes" class="wb-type-chips" role="group" aria-label="自动发送数据类型">
+                    <button class="wb-type-chip is-active" type="button" data-wb-mock-type="danmaku" aria-pressed="true">弹幕</button>
+                    <button class="wb-type-chip" type="button" data-wb-mock-type="gift" aria-pressed="false">礼物</button>
+                    <button class="wb-type-chip" type="button" data-wb-mock-type="super_chat" aria-pressed="false">醒目留言</button>
+                    <button class="wb-type-chip" type="button" data-wb-mock-type="guard" aria-pressed="false">上舰</button>
+                    <button class="wb-type-chip" type="button" data-wb-mock-type="enter" aria-pressed="false">入场</button>
+                  </div>
+                  <p id="wbMockTypesHint" class="wb-inline-hint">当前仅弹幕</p>
+                </div>
+                <div class="wb-form-row wb-form-row-compact">
+                  <span class="wb-form-copy"><b>朗读这些消息 <span id="wbMockAutoSpeakFlag" class="wb-danger-badge" hidden>真实发声</span></b><small>默认关闭；开启后持续进入 TTS 管线</small></span>
+                  <button id="wbMockAutoSpeak" class="wb-switch" type="button" role="switch" aria-checked="false"><span class="track"></span><span class="wb-switch-label">关</span></button>
+                </div>
+                <div class="wb-auto-status">
+                  <span class="wb-auto-status-dot" aria-hidden="true"></span>
+                  <div><b id="wbMockAutoStatus">已停止</b><span id="wbMockAutoStatusDetail">开启后按频率发送；参数变更会立即生效。</span></div>
+                </div>
+              </div>
+            </section>
+          </div>
+          <p class="wb-debug-foot"><b>提示</b>：自动发送由后端 mock_auto 运行；关闭工作台不会停止。需要停止时回到此页关闭主开关。</p>
+        </section>
+
+      </section>
+    </main>
+
+    <footer class="wb-foot">
+      <div id="wbFootNote" class="wb-foot-note"><b>全部外观恢复默认</b>只清空五类消息的覆盖；主题、固定规则与窗口几何不动。</div>
+      <div class="wb-foot-state">
+        <span id="wbStatus" class="wb-status" role="status" aria-live="polite"></span>
+        <span id="wbError" class="wb-error" role="alert" hidden></span>
+      </div>
+      <div class="wb-foot-actions">
+        <button id="wbCloseAction" class="wb-btn wb-close-compact" type="button">关闭</button>
+        <button id="wbSaveBtn" class="wb-btn wb-primary" type="button">保存</button>
+      </div>
+    </footer>
+
+    <div id="wbConfirmMask" class="wb-confirm-mask" hidden>
+      <div id="wbConfirmCard" class="wb-confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="wbConfirmTitle" aria-describedby="wbConfirmBody" tabindex="-1">
+        <h3 id="wbConfirmTitle">确认恢复默认</h3>
+        <p id="wbConfirmBody"></p>
+        <div class="wb-confirm-actions">
+          <button id="wbConfirmCancel" class="wb-btn" type="button">取消</button>
+          <button id="wbConfirmOk" class="wb-btn wb-danger" type="button">确认</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="wbToast" class="wb-toast" role="status" aria-live="polite" hidden>
+      <i class="wb-toast-dot" aria-hidden="true"></i>
+      <span id="wbToastText"></span>
+      <button id="wbUndoBtn" class="wb-undo-btn" type="button" hidden><svg class="wb-icon" aria-hidden="true"><use href="#wb-i-undo"></use></svg>撤销 (10s)</button>
+    </div>
+  </section>
+</div>
+
+<script src="app-core.js"></script>
+<script src="app-wb-core.js"></script>
+<script src="app-wb-motion.js"></script>
+<script src="app-wb-typography.js"></script>
+<script src="app-wb-presets.js"></script>
+<script src="app-wb-rules.js"></script>
+<script src="app-wb-window.js"></script>
+<script src="app-wb-debug.js"></script>
+<script src="app-danmaku.js"></script>
+<script src="appearance.js"></script>
+<script src="shell-core.js"></script>
+<script src="shell-data-history.js"></script>
+<script src="shell-data-compare.js"></script>
+<script src="shell.js"></script>
+</body>
+</html>

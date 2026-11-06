@@ -1,0 +1,32 @@
+name: Syntax checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Check Python syntax
+        shell: pwsh
+        run: |
+          python -m compileall -q app.py backend tools overlay_layout.py overlay_motion.py overlay_qt.py overlay_render.py overlay_types.py overlay_typography.py overlay_util.py
+      - name: Check JavaScript syntax
+        shell: pwsh
+        run: |
+          Get-ChildItem ui, tests\ui -Filter *.js -Recurse | ForEach-Object {
+            node --check $_.FullName
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }

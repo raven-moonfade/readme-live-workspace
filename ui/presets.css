@@ -1,0 +1,167 @@
+/* Overlay workbench · six-layer preset surfaces */
+.wb-presets-view {
+  grid-template-columns: minmax(280px, .85fr) minmax(0, 1.35fr);
+}
+
+.wb-preset-guide-body,
+.wb-preset-form-body {
+  min-width: 0;
+  overflow: auto;
+  padding: 14px;
+}
+
+.wb-preset-guide-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #94A1B4;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.wb-preset-guide-body p {
+  margin: 0;
+}
+
+.wb-preset-import-row,
+.wb-preset-actions,
+.wb-preset-layers,
+.wb-preset-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.wb-preset-layers label,
+.wb-preset-types label,
+.wb-preset-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #C9D3E1;
+  font-size: 11.5px;
+}
+
+.wb-preset-layers input,
+.wb-preset-types input,
+.wb-preset-switch input {
+  accent-color: #F0441C;
+}
+
+.wb-preset-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #7F8CA0;
+  font-size: 11.5px;
+}
+
+.wb-preset-field .input {
+  min-height: 32px;
+  resize: vertical;
+}
+
+.wb-preset-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wb-preset-section {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+  padding: 14px;
+  border: 1px solid var(--wb-line);
+  border-radius: 8px;
+  background: rgba(15, 20, 29, .46);
+}
+
+.wb-preset-section-head {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.wb-preset-section-head b {
+  color: #E8EEF7;
+  font-size: 13px;
+}
+
+.wb-preset-section-head span {
+  color: #69778B;
+  font-family: var(--wb-mono);
+  font-size: 10px;
+}
+
+.wb-preset-section .wb-preset-switch,
+.wb-preset-section .wb-preset-types {
+  grid-column: 1 / -1;
+}
+
+.wb-preset-status {
+  min-height: 84px;
+  margin: 0;
+  padding: 10px;
+  overflow: auto;
+  border: 1px solid var(--wb-line);
+  border-radius: 7px;
+  color: #A7B8D0;
+  background: #090D14;
+  font-family: var(--wb-mono);
+  font-size: 10.5px;
+  white-space: pre-wrap;
+}
+
+.wb-preset-status.is-error {
+  border-color: rgba(255, 128, 149, .38);
+  color: #FF9AA4;
+}
+
+.wb-preset-status.is-ok {
+  border-color: rgba(85, 221, 167, .30);
+  color: #78D9B2;
+}
+
+/* The workbench card resets bare buttons; restore the shared button contract
+   for .wb-btn descendants, then layer the preset primary action on top. */
+.wb-card .wb-btn {
+  height: 31px;
+  padding: 0 10px;
+  border: 1px solid var(--wb-line);
+  border-radius: 6px;
+  background: rgba(var(--ink-rgb), .022);
+  color: #A9B5C7;
+}
+
+.wb-card .wb-btn:hover {
+  border-color: var(--wb-line-strong);
+  background: rgba(var(--ink-rgb), .05);
+  color: #E9EFF7;
+}
+
+.wb-card .wb-btn-primary {
+  border-color: #F0441C;
+  background: #F0441C;
+  color: #190C08;
+}
+
+.wb-card .wb-btn-primary:hover {
+  border-color: #FF5F3A;
+  background: #FF5F3A;
+  color: #190C08;
+}
+
+@media (max-width: 900px) {
+  .wb-presets-view {
+    grid-template-columns: minmax(0, 1fr);
+    overflow: auto;
+  }
+
+  .wb-preset-guide,
+  .wb-preset-form {
+    min-height: 360px;
+  }
+}

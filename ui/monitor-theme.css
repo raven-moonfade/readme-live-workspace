@@ -1,0 +1,37 @@
+/* 幕台监看窗口共享工作台外观 token；字号/行高仍由 monitor.css 控制。 */
+body {
+  background:
+    radial-gradient(760px 420px at 8% -8%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 66%),
+    radial-gradient(720px 420px at 100% 0%, color-mix(in srgb, var(--accent) 5%, transparent), transparent 70%),
+    linear-gradient(145deg, var(--bg), color-mix(in srgb, var(--bg) 78%, #000));
+}
+
+html[data-ap-pattern="dots"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(var(--ap-dot, rgba(241, 243, 237, .11)) var(--ap-dot-radius, .75px), transparent var(--ap-dot-radius, .75px));
+  background-size: var(--ap-dot-spacing, 24px) var(--ap-dot-spacing, 24px);
+}
+
+.brand-mark {
+  background: var(--accent);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.topbar {
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+}
+
+.monitor {
+  position: relative;
+  z-index: 1;
+}
+
+.filter-chip.is-active,
+.font-btn,
+.tool-btn:hover {
+  accent-color: var(--accent);
+}

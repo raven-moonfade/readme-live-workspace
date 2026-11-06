@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>ReadMe 浮窗</title>
+<link rel="stylesheet" href="overlay.css">
+</head>
+<body data-enabled="true" data-click-through="false" data-theme="classic">
+  <main id="stage" class="stage" data-theme="classic" data-align="left" data-animation="fade" data-bg="true" aria-label="直播弹幕浮窗">
+    <div id="feed" class="feed" role="log" aria-live="polite" aria-relevant="additions text" aria-atomic="false"></div>
+  </main>
+
+  <div id="controls" class="controls" aria-hidden="true" hidden>
+    <button id="dragBar" class="drag-bar" type="button" title="按住拖动浮窗" aria-label="按住拖动浮窗">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+        <circle cx="8" cy="7" r="1.15"/><circle cx="12" cy="7" r="1.15"/><circle cx="16" cy="7" r="1.15"/>
+        <circle cx="8" cy="12" r="1.15"/><circle cx="12" cy="12" r="1.15"/><circle cx="16" cy="12" r="1.15"/>
+        <circle cx="8" cy="17" r="1.15"/><circle cx="12" cy="17" r="1.15"/><circle cx="16" cy="17" r="1.15"/>
+      </svg>
+      <span>拖动</span>
+    </button>
+    <button id="resizeHandle" class="resize-handle" type="button" title="拖动调整浮窗大小" aria-label="拖动调整浮窗大小">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M13.5 20H20v-6.5"/>
+        <path d="M20 20l-7.2-7.2"/>
+        <path d="M16.5 20H20v-3.5"/>
+      </svg>
+    </button>
+  </div>
+
+  <script src="overlay.js"></script>
+</body>
+</html>
