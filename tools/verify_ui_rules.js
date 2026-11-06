@@ -21,6 +21,11 @@ const url = 'file:///' + path.join(root, 'ui/index.html').replace(/\\/g, '/');
   const bili = await page.$$eval('#wbRulesBody tr', (rows) =>
     rows.map((row) => row.getAttribute('data-wb-lane')));
   await page.evaluate(() => {
+    const auto = window.MutaiApp.workbench.state.mock.auto;
+    Object.keys(auto.types).forEach((key) => { auto.types[key] = true; });
+    window.MutaiApp.modules.wbDebug.wbRenderMockControls();
+  });
+  await page.evaluate(() => {
     const select = document.getElementById('platformSelect');
     select.disabled = false;
     select.value = 'douyin';
@@ -40,6 +45,14 @@ const url = 'file:///' + path.join(root, 'ui/index.html').replace(/\\/g, '/');
       'tr[data-wb-lane="enter"] input[data-wb-pin-field="max"]'
     ).length
   }));
+  const mockDouyin = await page.evaluate(() => {
+    const auto = window.MutaiApp.workbench.state.mock.auto;
+    return {
+      platform: auto.platform,
+      types: Object.keys(auto.types).sort(),
+      payload: window.MutaiApp.modules.wbDebug.wbMockPayload(true)
+    };
+  });
   await page.click('[data-wb-tab="style"]');
   await page.waitForTimeout(300);
   const styleTypes = await page.$$eval('#wbTypeList [data-wb-type]', (els) =>
@@ -50,16 +63,47 @@ const url = 'file:///' + path.join(root, 'ui/index.html').replace(/\\/g, '/');
     els.map((el) => el.getAttribute('data-wb-mock-type')));
   const mockKinds = await page.$$eval('#wbMockKind option', (els) =>
     els.map((el) => el.value));
+  await page.evaluate(() => {
+    const select = document.getElementById('platformSelect');
+    select.disabled = false;
+    select.value = 'bilibili';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await page.waitForTimeout(500);
+  const mockBilibili = await page.evaluate(() => {
+    const auto = window.MutaiApp.workbench.state.mock.auto;
+    return {
+      platform: auto.platform,
+      types: Object.keys(auto.types).sort(),
+      values: auto.types,
+      payload: window.MutaiApp.modules.wbDebug.wbMockPayload(true)
+    };
+  });
   await page.screenshot({ path: path.join(process.env.TEMP || root, 'rules-douyin.png') });
-  console.log(JSON.stringify({ bili, douyin, zeros, styleTypes, mockTypes, mockKinds, errors }, null, 2));
+  console.log(JSON.stringify({
+    bili, douyin, zeros, styleTypes, mockTypes, mockKinds,
+    mockDouyin, mockBilibili, errors
+  }, null, 2));
   await browser.close();
   const expected = ['danmaku', 'gift', 'enter', 'like', 'social', 'fansclub'];
+  const biliTypes = ['danmaku', 'enter', 'gift', 'guard', 'social', 'super_chat'];
+  const douyinTypesSorted = ['danmaku', 'enter', 'fansclub', 'gift', 'like', 'social'];
   if (errors.length || bili.length !== 6 || douyin.length !== 6 ||
       styleTypes.length !== 6 || mockTypes.length !== 6 ||
       JSON.stringify(styleTypes) !== JSON.stringify(expected) ||
       JSON.stringify(mockTypes) !== JSON.stringify(expected) ||
       JSON.stringify(mockKinds) !== JSON.stringify(expected) ||
-      zeros.danmakuCountControls !== 0 || zeros.enterCountControls !== 0) process.exit(1);
+      zeros.danmakuCountControls !== 0 || zeros.enterCountControls !== 0 ||
+      JSON.stringify(mockDouyin.types) !== JSON.stringify(douyinTypesSorted) ||
+      mockDouyin.payload.platform !== 'douyin' ||
+      JSON.stringify(Object.keys(mockDouyin.payload.types).sort()) !== JSON.stringify(douyinTypesSorted) ||
+      JSON.stringify(mockBilibili.types) !== JSON.stringify(biliTypes) ||
+      mockBilibili.values.super_chat !== true ||
+      mockBilibili.values.guard !== true ||
+      mockBilibili.payload.platform !== 'bilibili' ||
+      JSON.stringify(Object.keys(mockBilibili.payload.types).sort()) !== JSON.stringify(biliTypes)) {
+    process.exit(1);
+  }
 })().catch((error) => {
   console.error(error);
   process.exit(1);

@@ -323,12 +323,14 @@ def normalize_message(method: str, payload: bytes, message_id: int = 0) -> Optio
         )
 
     if method == "WebcastFansclubMessage":
-        user = parse_user(first(fields, 3)) or parse_user(first(fields, 2))
+        # 抖音 FansclubMessage: commonInfo=1, type=2 (1=升级, 2=加入),
+        # content=3, user=4。字段顺序与部分旧版 proto 不同。
+        user = parse_user(first(fields, 4)) or parse_user(first(fields, 3)) or parse_user(first(fields, 2))
         if not user:
             return None
         club_type = as_int(first(fields, 2))
-        content = as_text(first(fields, 4)).strip()
-        action = "粉丝团升级" if club_type == 2 else "加入了粉丝团"
+        content = as_text(first(fields, 3)).strip()
+        action = "粉丝团升级" if club_type == 1 else "加入了粉丝团"
         return (
             "fansclub",
             {

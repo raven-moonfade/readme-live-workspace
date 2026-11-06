@@ -2210,8 +2210,10 @@
         running: false, sent: 0, interval: 1500, perTick: 1,
         types: {
           danmaku: true, gift: false, super_chat: false, guard: false, enter: false,
-          like: false, social: false
+          like: false, social: false, fansclub: false
         },
+        typesByPlatform: null,
+        platform: '',
         speak: true
       },
       applyTimer: 0,
@@ -2795,6 +2797,10 @@
       { name: '桃花花', price: 5 }, { name: '干杯', price: 10 }, { name: '打call', price: 30 },
       { name: '牛哇', price: 20 }, { name: '星星点点', price: 50 }, { name: '礼物小水枪', price: 99 }
     ];
+    var giftPoolDouyin = [
+      { name: '小心心', diamonds: 1 }, { name: '玫瑰', diamonds: 1 }, { name: '大啤酒', diamonds: 2 },
+      { name: '抖音1号', diamonds: 10 }, { name: '跑车', diamonds: 66 }, { name: '嘉年华', diamonds: 3000 }
+    ];
     var scPool = ['这条弹幕一定要读啊！', '主播唱歌吧，求求了', '加油，一直支持你',
       '刚下班，来听会儿声音', '今天心情不好，听主播声音治愈一下'];
     var roomTitles = ['深夜摸鱼中', '点歌环节', '练歌房', '周末杂谈', '游戏日常'];
@@ -3069,13 +3075,20 @@
       if (ev.type === 'gift') return '感谢' + ev.user + '送出的' + (meta.gift_name || '礼物');
       if (ev.type === 'guard') return '感谢' + ev.user + '开通' + guardName(meta.guard_level);
       if (ev.type === 'enter') return ev.user + '进入直播间';
+      if (ev.type === 'like') return ev.user + '点赞了直播间';
+      if (ev.type === 'social') return ev.user + (meta.social_action || '关注了直播间');
+      if (ev.type === 'fansclub') return ev.user + (meta.fansclub_action || '加入了粉丝团');
       return ev.user;
     }
 
     function injectMockEvent(payload) {
       var p = payload && typeof payload === 'object' ? payload : {};
       var kind = String(p.kind || 'danmaku');
-      var allowed = ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'like', 'social', 'fansclub'];
+      var platform = String((m.config && m.config.platform) || 'bilibili').toLowerCase() === 'douyin'
+        ? 'douyin' : 'bilibili';
+      var allowed = platform === 'douyin'
+        ? ['danmaku', 'gift', 'enter', 'like', 'social', 'fansclub']
+        : ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'social'];
       if (allowed.indexOf(kind) < 0) {
         return { ok: false, error: '不支持的消息类型：' + kind };
       }
@@ -3087,12 +3100,24 @@
       var uid = 900000 + hint;
 
       if (kind === 'gift') {
-        var gift = giftPool[hint % giftPool.length];
-        if (!meta.gift_name) meta.gift_name = gift.name;
-        if (meta.price === undefined) meta.price = gift.price;
-        if (meta.num === undefined) meta.num = 1;
-        if (!body) body = '送出 ' + meta.gift_name + ' ×' + meta.num;
-        if (meta.total_coin === undefined) meta.total_coin = numFromStr(meta.price, 0) * numFromStr(meta.num, 1);
+        if (platform === 'douyin') {
+          var dyGift = giftPoolDouyin[hint % giftPoolDouyin.length];
+          if (!meta.gift_name) meta.gift_name = dyGift.name;
+          if (meta.num === undefined) meta.num = 1;
+          meta.combo_count = meta.num;
+          meta.diamond_count = meta.diamond_count === undefined ? dyGift.diamonds : meta.diamond_count;
+          meta.coin_type = 'diamond';
+          meta.price = 0;
+          meta.total_coin = 0;
+          if (!body) body = '送出 ' + meta.gift_name + ' ×' + meta.num;
+        } else {
+          var gift = giftPool[hint % giftPool.length];
+          if (!meta.gift_name) meta.gift_name = gift.name;
+          if (meta.price === undefined) meta.price = gift.price;
+          if (meta.num === undefined) meta.num = 1;
+          if (!body) body = '送出 ' + meta.gift_name + ' ×' + meta.num;
+          if (meta.total_coin === undefined) meta.total_coin = numFromStr(meta.price, 0) * numFromStr(meta.num, 1);
+        }
       } else if (kind === 'super_chat') {
         if (!body) body = scPool[hint % scPool.length];
         if (meta.message === undefined) meta.message = body;
@@ -3103,10 +3128,22 @@
         if (!body) body = '开通了' + meta.guard_name;
       } else if (kind === 'enter') {
         if (!body) body = '进入直播间';
+      } else if (kind === 'like') {
+        if (!body) body = '点赞了直播间';
+        if (meta.like_count === undefined) meta.like_count = 1 + (hint % 20);
+      } else if (kind === 'social') {
+        if (!body) {
+          body = platform === 'douyin' && hint % 3 === 0 ? '分享了直播间' : '关注了直播间';
+        }
+        if (meta.social_action === undefined) meta.social_action = body;
+      } else if (kind === 'fansclub') {
+        if (!body) body = hint % 2 === 0 ? '粉丝团升级' : '加入了粉丝团';
+        if (meta.fansclub_action === undefined) meta.fansclub_action = body;
       } else if (!body) {
         body = danmakuTexts[hint % danmakuTexts.length];
       }
       meta.mock = true;
+      meta.platform = platform;
 
       var filterReason = speak ? mockReadFilterReason(kind, body, meta, uid) : 'mock_display_only';
       var spoken = !!speak && !filterReason;
@@ -3261,10 +3298,21 @@
     function generate() {
       var r = Math.random();
       var type = 'danmaku';
-      if (r < 0.08) type = 'gift';
-      else if (r < 0.13) type = 'super_chat';
-      else if (r < 0.17) type = 'guard';
-      else if (r < 0.36) type = 'enter';
+      var platform = String((m.config && m.config.platform) || 'bilibili').toLowerCase() === 'douyin'
+        ? 'douyin' : 'bilibili';
+      if (platform === 'douyin') {
+        if (r < 0.08) type = 'gift';
+        else if (r < 0.20) type = 'enter';
+        else if (r < 0.26) type = 'like';
+        else if (r < 0.31) type = 'social';
+        else if (r < 0.36) type = 'fansclub';
+      } else {
+        if (r < 0.08) type = 'gift';
+        else if (r < 0.13) type = 'super_chat';
+        else if (r < 0.17) type = 'guard';
+        else if (r < 0.20) type = 'social';
+        else if (r < 0.36) type = 'enter';
+      }
 
       var user = pick(users);
       var uid = 100000 + Math.floor(Math.random() * 899999);
@@ -3274,10 +3322,20 @@
       if (type === 'danmaku') {
         text = pick(danmakuTexts);
       } else if (type === 'gift') {
-        var g = pick(giftPool);
-        meta.gift_name = g.name;
-        meta.price = g.price;
-        meta.num = pick([1, 1, 1, 2, 5, 10]);
+        if (platform === 'douyin') {
+          var dg = pick(giftPoolDouyin);
+          meta.gift_name = dg.name;
+          meta.diamond_count = dg.diamonds;
+          meta.coin_type = 'diamond';
+          meta.price = 0;
+          meta.total_coin = 0;
+          meta.num = pick([1, 1, 1, 2, 5, 10]);
+        } else {
+          var g = pick(giftPool);
+          meta.gift_name = g.name;
+          meta.price = g.price;
+          meta.num = pick([1, 1, 1, 2, 5, 10]);
+        }
       } else if (type === 'super_chat') {
         text = pick(scPool);
         meta.message = text;
@@ -3285,8 +3343,19 @@
       } else if (type === 'guard') {
         meta.guard_level = pick([1, 1, 2, 3]);
         meta.guard_name = guardName(meta.guard_level);
+      } else if (type === 'like') {
+        text = '点赞了直播间';
+        meta.like_count = pick([1, 2, 5, 10, 20]);
+      } else if (type === 'social') {
+        text = platform === 'douyin' && Math.random() < 0.35 ? '分享了直播间' : '关注了直播间';
+        meta.social_action = text;
+      } else if (type === 'fansclub') {
+        text = pick(['加入了粉丝团', '粉丝团升级']);
+        meta.fansclub_action = text;
       }
 
+      meta.mock = true;
+      meta.platform = platform;
       var spoken = decideSpoken(type, text, meta, uid);
       var ev = emit({ type: type, user: user, uid: uid, text: text, meta: meta, spoken: spoken });
       m.stats.received += 1;

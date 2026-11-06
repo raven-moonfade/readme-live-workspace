@@ -66,6 +66,10 @@ _UNSET = object()
 SESSION_MESSAGE_TYPES = (
     "danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub",
 )
+MOCK_TYPES_BY_PLATFORM = {
+    "bilibili": ("danmaku", "gift", "super_chat", "guard", "enter", "social"),
+    "douyin": ("danmaku", "gift", "enter", "like", "social", "fansclub"),
+}
 FILTER_REASONS = frozenset(
     (
         "disabled",
@@ -452,6 +456,7 @@ class DanmakuTTSService:
         # ---- 调试：自动模拟发送 ----
         self._mock_task: Optional["concurrent.futures.Future"] = None
         self._mock_sent = 0
+        self._mock_platform = ""
         if str(self.config.get("sessdata", default="") or "").strip():
             self._account["logged_in"] = True
             try:
@@ -1070,11 +1075,12 @@ class DanmakuTTSService:
             meta = dict(payload.get("meta") or {})
             source_platform = str(getattr(self, "_source_platform", "bilibili") or "bilibili")
             declared_platform = normalize_platform(meta.get("platform") or source_platform)
-            if declared_platform and declared_platform != source_platform:
+            is_mock_declared = bool(meta.get("mock"))
+            if declared_platform and declared_platform != source_platform and not is_mock_declared:
                 logger.debug("忽略非当前平台消息：%s != %s", declared_platform, source_platform)
                 return None
             meta.setdefault("platform", source_platform)
-            is_mock = bool(meta.get("mock"))
+            is_mock = is_mock_declared
             session_id = self._current_session_id()
             self._stats_bump("received", mock=is_mock, session_id=session_id)
             self._session_message_bump(kind, meta, mock=is_mock, uid=uid)
@@ -2067,6 +2073,10 @@ class DanmakuTTSService:
             ("小心心", 1, 0), ("棒棒糖", 4, 4), ("桃花花", 5, 5), ("干杯", 10, 10),
             ("牛哇", 20, 20), ("打call", 30, 30), ("星星点点", 50, 50), ("嘉年华", 1, 2000),
         ],
+        "gift_douyin": [
+            ("小心心", 1, 1), ("玫瑰", 1, 1), ("大啤酒", 2, 2), ("抖音1号", 10, 10),
+            ("跑车", 66, 66), ("嘉年华", 1, 3000),
+        ],
         "super_chat": ["这条弹幕一定要读啊！", "主播唱歌吧，求求了", "加油，一直支持你"],
         "guard": [("总督", 1), ("提督", 2), ("舰长", 3)],
         "enter": ["进入直播间"],
@@ -2079,8 +2089,18 @@ class DanmakuTTSService:
         "月见草", "发呆的猫", "半糖去冰", "星河入梦", "听风者",
     ]
 
+    def _mock_platform_key(self, override: Optional[str] = None) -> str:
+        value = normalize_platform(override) if override else ""
+        if value in MOCK_TYPES_BY_PLATFORM:
+            return value
+        current = normalize_platform(
+            getattr(self, "_mock_platform", "") or getattr(self, "_source_platform", "") or "bilibili"
+        )
+        return current if current in MOCK_TYPES_BY_PLATFORM else "bilibili"
+
     def inject_mock(self, kind: str = "danmaku", user: str = "", text: str = "",
-                    meta: Optional[Dict[str, Any]] = None, speak: bool = False) -> Dict[str, Any]:
+                    meta: Optional[Dict[str, Any]] = None, speak: bool = False,
+                    platform: str = "") -> Dict[str, Any]:
         """注入一条模拟消息（走与真实弹幕完全相同的管线，便于调试浮窗/朗读）。
 
         - `speak=False`：只上屏/进浮窗，不朗读（默认）
@@ -2088,7 +2108,9 @@ class DanmakuTTSService:
         """
         try:
             kind = str(kind or "danmaku")
-            if kind not in SESSION_MESSAGE_TYPES:
+            platform_key = self._mock_platform_key(platform)
+            allowed = MOCK_TYPES_BY_PLATFORM[platform_key]
+            if kind not in allowed:
                 return {"ok": False, "error": "不支持的消息类型：%s" % kind}
             seq_hint = self._mock_seq = getattr(self, "_mock_seq", 0) + 1
             uname = str(user or "").strip() or self._MOCK_USERS[seq_hint % len(self._MOCK_USERS)]
@@ -2096,18 +2118,30 @@ class DanmakuTTSService:
             body = str(text or "").strip()
 
             if kind == "gift":
-                if not body or "gift_name" not in payload_meta:
-                    name, num, price = self._MOCK_SAMPLES["gift"][seq_hint % len(self._MOCK_SAMPLES["gift"])]
-                    payload_meta.setdefault("gift_name", name)
-                    payload_meta.setdefault("num", num)
-                    payload_meta.setdefault("price", price)
-                try:
-                    mock_num = max(1, int(payload_meta.get("num") or 1))
-                    mock_price = max(0, int(payload_meta.get("price") or 0))
-                except (TypeError, ValueError):
-                    mock_num, mock_price = 1, 0
-                payload_meta.setdefault("coin_type", "mock_cny")
-                payload_meta.setdefault("total_coin", mock_price * mock_num)
+                if platform_key == "douyin":
+                    if not body or "gift_name" not in payload_meta:
+                        name, num, diamonds = self._MOCK_SAMPLES["gift_douyin"][
+                            seq_hint % len(self._MOCK_SAMPLES["gift_douyin"])
+                        ]
+                        payload_meta.setdefault("gift_name", name)
+                        payload_meta.setdefault("num", num)
+                        payload_meta.setdefault("diamond_count", diamonds)
+                    payload_meta.setdefault("coin_type", "diamond")
+                    payload_meta.setdefault("price", 0)
+                    payload_meta.setdefault("total_coin", 0)
+                else:
+                    if not body or "gift_name" not in payload_meta:
+                        name, num, price = self._MOCK_SAMPLES["gift"][seq_hint % len(self._MOCK_SAMPLES["gift"])]
+                        payload_meta.setdefault("gift_name", name)
+                        payload_meta.setdefault("num", num)
+                        payload_meta.setdefault("price", price)
+                    try:
+                        mock_num = max(1, int(payload_meta.get("num") or 1))
+                        mock_price = max(0, int(payload_meta.get("price") or 0))
+                    except (TypeError, ValueError):
+                        mock_num, mock_price = 1, 0
+                    payload_meta.setdefault("coin_type", "mock_cny")
+                    payload_meta.setdefault("total_coin", mock_price * mock_num)
                 body = body or ("送出 %s" % payload_meta.get("gift_name"))
             elif kind == "super_chat":
                 body = body or self._MOCK_SAMPLES["super_chat"][seq_hint % len(self._MOCK_SAMPLES["super_chat"])]
@@ -2134,6 +2168,7 @@ class DanmakuTTSService:
                 body = body or self._MOCK_SAMPLES["danmaku"][seq_hint % len(self._MOCK_SAMPLES["danmaku"])]
 
             payload_meta["mock"] = True
+            payload_meta["platform"] = platform_key
             payload = {"user": uname, "uid": 0, "text": body, "meta": payload_meta}
             event = self._inject_on_loop(kind, payload, bool(speak))
             spoken = bool((event or {}).get("spoken"))
@@ -2167,19 +2202,23 @@ class DanmakuTTSService:
         loop.call_soon_threadsafe(_run)
         return fut.result(timeout=5.0)
 
-    def inject_mock_burst(self, count: int = 10, kind: str = "mixed", speak: bool = False) -> Dict[str, Any]:
-        """批量注入模拟消息（弹幕风暴调试）。`kind=mixed` 时混合五类消息。"""
+    def inject_mock_burst(
+        self, count: int = 10, kind: str = "mixed", speak: bool = False,
+        platform: str = "",
+    ) -> Dict[str, Any]:
+        """批量注入模拟消息（弹幕风暴调试）。`kind=mixed` 时混合当前平台类型。"""
         try:
             n = max(1, min(int(count), 200))
         except (TypeError, ValueError):
             n = 10
-        kinds = SESSION_MESSAGE_TYPES
+        platform_key = self._mock_platform_key(platform)
+        kinds = MOCK_TYPES_BY_PLATFORM[platform_key]
         injected = 0
         spoken = 0
         filters: Dict[str, int] = {}
         for i in range(n):
             k = kinds[i % len(kinds)] if kind == "mixed" else kind
-            res = self.inject_mock(k, speak=speak)
+            res = self.inject_mock(k, speak=speak, platform=platform_key)
             if res.get("ok"):
                 injected += 1
                 if res.get("spoken"):
@@ -2203,6 +2242,8 @@ class DanmakuTTSService:
         for key in ("interval_ms", "per_tick", "speak"):
             if key in payload:
                 patch[key] = payload[key]
+        if payload.get("platform"):
+            self._mock_platform = normalize_platform(payload.get("platform"))
         if isinstance(payload.get("types"), dict):
             patch["types"] = payload["types"]
         if patch:
@@ -2219,10 +2260,11 @@ class DanmakuTTSService:
         running = bool(fut is not None and not fut.done() and not fut.cancelled())
         return {
             "running": running,
-            "sent": int(self._mock_sent),
+            "sent": int(getattr(self, "_mock_sent", 0)),
             "interval_ms": int(cfg.get("interval_ms") or 1500),
             "per_tick": int(cfg.get("per_tick") or 1),
             "speak": bool(cfg.get("speak")),
+            "platform": self._mock_platform_key(),
             "types": dict(cfg.get("types") or {}),
         }
 
@@ -2255,7 +2297,9 @@ class DanmakuTTSService:
                 await asyncio.sleep(interval)
                 cfg = self.config.get("mock", default={}) or {}
                 types_cfg = cfg.get("types") or {}
-                kinds = [k for k in SESSION_MESSAGE_TYPES if types_cfg.get(k)]
+                platform = self._mock_platform_key()
+                allowed = MOCK_TYPES_BY_PLATFORM[platform]
+                kinds = [k for k in allowed if types_cfg.get(k)]
                 if not kinds:
                     continue
                 try:
@@ -2264,7 +2308,7 @@ class DanmakuTTSService:
                     per_tick = 1
                 speak = bool(cfg.get("speak"))
                 for _ in range(per_tick):
-                    self.inject_mock(random.choice(kinds), speak=speak)
+                    self.inject_mock(random.choice(kinds), speak=speak, platform=platform)
                     self._mock_sent += 1
         except asyncio.CancelledError:
             raise

@@ -20,7 +20,57 @@
   var overlayApi = ctx.helpers.overlayApi;
   var overlayErrorText = ctx.helpers.overlayErrorText;
   var WB_TYPES = wb.constants.WB_TYPES;
+  var WB_TYPES_BY_PLATFORM = wb.constants.WB_TYPES_BY_PLATFORM;
+  var wbPlatform = wb.helpers.wbPlatform;
   var wbTypesForPlatform = wb.helpers.wbTypesForPlatform;
+
+  function wbAutoTypeDefaults(platform) {
+    var types = WB_TYPES_BY_PLATFORM[platform] || WB_TYPES_BY_PLATFORM.bilibili;
+    var out = {};
+    for (var i = 0; i < types.length; i++) out[types[i]] = types[i] === 'danmaku';
+    return out;
+  }
+
+  function wbNormalizeAutoTypes(platform, source) {
+    var types = WB_TYPES_BY_PLATFORM[platform] || WB_TYPES_BY_PLATFORM.bilibili;
+    var out = wbAutoTypeDefaults(platform);
+    var src = source && typeof source === 'object' ? source : {};
+    for (var i = 0; i < types.length; i++) {
+      if (typeof src[types[i]] === 'boolean') out[types[i]] = src[types[i]];
+    }
+    return out;
+  }
+
+  function wbInitAutoTypeSets() {
+    var auto = wbState.mock.auto;
+    var current = wbPlatform();
+    if (!auto.platform) auto.platform = current;
+    if (!auto.typesByPlatform) auto.typesByPlatform = {};
+    var platforms = ['bilibili', 'douyin'];
+    for (var i = 0; i < platforms.length; i++) {
+      var platform = platforms[i];
+      auto.typesByPlatform[platform] = wbNormalizeAutoTypes(
+        platform,
+        auto.typesByPlatform[platform] || (platform === auto.platform ? auto.types : null)
+      );
+    }
+    auto.types = wbNormalizeAutoTypes(auto.platform, auto.types);
+    auto.typesByPlatform[auto.platform] = wbClone(auto.types);
+  }
+
+  function wbOnPlatformChanged(platform) {
+    var auto = wbState.mock.auto;
+    wbInitAutoTypeSets();
+    if (auto.platform) {
+      auto.typesByPlatform[auto.platform] = wbNormalizeAutoTypes(auto.platform, auto.types);
+    }
+    auto.platform = platform === 'douyin' ? 'douyin' : 'bilibili';
+    auto.types = wbClone(auto.typesByPlatform[auto.platform]);
+    var types = wbTypesForPlatform(auto.platform);
+    if (types.indexOf(wbState.mock.kind) < 0) wbState.mock.kind = types[0];
+    wbRenderMockControls();
+    if (auto.running) wbApplyMockAuto(true, true);
+  }
 
   function wbMockTypeLabels() {
     return {
@@ -60,6 +110,7 @@
     wbDom.mockTypesHint.style.color = names.length ? '' : 'var(--wb-danger)';
   }
   function wbUpdateMockAutoUi() {
+    wbInitAutoTypeSets();
     var auto = wbState.mock.auto;
     wbDom.mockAutoState.textContent = auto.running ? '运行中' : '已停止';
     wbDom.mockAutoState.classList.toggle('is-running', auto.running);
@@ -77,6 +128,7 @@
     wbRenderMockTypeChips();
   }
   function wbRenderMockControls() {
+    wbInitAutoTypeSets();
     var mock = wbState.mock;
     var labels = wbMockTypeLabels();
     var types = wbTypesForPlatform();
@@ -137,13 +189,15 @@
         kind: kind,
         user: wbState.mock.user,
         text: wbState.mock.text,
-        speak: speak
+        speak: speak,
+        platform: wbPlatform()
       }]);
     } else {
       request = overlayApi('inject_mock_burst', [{
         count: count,
         kind: kind,
-        speak: speak
+        speak: speak,
+        platform: wbPlatform()
       }]);
     }
     request.then(function (res) {
@@ -170,7 +224,8 @@
       interval_ms: auto.interval,
       per_tick: auto.perTick,
       speak: !!auto.speak,
-      types: wbClone(auto.types)
+      platform: auto.platform || wbPlatform(),
+      types: wbClone(wbNormalizeAutoTypes(auto.platform || wbPlatform(), auto.types))
     };
   }
   function wbApplyMockAuto(enabled, immediate) {
@@ -200,9 +255,8 @@
         if (typeof res.per_tick === 'number') auto.perTick = clamp(Math.round(res.per_tick), 1, 10);
         if (typeof res.speak === 'boolean') auto.speak = res.speak;
         if (res.types && typeof res.types === 'object') {
-          for (var i = 0; i < WB_TYPES.length; i++) {
-            if (typeof res.types[WB_TYPES[i]] === 'boolean') auto.types[WB_TYPES[i]] = res.types[WB_TYPES[i]];
-          }
+          auto.types = wbNormalizeAutoTypes(auto.platform || wbPlatform(), res.types);
+          auto.typesByPlatform[auto.platform] = wbClone(auto.types);
         }
       }
       if (document.activeElement !== wbDom.mockInterval) wbDom.mockInterval.value = String(auto.interval);
@@ -249,9 +303,8 @@
         if (typeof res.per_tick === 'number') auto.perTick = clamp(Math.round(res.per_tick), 1, 10);
         if (typeof res.speak === 'boolean') auto.speak = res.speak;
         if (res.types && typeof res.types === 'object') {
-          for (var i = 0; i < WB_TYPES.length; i++) {
-            if (typeof res.types[WB_TYPES[i]] === 'boolean') auto.types[WB_TYPES[i]] = res.types[WB_TYPES[i]];
-          }
+          auto.types = wbNormalizeAutoTypes(auto.platform || wbPlatform(), res.types);
+          auto.typesByPlatform[auto.platform] = wbClone(auto.types);
         }
         if (document.activeElement !== wbDom.mockInterval) wbDom.mockInterval.value = String(auto.interval);
         if (document.activeElement !== wbDom.mockPerTick) wbDom.mockPerTick.value = String(auto.perTick);
@@ -278,6 +331,11 @@
     if (wbState.open && wbState.tab === 'debug') wbStartMockPoll();
   }
 
+  document.addEventListener('mutai:platform-changed', function (event) {
+    var platform = event && event.detail && event.detail.platform === 'douyin' ? 'douyin' : 'bilibili';
+    wbOnPlatformChanged(platform);
+  });
+
   ctx.modules.wbDebug = {
     wbSetDebugTab: wbSetDebugTab,
     wbMockTypeLabels: wbMockTypeLabels,
@@ -296,6 +354,7 @@
     wbToggleMockAuto: wbToggleMockAuto,
     wbFetchMockStatus: wbFetchMockStatus,
     wbStartMockPoll: wbStartMockPoll,
-    wbStopMockPoll: wbStopMockPoll
+    wbStopMockPoll: wbStopMockPoll,
+    wbOnPlatformChanged: wbOnPlatformChanged
   };
 })();

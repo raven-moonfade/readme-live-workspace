@@ -135,7 +135,8 @@ def main() -> int:
     check(snapshot["session"]["real"]["gift_cny"] == 1.0, "get_state 返回本机流水分项")
     check(snapshot["session"]["real"]["unique_users"] == 1, "get_state 返回 UID 去重数")
     check(snapshot["session"]["mock"]["received"] == 1, "get_state 返回模拟场次统计")
-    check(snapshot["mock"] == {"running": False, "sent": 7}, "get_state 返回模拟任务状态")
+    check(snapshot["mock"] == {"running": False, "sent": 7},
+          "get_state 返回模拟任务状态")
     check(snapshot["queue_len"] == 3, "queue_len 保持待 TTS + 播放器队列")
 
     service._begin_session(1002)

@@ -454,6 +454,21 @@ def run() -> None:
         check(len(window._pins.get("gift", [])) == 1, "礼物 lane 收到该礼物",
               len(window._pins.get("gift", [])))
 
+    # 固定区粉丝团必须显示用户名。
+    club = window._normalize_item(item(5150, "fansclub"))
+    if club is not None:
+        club.user = "团友甲"
+        club.text = "加入了粉丝团"
+        club.meta["fansclub_action"] = "加入了粉丝团"
+        club.pinned = True
+        club.lane = "fansclub"
+        _body, runs, _badges = overlay_qt.display_parts(
+            window._render_context(), club, "fansclub"
+        )
+        run_texts = [item[0] for item in runs]
+        check("团友甲" in run_texts and "加入了粉丝团" in run_texts,
+              "固定区粉丝团显示用户名", run_texts)
+
     # 滚动区上下留白一致（顶部固定区 / 底部固定区）。
     window._clear_messages()
     for lane in window._effective["pins"].values():

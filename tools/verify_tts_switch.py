@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -61,6 +62,63 @@ def main() -> int:
             display_only = service.inject_mock("danmaku", text="只上屏", speak=False)
             check(display_only.get("ok") is True and display_only.get("filter") == "mock_display_only",
                   "重新开启后调试消息恢复原有仅上屏语义", display_only)
+
+            rejected = service.inject_mock("super_chat", speak=False, platform="douyin")
+            check(rejected.get("ok") is False, "抖音模拟数据拒绝 SC", rejected)
+            rejected = service.inject_mock("guard", speak=False, platform="douyin")
+            check(rejected.get("ok") is False, "抖音模拟数据拒绝舰长", rejected)
+            club = service.inject_mock("fansclub", speak=False, platform="douyin")
+            check(club.get("ok") is True and club.get("user"),
+                  "抖音粉丝团模拟数据带用户名", club)
+            cursor = service.poll_events(0)["cursor"]
+            service.inject_mock("gift", speak=False, platform="douyin")
+            gift_events = service.poll_events(cursor)["events"]
+            gift_event = next((e for e in gift_events if e.get("type") == "gift"), None)
+            check(gift_event is not None and
+                  gift_event.get("meta", {}).get("coin_type") == "diamond" and
+                  int(gift_event.get("meta", {}).get("diamond_count") or 0) > 0,
+                  "抖音礼物模拟数据使用钻石口径", gift_event)
+
+            cursor = service.poll_events(0)["cursor"]
+            service.inject_mock_burst(count=12, kind="mixed", speak=False, platform="douyin")
+            events = service.poll_events(cursor)["events"]
+            kinds = {event.get("type") for event in events
+                     if event.get("type") != "log"}
+            allowed = {"danmaku", "gift", "enter", "like", "social", "fansclub"}
+            check(bool(kinds) and kinds <= allowed,
+                  "抖音混合模拟只产生抖音消息类型", sorted(kinds))
+            check(all(event.get("meta", {}).get("platform") == "douyin"
+                      for event in events if event.get("type") != "log"),
+                  "抖音模拟事件全部标记 platform=douyin")
+
+            cursor = service.poll_events(0)["cursor"]
+            service.mock_auto({
+                "enabled": True,
+                "platform": "douyin",
+                "interval_ms": 200,
+                "per_tick": 2,
+                "speak": False,
+                "types": {
+                    "danmaku": True,
+                    "gift": False,
+                    "super_chat": True,
+                    "guard": True,
+                    "enter": False,
+                    "like": False,
+                    "social": False,
+                    "fansclub": False,
+                },
+            })
+            time.sleep(0.9)
+            service.mock_auto({"enabled": False, "platform": "douyin"})
+            time.sleep(0.2)
+            auto_events = service.poll_events(cursor)["events"]
+            auto_kinds = {
+                event.get("type") for event in auto_events
+                if event.get("type") not in ("log",)
+            }
+            check(auto_kinds == {"danmaku"},
+                  "抖音自动模拟只发送抖音类型，不混入 SC/舰长", sorted(auto_kinds))
         finally:
             service.shutdown()
 

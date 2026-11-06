@@ -226,6 +226,23 @@ def pinned_display_parts(
         runs.append((body, body_font, body_color))
         if int(message.pin_count) > 1:
             runs.append((" ×" + str(message.pin_count), num_font, accent_color))
+    elif lane in ("danmaku", "enter", "like", "social", "fansclub"):
+        if lane == "like":
+            body = message.text or "点赞了直播间"
+        elif lane == "social":
+            body = message.text or str_value(meta.get("social_action"), "关注了直播间")
+        elif lane == "fansclub":
+            body = message.text or str_value(meta.get("fansclub_action"), "加入了粉丝团")
+        elif lane == "enter":
+            body = message.text or "进入直播间"
+        else:
+            body = message.text or ""
+        body = clip_codepoints(body, 120, ellipsis=True)
+        runs.append((LANE_LABELS.get(lane, "") + " ", accent_font, accent_color))
+        if user and user not in body:
+            runs.append((user, name_font, name_color))
+            runs.append((" ", body_font, body_color))
+        runs.append((body, body_font, body_color))
     else:
         runs.append((message.text or "", body_font, body_color))
     return "", runs, []
