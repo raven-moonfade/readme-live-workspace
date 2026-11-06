@@ -14,7 +14,7 @@ from typing import Any, Dict, Mapping
 from .fonts import family_error, normalize_family
 from .styles import THEME_PRESETS
 
-OVERLAY_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
+OVERLAY_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub")
 TYPOGRAPHY_SCHEMA_VERSION = 1
 TYPOGRAPHY_FIELDS = ("font_family", "line_height", "letter_spacing")
 

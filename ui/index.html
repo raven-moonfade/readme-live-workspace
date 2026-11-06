@@ -426,9 +426,14 @@
               <input class="switch-input" type="checkbox" data-path="read.like">
               <span class="switch-track"><span class="switch-knob"></span></span>
             </label>
-            <label class="switch-row" data-platform-only="douyin">
+            <label class="switch-row">
               <span class="switch-text">关注 / 分享</span>
               <input class="switch-input" type="checkbox" data-path="read.social" checked>
+              <span class="switch-track"><span class="switch-knob"></span></span>
+            </label>
+            <label class="switch-row" data-platform-only="douyin">
+              <span class="switch-text">粉丝团</span>
+              <input class="switch-input" type="checkbox" data-path="read.fansclub" checked>
               <span class="switch-track"><span class="switch-knob"></span></span>
             </label>
           </div>
@@ -524,7 +529,7 @@
         <h1 id="workspaceDataTitle">数据</h1>
         <div class="data-head-sub">
           <p>本场实时快照与历史场次；只展示本机能够证明的数据，不虚构平台热度或营收。</p>
-          <button class="data-help" type="button" aria-label="数据口径：本场收到包含弹幕、礼物、SC、舰长与入场；模拟事件全部隔离；观众总数与在线人数未接入，不计算观众活跃率；礼物金额为本机观测流水，非平台结算。" data-tip="本场收到包含弹幕、礼物、SC、舰长与入场；模拟事件全部隔离。直播间信息与队列来自当前连接；消息与金额来自本机事件流。硬丢弃只计队列/播放前失败；关闭类型、去重、冷却、长度等规则过滤单独显示，不当作丢失。观众总数 / 在线人数未接入，不计算观众活跃率。礼物金额为本机观测流水，非平台结算；免费礼物与银瓜子不折成人民币。">?</button>
+              <button class="data-help" type="button" aria-label="数据口径：本场收到按平台支持的消息类型；模拟事件全部隔离；观众总数与在线人数未接入，不计算观众活跃率；礼物金额为本机观测流水，非平台结算。" data-tip="本场收到按平台支持的消息类型（弹幕、礼物、入场、关注/分享、点赞、粉丝团，B站另有 SC 与舰长）；模拟事件全部隔离。直播间信息与队列来自当前连接；消息与金额来自本机事件流。硬丢弃只计队列/播放前失败；关闭类型、去重、冷却、长度等规则过滤单独显示，不当作丢失。观众总数 / 在线人数未接入，不计算观众活跃率。礼物金额为本机观测流水，非平台结算；免费礼物与银瓜子不折成人民币。">?</button>
         </div>
       </div>
       <div class="view-head-actions data-head-actions">
@@ -1216,7 +1221,7 @@
         <section class="wb-panel wb-rules-main">
           <header class="wb-rules-head">
             <div>
-              <div class="wb-rules-title"><h3>置顶与置底</h3><span class="wb-chip"><i aria-hidden="true"></i>五类 lane 独立 · 随平台切换</span></div>
+              <div class="wb-rules-title"><h3>置顶与置底</h3><span class="wb-chip"><i aria-hidden="true"></i>六类 lane 独立 · 随平台切换</span></div>
               <p>固定项不进滚动流；容量预算按窗口真实高度计算。停留时长 / 同屏条数填 0 = 不限。</p>
             </div>
             <div class="wb-rules-actions">
@@ -1258,7 +1263,7 @@
             <p id="wbCapacityNote" class="wb-capacity-note">压缩顺序：间距 8→6→4px；仍超预算时先淘汰 guard，再 gift，最后 SC。固定项不复制进滚动流。</p>
             <div class="wb-decision-grid">
               <div class="wb-decision-item"><b>1 · PIN</b><span>启用、位置合法、礼物达到门槛；进入本类 lane，不复制进滚动流。</span></div>
-              <div class="wb-decision-item"><b>2 · SCROLL</b><span>普通消息，或固定关闭 / 低于门槛；进入普通滚动流。</span></div>
+              <div class="wb-decision-item"><b>2 · SCROLL</b><span>普通消息，或固定关闭；进入普通滚动流。礼物 lane 开启时，低于门槛的礼物只丢弃、不再回流滚动区。</span></div>
               <div class="wb-decision-item"><b>3 · DROP</b><span>合格但硬预算不足；只从浮窗丢弃，journal / 监看 / TTS 保留。</span></div>
             </div>
           </section>
@@ -1336,7 +1341,7 @@
             <section class="wb-form-section">
               <h4>主题基线</h4>
               <div id="wbThemeGrid" class="wb-theme-grid"></div>
-              <p class="wb-section-note">主题切换只更新未覆盖字段；已覆盖字段保持不变，也不会清空五类覆盖。</p>
+            <p class="wb-section-note">主题切换只更新未覆盖字段；已覆盖字段保持不变，也不会清空各类型覆盖。</p>
             </section>
           </div>
         </section>
@@ -1429,7 +1434,7 @@
     </main>
 
     <footer class="wb-foot">
-      <div id="wbFootNote" class="wb-foot-note"><b>全部外观恢复默认</b>只清空五类消息的覆盖；主题、固定规则与窗口几何不动。</div>
+            <div id="wbFootNote" class="wb-foot-note"><b>全部外观恢复默认</b>只清空各类型消息的覆盖；主题、固定规则与窗口几何不动。</div>
       <div class="wb-foot-state">
         <span id="wbStatus" class="wb-status" role="status" aria-live="polite"></span>
         <span id="wbError" class="wb-error" role="alert" hidden></span>

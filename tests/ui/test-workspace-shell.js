@@ -1190,7 +1190,7 @@ async function probeTopbarGeometry(page) {
     workbenchCloseFocus: workbenchCloseFocus.view === 'danmaku' &&
       workbenchCloseFocus.focus === 'danmaku',
     dataVisible: !dataBase.panelHidden && dataBase.active,
-    dataReal: data.received > 0 && data.typeRows === 7 && data.nonZeroTypes > 0 && data.activityBars === 20,
+    dataReal: data.received > 0 && data.typeRows === 8 && data.nonZeroTypes > 0 && data.activityBars === 20,
     dataNoFakeMode: data.mode.includes('模拟'),
     dataValueFields: data.giftValue.startsWith('本机字段 ¥') && data.scValue.startsWith('本机字段 ¥'),
     dataPulse: data.pulse && data.oldMetricCards === 0 &&
@@ -1199,7 +1199,7 @@ async function probeTopbarGeometry(page) {
     backendHydration: backendHydration.users === '4' &&
       backendHydration.revenue === '¥42.50' &&
       backendHydration.gift.includes('¥12.50') &&
-      backendHydration.types.join(',') === '7,2,1,0,0,0,0',
+      backendHydration.types.join(',') === '7,2,1,0,0,0,0,0',
     sessionOpenForwarded: sessionOpenForwarded === true,
     filteredMetric: filteredMetric.dropped === '2' && filteredMetric.filtered === '10',
     appearanceSavePersists: appearanceSave.calls === 1 &&

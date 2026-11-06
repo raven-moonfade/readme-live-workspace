@@ -6,9 +6,9 @@ from __future__ import annotations
 import math
 from typing import Any, Mapping, Sequence
 
-PIN_LANES = ("gift", "sc", "guard", "danmaku", "enter", "like", "social")
-LANE_PRIORITY = ("sc", "gift", "guard", "social", "like", "enter", "danmaku")
-LANE_EVICTION_ORDER = ("danmaku", "enter", "like", "social", "guard", "gift", "sc")
+PIN_LANES = ("gift", "sc", "guard", "danmaku", "enter", "like", "social", "fansclub")
+LANE_PRIORITY = ("sc", "gift", "guard", "fansclub", "social", "like", "enter", "danmaku")
+LANE_EVICTION_ORDER = ("danmaku", "enter", "like", "social", "fansclub", "guard", "gift", "sc")
 
 
 def lane_height(heights: Sequence[float], gap: float) -> float:

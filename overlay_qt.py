@@ -192,6 +192,7 @@ LOG = logging.getLogger("overlay_qt")
 APP_TITLE = "ReadMe 浮窗"
 CONFIG_POLL_MS = 1200
 ITEMS_POLL_MS = 250
+SCROLL_GIFT_MERGE_SECONDS = 10.0
 RECONNECT_SECONDS = 1.0
 OUTRO_MS = 180
 ENTER_MS = 220
@@ -218,7 +219,9 @@ def _system_reduced_motion() -> bool:
         pass
     return False
 
-OVERLAY_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
+OVERLAY_TYPES = (
+    "danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub",
+)
 LANE_TYPES = {
     "gift": "gift",
     "sc": "super_chat",
@@ -227,6 +230,7 @@ LANE_TYPES = {
     "enter": "enter",
     "like": "like",
     "social": "social",
+    "fansclub": "fansclub",
 }
 STYLE_KEYS = (
     "font_size",
@@ -267,13 +271,13 @@ DEFAULT_PINS: dict[str, dict[str, Any]] = {
         "enabled": False,
         "position": "bottom",
         "duration_ms": 8000,
-        "max": 3,
+        "max": 0,
     },
     "enter": {
         "enabled": False,
         "position": "bottom",
         "duration_ms": 6000,
-        "max": 2,
+        "max": 0,
     },
     "like": {
         "enabled": False,
@@ -282,6 +286,12 @@ DEFAULT_PINS: dict[str, dict[str, Any]] = {
         "max": 2,
     },
     "social": {
+        "enabled": False,
+        "position": "bottom",
+        "duration_ms": 6000,
+        "max": 2,
+    },
+    "fansclub": {
         "enabled": False,
         "position": "bottom",
         "duration_ms": 6000,
@@ -330,6 +340,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "enter": False,
         "like": True,
         "social": True,
+        "fansclub": True,
     },
     "click_through": True,
     "always_on_top": True,
@@ -661,6 +672,9 @@ def _normalize_lane_pin(
         ),
         "max": _int(source.get("max"), 0, 6, int(fallback["max"])),
     }
+    if lane in ("danmaku", "enter"):
+        # 这两类不提供同屏条数设置，按“不限”处理（仍受固定区预算约束）。
+        result["max"] = 0
     if lane == "gift":
         result["min_price"] = max(
             0.0,
@@ -1140,6 +1154,7 @@ class OverlayWindow(QWidget):
         self._exiting: list[_Message] = []
         self._pin_fading: list[_Message] = []
         self._pins: dict[str, list[_Message]] = {lane: [] for lane in PIN_LANES}
+        self._gift_merge_ledger: dict[str, tuple[float, int]] = {}
         self._plan: Optional[dict[str, Any]] = None
         self._scroll_visible_ids: set[str] = set()
         self._lane_visible_ids: set[str] = set()
@@ -1746,6 +1761,15 @@ class OverlayWindow(QWidget):
                     self._clear_lane(lane, "配置关闭")
                     layout_changed = True
                 continue
+            if lane == "gift" and not bool(old_policy.get("enabled")):
+                removed = 0
+                for message in list(self._messages):
+                    if message.kind == "gift" and not message.leaving:
+                        self._drop_scroll_now(message)
+                        removed += 1
+                if removed:
+                    layout_changed = True
+                    LOG.info("礼物 lane 开启：从滚动区移除 %d 条旧礼物", removed)
             if max_items > 0 and len(self._pins.get(lane, [])) > max_items:
                 self._trim_lane(lane, max_items, "上限缩小")
                 layout_changed = True
@@ -1754,7 +1778,7 @@ class OverlayWindow(QWidget):
 
         if pin_changed:
             LOG.info(
-                "lane 配置：gift=%s sc=%s guard=%s danmaku=%s enter=%s like=%s social=%s counts=%s",
+                "lane 配置：gift=%s sc=%s guard=%s danmaku=%s enter=%s like=%s social=%s fansclub=%s counts=%s",
                 new_pins.get("gift"),
                 new_pins.get("sc"),
                 new_pins.get("guard"),
@@ -1762,6 +1786,7 @@ class OverlayWindow(QWidget):
                 new_pins.get("enter"),
                 new_pins.get("like"),
                 new_pins.get("social"),
+                new_pins.get("fansclub"),
                 {lane: len(self._pins.get(lane, [])) for lane in PIN_LANES},
             )
         if layout_changed:
@@ -1846,6 +1871,45 @@ class OverlayWindow(QWidget):
         if identifier is None:
             identifier = message.user
         return "%s\x1f%s" % (lane, identifier)
+
+    def _gift_merge_key(self, message: _Message) -> str:
+        gift_id = str(message.meta.get("gift_id") or "").strip()
+        identity = str(message.uid or "").strip() or message.user
+        return "%s\x1f%s" % (identity, gift_id or self._gift_name(message))
+
+    def _merge_gift_count(self, message: _Message) -> int:
+        """同一用户 + 同一礼物在窗口内累计数量；气泡消失后仍保留计数。"""
+        key = self._gift_merge_key(message)
+        now = time.perf_counter()
+        cutoff = now - SCROLL_GIFT_MERGE_SECONDS
+        for stale in [name for name, (ts, _num) in self._gift_merge_ledger.items() if ts < cutoff]:
+            del self._gift_merge_ledger[stale]
+        add_num = _positive_int(message.meta.get("num"), 1)
+        previous = self._gift_merge_ledger.get(key)
+        total = previous[1] + add_num if previous else add_num
+        self._gift_merge_ledger[key] = (now, total)
+        message.meta["num"] = total
+        return total
+
+    def _merge_scroll_gift(self, message: _Message) -> _Message:
+        """滚动区礼物合并：累计数量，旧气泡还在时先移除再重新触发。"""
+        if message.kind != "gift":
+            return message
+        key = self._gift_merge_key(message)
+        total = self._merge_gift_count(message)
+        for existing in list(self._messages):
+            if existing.kind != "gift" or existing.leaving or existing.suppress_draw:
+                continue
+            if self._gift_merge_key(existing) != key:
+                continue
+            self._drop_scroll_now(existing)
+        LOG.info(
+            "滚动礼物合并：user=%s gift=%s → 累计 %d",
+            message.user,
+            self._gift_name(message),
+            total,
+        )
+        return message
 
     def _pin_clone(self, message: _Message, lane: str) -> _Message:
         now = time.perf_counter()
@@ -2013,7 +2077,8 @@ class OverlayWindow(QWidget):
                         price,
                         min_price,
                     )
-                    return "scroll"
+                    # 礼物 lane 开启时，低于门槛的礼物不再回流到滚动区。
+                    return "drop"
         try:
             maximum = int(policy.get("max", 0) or 0)
         except (TypeError, ValueError):
@@ -2034,6 +2099,7 @@ class OverlayWindow(QWidget):
         except (TypeError, ValueError):
             maximum = 0
         price = _float_value(message.meta.get("price"), 0.0)
+        merged_num = self._merge_gift_count(message) if lane == "gift" else 0
         key = self._pin_key_for(message)
         for ghost in list(self._pin_fading):
             if ghost.lane == lane and ghost.pin_key == key:
@@ -2045,12 +2111,10 @@ class OverlayWindow(QWidget):
             None,
         )
         if existing is not None:
-            old_num = _positive_int(existing.meta.get("num"), 1)
-            add_num = _positive_int(message.meta.get("num"), 1)
             merged_meta = dict(existing.meta)
             merged_meta.update(message.meta)
             if lane == "gift":
-                merged_meta["num"] = old_num + add_num
+                merged_meta["num"] = merged_num
             existing.meta = merged_meta
             existing.text = message.text
             existing.pin_price = max(float(existing.pin_price), price)
@@ -2067,10 +2131,9 @@ class OverlayWindow(QWidget):
             self._arm_pin_timer(existing)
             self._last_pin_layout_sig = None
             LOG.info(
-                "lane 合并：lane=%s user=%s +%d → pin_count=%d num=%s，计时已重置，状态=%s",
+                "lane 合并：lane=%s user=%s → pin_count=%d num=%s，计时已重置，状态=%s",
                 lane,
                 existing.user,
-                add_num,
                 existing.pin_count,
                 existing.meta.get("num"),
                 self._pin_state_text()
@@ -2186,6 +2249,7 @@ class OverlayWindow(QWidget):
                 if not message.leaving:
                     self._start_leave(message)
         for message in scroll_messages:
+            message = self._merge_scroll_gift(message)
             active = [item for item in self._messages if not item.leaving]
             while max_lines > 0 and len(active) >= max_lines:
                 oldest = active.pop(0)
@@ -2512,7 +2576,8 @@ class OverlayWindow(QWidget):
         ) + scroll_gap * max(0, len(active) - 1)
         for message in active:
             message.suppress_draw = False
-        y = scroll_bottom - total
+        # 滚动内容在可用区域内垂直居中：顶部固定区与底部固定区的留白一致。
+        y = scroll_top + max(0.0, (available_scroll - total) / 2.0)
         now = time.perf_counter()
         for message in active:
             if message.visual is None:

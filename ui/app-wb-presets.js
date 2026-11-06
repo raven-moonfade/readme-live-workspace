@@ -359,7 +359,7 @@
       if (typeBox.getAttribute("data-platform-types") !== sig) {
         var labels = {
           danmaku: "弹幕", gift: "礼物", super_chat: "SC", guard: "舰长",
-          enter: "入场", like: "点赞", social: "关注"
+          enter: "入场", like: "点赞", social: "关注", fansclub: "粉丝团"
         };
         typeBox.innerHTML = types.map(function (type) {
           return '<label><input type="checkbox" data-wb-preset-type="' + type + '">' +

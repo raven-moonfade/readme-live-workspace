@@ -32,7 +32,13 @@ const url = 'file:///' + path.join(root, 'ui/index.html').replace(/\\/g, '/');
   const zeros = await page.evaluate(() => ({
     durationMin: document.querySelector('input[data-wb-pin-field="duration_ms"]')?.getAttribute('min'),
     maxMin: document.querySelector('input[data-wb-pin-field="max"]')?.getAttribute('min'),
-    hints: document.querySelectorAll('.wb-zero-hint').length
+    hints: document.querySelectorAll('.wb-zero-hint').length,
+    danmakuCountControls: document.querySelectorAll(
+      'tr[data-wb-lane="danmaku"] input[data-wb-pin-field="max"]'
+    ).length,
+    enterCountControls: document.querySelectorAll(
+      'tr[data-wb-lane="enter"] input[data-wb-pin-field="max"]'
+    ).length
   }));
   await page.click('[data-wb-tab="style"]');
   await page.waitForTimeout(300);
@@ -47,12 +53,13 @@ const url = 'file:///' + path.join(root, 'ui/index.html').replace(/\\/g, '/');
   await page.screenshot({ path: path.join(process.env.TEMP || root, 'rules-douyin.png') });
   console.log(JSON.stringify({ bili, douyin, zeros, styleTypes, mockTypes, mockKinds, errors }, null, 2));
   await browser.close();
-  const expected = ['danmaku', 'gift', 'enter', 'like', 'social'];
-  if (errors.length || bili.length !== 5 || douyin.length !== 5 ||
-      styleTypes.length !== 5 || mockTypes.length !== 5 ||
+  const expected = ['danmaku', 'gift', 'enter', 'like', 'social', 'fansclub'];
+  if (errors.length || bili.length !== 6 || douyin.length !== 6 ||
+      styleTypes.length !== 6 || mockTypes.length !== 6 ||
       JSON.stringify(styleTypes) !== JSON.stringify(expected) ||
       JSON.stringify(mockTypes) !== JSON.stringify(expected) ||
-      JSON.stringify(mockKinds) !== JSON.stringify(expected)) process.exit(1);
+      JSON.stringify(mockKinds) !== JSON.stringify(expected) ||
+      zeros.danmakuCountControls !== 0 || zeros.enterCountControls !== 0) process.exit(1);
 })().catch((error) => {
   console.error(error);
   process.exit(1);

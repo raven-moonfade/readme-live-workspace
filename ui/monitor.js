@@ -6,7 +6,9 @@
 (function () {
   "use strict";
 
-  const TYPE_ORDER = ["danmaku", "gift", "super_chat", "guard", "enter", "like", "social"];
+  const TYPE_ORDER = [
+    "danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub",
+  ];
   const TYPE_META = Object.freeze({
     danmaku: Object.freeze({
       label: "弹幕",
@@ -63,6 +65,14 @@
       color: "#7DDCFF",
       bg: "rgba(125, 220, 255, .085)",
       border: "rgba(125, 220, 255, .26)",
+    }),
+    fansclub: Object.freeze({
+      label: "粉丝团",
+      short: "团",
+      code: "FANSCLUB",
+      color: "#FFC46B",
+      bg: "rgba(255, 196, 107, .085)",
+      border: "rgba(255, 196, 107, .26)",
     }),
   });
 
@@ -430,6 +440,7 @@
     if (text == null && type === "enter") text = "进入直播间";
     if (text == null && type === "like") text = "点赞了直播间";
     if (text == null && type === "social") text = asText(meta.social_action || "关注了直播间");
+    if (text == null && type === "fansclub") text = asText(meta.fansclub_action || "加入了粉丝团");
     if (type === "enter") text = asText(text).replace(/^进入了?直播间$/, "进入直播间");
     text = asText(text == null ? "" : text);
 
@@ -714,15 +725,15 @@
 
   function platformTypeOrder() {
     return state.platform === "douyin"
-      ? ["danmaku", "gift", "enter", "like", "social"]
-      : ["danmaku", "gift", "super_chat", "guard", "enter"];
+      ? ["danmaku", "gift", "enter", "like", "social", "fansclub"]
+      : ["danmaku", "gift", "super_chat", "guard", "enter", "social"];
   }
 
   function updateFilterCounts() {
     if (!el.typeFilters) return;
     const counts = {
       all: state.items.length, danmaku: 0, gift: 0, super_chat: 0,
-      guard: 0, enter: 0, like: 0, social: 0,
+      guard: 0, enter: 0, like: 0, social: 0, fansclub: 0,
     };
     state.items.forEach(function (item) {
       counts[item.type] += 1;

@@ -42,7 +42,8 @@
     platform: 'bilibili',
     tts: { enabled: true, voice: 'zh-CN-XiaoxiaoNeural', rate: '+0%', pitch: '+0Hz', volume: '+0%' },
     read: {
-      danmaku: true, gift: true, super_chat: true, guard: true, enter: false, like: false, social: true,
+      danmaku: true, gift: true, super_chat: true, guard: true, enter: false,
+      like: false, social: true, fansclub: true,
       gift_min_price: 0, include_user: true,
       templates: {
         danmaku: '{user}说：{text}',
@@ -51,7 +52,8 @@
         guard: '感谢{user}开通{guard_name}',
         enter: '{user}进入直播间',
         like: '{user}点了赞',
-        social: '{user}{social_action}'
+        social: '{user}{social_action}',
+        fansclub: '{user}{fansclub_action}'
       }
     },
     filters: { blacklist: [], dedup_seconds: 5, max_len: 80, user_cooldown: 3, global_cooldown: 0.5 },
@@ -90,7 +92,10 @@
         gift: true,
         super_chat: true,
         guard: true,
-        enter: false
+        enter: false,
+        like: true,
+        social: true,
+        fansclub: true
       },
       gift_pin: false,
       gift_pin_position: 'bottom',
@@ -113,14 +118,15 @@
         guard: false,
         enter: false,
         like: false,
-        social: false
+        social: false,
+        fansclub: false
       }
     }
   };
 
   var BADGE_LABEL = {
     danmaku: '弹幕', gift: '礼物', super_chat: 'SC', guard: '上舰',
-    enter: '入场', like: '点赞', social: '关注'
+    enter: '入场', like: '点赞', social: '关注', fansclub: '粉丝团'
   };
   var USER_COLOR_VARS = [
     '--user-c1', '--user-c2', '--user-c3', '--user-c4', '--user-c5',
@@ -164,7 +170,7 @@
     queue_full: '队列已满',
     unsupported: '不支持类型'
   };
-  var MOCK_AUTO_TYPE_KEYS = ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'like', 'social'];
+  var MOCK_AUTO_TYPE_KEYS = ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'like', 'social', 'fansclub'];
   var MOCK_AUTO_TYPE_LABELS = {
     danmaku: '弹幕',
     gift: '礼物',
@@ -172,7 +178,8 @@
     guard: '上舰',
     enter: '入场',
     like: '点赞',
-    social: '关注'
+    social: '关注',
+    fansclub: '粉丝团'
   };
 
   /* ---------------- DOM 引用 ---------------- */
@@ -417,6 +424,7 @@
     if (ev.type === 'super_chat') return meta.message || '发送了醒目留言';
     if (ev.type === 'like') return '点赞了直播间';
     if (ev.type === 'social') return meta.social_action || '关注了直播间';
+    if (ev.type === 'fansclub') return meta.fansclub_action || '加入了粉丝团';
     return '';
   }
 
@@ -1389,14 +1397,14 @@
      浮窗工作台 v2（B 工作台）
      只消费 get_config_v2 / apply_overlay / update_config / mock_*。
      ============================================================ */
-  var WB_TYPES = ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'like', 'social'];
+  var WB_TYPES = ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'like', 'social', 'fansclub'];
   var WB_TYPES_BY_PLATFORM = {
-    bilibili: ['danmaku', 'gift', 'super_chat', 'guard', 'enter'],
-    douyin: ['danmaku', 'gift', 'enter', 'like', 'social']
+    bilibili: ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'social'],
+    douyin: ['danmaku', 'gift', 'enter', 'like', 'social', 'fansclub']
   };
   var WB_PIN_LANES_BY_PLATFORM = {
-    bilibili: ['gift', 'sc', 'guard', 'danmaku', 'enter'],
-    douyin: ['gift', 'danmaku', 'enter', 'like', 'social']
+    bilibili: ['gift', 'sc', 'guard', 'danmaku', 'enter', 'social'],
+    douyin: ['gift', 'danmaku', 'enter', 'like', 'social', 'fansclub']
   };
   function wbPlatform() {
     return state.platform === 'douyin' ? 'douyin' : 'bilibili';
@@ -1514,7 +1522,11 @@
     },
     social: {
       name: '关注', code: 'SOCIAL', color: 'var(--ok)', icon: '#wb-i-enter',
-      sub: '抖音关注 / 分享直播间'
+      sub: '关注 / 分享直播间（B站 / 抖音）'
+    },
+    fansclub: {
+      name: '粉丝团', code: 'FANSCLUB', color: 'var(--warn)', icon: '#wb-i-star',
+      sub: '抖音加入粉丝团 / 粉丝团升级'
     }
   };
   var WB_THEME_META = {
@@ -1570,10 +1582,11 @@
     gift: { enabled: true, position: 'top', duration_ms: 8000, max: 3, min_price: 10 },
     sc: { enabled: true, position: 'top', duration_ms: 12000, max: 2 },
     guard: { enabled: true, position: 'bottom', duration_ms: 6000, max: 2 },
-    danmaku: { enabled: false, position: 'bottom', duration_ms: 8000, max: 3 },
-    enter: { enabled: false, position: 'bottom', duration_ms: 6000, max: 2 },
+    danmaku: { enabled: false, position: 'bottom', duration_ms: 8000, max: 0 },
+    enter: { enabled: false, position: 'bottom', duration_ms: 6000, max: 0 },
     like: { enabled: false, position: 'bottom', duration_ms: 6000, max: 2 },
-    social: { enabled: false, position: 'bottom', duration_ms: 6000, max: 2 }
+    social: { enabled: false, position: 'bottom', duration_ms: 6000, max: 2 },
+    fansclub: { enabled: false, position: 'bottom', duration_ms: 6000, max: 2 }
   };
   function wbNullStyle() {
     var out = {};
@@ -2057,6 +2070,7 @@
       if (raw.position === 'top' || raw.position === 'bottom') out[lane].position = raw.position;
       out[lane].duration_ms = wbRound(raw.duration_ms, out[lane].duration_ms, 0, 30000);
       out[lane].max = wbRound(raw.max, out[lane].max, 0, 6);
+      if (lane === 'danmaku' || lane === 'enter') out[lane].max = 0;
       if (lane === 'gift') {
         out[lane].min_price = clamp(wbFinite(raw.min_price, out[lane].min_price), 0, 100000);
       }
@@ -3061,7 +3075,7 @@
     function injectMockEvent(payload) {
       var p = payload && typeof payload === 'object' ? payload : {};
       var kind = String(p.kind || 'danmaku');
-      var allowed = ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'like', 'social'];
+      var allowed = ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'like', 'social', 'fansclub'];
       if (allowed.indexOf(kind) < 0) {
         return { ok: false, error: '不支持的消息类型：' + kind };
       }
@@ -3549,7 +3563,7 @@
         count = clamp(count, 1, 200);
         var requestedKind = String(p.kind || 'mixed');
         var speak = !!p.speak;
-        var kinds = ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'like', 'social'];
+        var kinds = ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'like', 'social', 'fansclub'];
         var injected = 0;
         var spoken = 0;
         var filters = {};

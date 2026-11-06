@@ -18,6 +18,7 @@ TYPE_COLORS: dict[str, str] = {
     "enter": "#53d6c5",
     "like": "#ff8fb1",
     "social": "#7ddcff",
+    "fansclub": "#ffc46b",
 }
 TYPE_NAMES = {
     "danmaku": "弹幕",
@@ -27,6 +28,7 @@ TYPE_NAMES = {
     "enter": "入场",
     "like": "点赞",
     "social": "关注",
+    "fansclub": "粉丝团",
 }
 LANE_LABELS = {
     "gift": "礼物",
@@ -36,6 +38,7 @@ LANE_LABELS = {
     "enter": "入场",
     "like": "点赞",
     "social": "关注",
+    "fansclub": "粉丝团",
 }
 
 

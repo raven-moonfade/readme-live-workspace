@@ -104,7 +104,7 @@ def run() -> None:
     check(
         result["lane_heights"] == {
             "gift": 156, "sc": 102, "guard": 48,
-            "danmaku": 0, "enter": 0, "like": 0, "social": 0,
+            "danmaku": 0, "enter": 0, "like": 0, "social": 0, "fansclub": 0,
         },
         "默认样例 lane 高度",
         repr(result["lane_heights"]),
@@ -171,7 +171,7 @@ def run() -> None:
     check(
         tall["capacity_rows"] == {
             "gift": 1, "sc": 1, "guard": 1,
-            "danmaku": 0, "enter": 0, "like": 0, "social": 0,
+            "danmaku": 0, "enter": 0, "like": 0, "social": 0, "fansclub": 0,
         },
         "大字默认预算每 lane 1 行",
         repr(tall["capacity_rows"]),
@@ -238,7 +238,7 @@ def run() -> None:
     check(
         mixed["item_px_by_lane"] == {
             "gift": 100, "sc": 40, "guard": 60,
-            "danmaku": 48, "enter": 48, "like": 48, "social": 48,
+            "danmaku": 48, "enter": 48, "like": 48, "social": 48, "fansclub": 48,
         },
         "支持 per-lane item height",
         mixed["item_px_by_lane"],
@@ -246,7 +246,7 @@ def run() -> None:
     check(
         mixed["lane_heights"] == {
             "gift": 100, "sc": 40, "guard": 60,
-            "danmaku": 0, "enter": 0, "like": 0, "social": 0,
+            "danmaku": 0, "enter": 0, "like": 0, "social": 0, "fansclub": 0,
         },
         "per-lane 高度独立计算",
         mixed["lane_heights"],
@@ -260,7 +260,7 @@ def run() -> None:
     check(
         empty_lane["lane_heights"] == {
             "gift": 100, "sc": 0, "guard": 0,
-            "danmaku": 0, "enter": 0, "like": 0, "social": 0,
+            "danmaku": 0, "enter": 0, "like": 0, "social": 0, "fansclub": 0,
         },
         "空 lane 不被其他 lane 的大字体拖累",
         empty_lane["lane_heights"],

@@ -607,7 +607,7 @@ fs.mkdirSync(OUT, { recursive: true });
     historyUi: history.listCount === 2 && history.countBadge === '2' && !history.error &&
       historyDetailView.title === '历史夜航电台' &&
       historyDetailView.metrics.join(',') === '120,100,20,42' &&
-      historyDetailView.typeRows === 7 &&
+      historyDetailView.typeRows === 8 &&
       historyDetailView.activityBars > 0 &&
       historyDetailView.exportButtons.join(',') === '导出 JSON,导出 CSV' &&
       historyDetailView.deleteButton,
@@ -636,7 +636,7 @@ fs.mkdirSync(OUT, { recursive: true });
     historyCompare: compareView.title === '场次对比' &&
       compareView.contexts.join(',') === '历史夜航电台,上一场夜航电台' &&
       compareView.metricRows >= 10 &&
-      compareView.typeRows === 7 &&
+      compareView.typeRows === 8 &&
       compareView.metricCells[0].join('|') === '时长|01:00:00|00:30:00|' &&
       compareView.metricCells[1].join('|') === '收到|120|80|+40 条' &&
       compareView.metricCells[4].join('|') === '收到 / 小时|120.0|160.0|-40.0/时' &&

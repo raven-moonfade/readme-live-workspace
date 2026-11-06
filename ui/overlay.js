@@ -15,7 +15,7 @@
   var dragBar = document.getElementById('dragBar');
   var resizeHandle = document.getElementById('resizeHandle');
 
-  var OVERLAY_TYPES = ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'like', 'social'];
+  var OVERLAY_TYPES = ['danmaku', 'gift', 'super_chat', 'guard', 'enter', 'like', 'social', 'fansclub'];
   var THEMES = ['classic', 'shortvideo', 'minimal', 'highcontrast'];
   var CONFIG_POLL_MS = 500;
   var ITEM_POLL_MS = 260;
@@ -63,7 +63,8 @@
       guard: true,
       enter: true,
       like: true,
-      social: true
+      social: true,
+      fansclub: true
     },
     click_through: false,
     always_on_top: true,
@@ -174,7 +175,8 @@
       guard: true,
       enter: true,
       like: true,
-      social: true
+      social: true,
+      fansclub: true
     }
   });
 
@@ -978,6 +980,11 @@
     if (item.type === 'social') {
       result.tags.push({ kind: 'social', label: '关注', icon: 'enter' });
       result.body = item.text || normalizeMetaText(meta.social_action, '关注了直播间');
+      return result;
+    }
+    if (item.type === 'fansclub') {
+      result.tags.push({ kind: 'fansclub', label: '粉丝团', icon: 'star' });
+      result.body = item.text || normalizeMetaText(meta.fansclub_action, '加入了粉丝团');
       return result;
     }
 

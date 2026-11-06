@@ -247,7 +247,7 @@ async function selectSize(page, size) {
       body: [document.body.scrollWidth, document.body.clientWidth]
     }));
     assert(narrow.state.fontPx === 40 && narrow.state.layout === 'single_line', '1024 大档保持 40px 单行', narrow.state);
-    assert(narrow.filtersDisplay === 'none' && narrow.selectDisplay !== 'none' && narrow.selectOptions === 6,
+    assert(narrow.filtersDisplay === 'none' && narrow.selectDisplay !== 'none' && narrow.selectOptions === 7,
       '1024 大档使用完整筛选下拉', narrow);
     assert(narrow.body[0] <= narrow.body[1], '1024 页面无横向溢出', narrow.body);
     await page.selectOption('#filterSelect', 'guard');

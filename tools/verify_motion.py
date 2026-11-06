@@ -68,8 +68,10 @@ def run_resolver() -> None:
     print("\n-- resolver --")
     resolved = MotionResolver(doc()).resolve_all()
     check(
-        set(resolved) == {"danmaku", "gift", "super_chat", "guard", "enter", "like", "social"},
-        "七类齐全",
+        set(resolved) == {
+            "danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub",
+        },
+        "八类齐全",
     )
     check(
         all(set(spec) == set(MOTION_FIELDS) for spec in resolved.values()),

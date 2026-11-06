@@ -156,6 +156,16 @@ def test_protobuf() -> None:
     check(kind == "social", "关注类型映射", kind)
     check(body and body["meta"]["social_action"] == "关注了直播间", "关注文案", body)
 
+    fansclub = (
+        field_varint(2, 1)
+        + field_bytes(3, make_user(6666, "团友"))
+        + field_bytes(4, "加入了粉丝团")
+    )
+    kind, body = normalize_message("WebcastFansclubMessage", fansclub, 9007)
+    check(kind == "fansclub", "粉丝团类型映射", kind)
+    check(body and body["user"] == "团友", "粉丝团用户名", body)
+    check(body and body["meta"]["fansclub_action"] == "加入了粉丝团", "粉丝团文案", body)
+
     compressed = gzip.compress(raw)
     check(len(parse_response(compressed)["messages"]) == 1, "兼容 gzip 响应")
     push_frame = field_bytes(8, raw)

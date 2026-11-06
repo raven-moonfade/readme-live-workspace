@@ -11,7 +11,7 @@ from __future__ import annotations
 import copy
 from typing import Any, Dict, Mapping
 
-OVERLAY_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
+OVERLAY_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub")
 MOTION_SCHEMA_VERSION = 1
 
 MOTION_FIELDS = (

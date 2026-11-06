@@ -345,7 +345,7 @@ def run() -> None:
           "布局：固定 288.6 / 滚动 331.4", window._plan.get("fixed_height"))
     check(window._plan.get("lane_heights") == {
               "gift": 96.2, "sc": 96.2, "guard": 96.2,
-              "danmaku": 0, "enter": 0, "like": 0, "social": 0,
+              "danmaku": 0, "enter": 0, "like": 0, "social": 0, "fansclub": 0,
           },
           "布局：每 lane 按真实高度 96.2", window._plan.get("lane_heights"))
     check(window._plan.get("lane_cap") == 248 and window._plan.get("item_px") == 45,
@@ -393,6 +393,95 @@ def run() -> None:
           "布局：丢弃最旧、保留最新 8 条")
     check(all(abs(message.visual.height - 44.1) < 0.2 for message in window._messages if message.visual),
           "布局：短消息每条 44.1px")
+
+    # 滚动区礼物合并：同用户 + 同礼物在窗口内累计并重新触发。
+    window._clear_messages()
+    for lane in window._effective["pins"].values():
+        lane["enabled"] = False
+    gift_a = window._normalize_item(item(5000, "gift"))
+    gift_b = window._normalize_item(item(5001, "gift"))
+    if gift_a is not None and gift_b is not None:
+        gift_a.user = gift_b.user = "合并测试用户"
+        gift_b.uid = gift_a.uid
+        gift_a.meta["num"] = 2
+        gift_b.meta["num"] = 3
+        window._ingest([gift_a])
+        window._ingest([gift_b])
+        check(len(window._messages) == 1 and
+              int(window._messages[0].meta.get("num") or 0) == 5,
+              "滚动礼物：同用户同礼物累计数量",
+              [(message.user, message.meta.get("num")) for message in window._messages])
+        # 模拟旧气泡已经被挤出去：计数仍应在时间窗内保留。
+        window._drop_scroll_now(window._messages[0])
+        gift_c = window._normalize_item(item(5002, "gift"))
+        if gift_c is not None:
+            gift_c.user = "合并测试用户"
+            gift_c.uid = gift_a.uid
+            gift_c.meta["num"] = 4
+            window._ingest([gift_c])
+            check(len(window._messages) == 1 and
+                  int(window._messages[-1].meta.get("num") or 0) == 9,
+                  "滚动礼物：旧气泡已挤出后重新出现并累加之前数量",
+                  [(message.user, message.meta.get("num")) for message in window._messages])
+            gift_d = window._normalize_item(item(5003, "gift"))
+            if gift_d is not None:
+                gift_d.user = "合并测试用户"
+                gift_d.uid = gift_a.uid
+                gift_d.meta["num"] = 1
+                key = window._gift_merge_key(gift_d)
+                window._gift_merge_ledger[key] = (
+                    time.perf_counter() - overlay_qt.SCROLL_GIFT_MERGE_SECONDS - 1,
+                    9,
+                )
+                window._ingest([gift_d])
+                check(len(window._messages) == 1 and
+                      int(window._messages[-1].meta.get("num") or 0) == 1,
+                      "滚动礼物：超过时间窗后重新计数",
+                      [(message.user, message.meta.get("num")) for message in window._messages])
+
+    # 礼物 lane 开启后，礼物不再进入滚动区。
+    window._clear_messages()
+    for lane in window._effective["pins"].values():
+        lane["enabled"] = False
+    window._effective["pins"]["gift"]["enabled"] = True
+    pinned_gift = window._normalize_item(item(5100, "gift"))
+    if pinned_gift is not None:
+        pinned_gift.meta["price"] = 20
+        window._ingest([pinned_gift])
+        check(not any(message.kind == "gift" for message in window._messages),
+              "礼物 lane 开启后滚动区不再出现礼物",
+              [(message.kind, message.user) for message in window._messages])
+        check(len(window._pins.get("gift", [])) == 1, "礼物 lane 收到该礼物",
+              len(window._pins.get("gift", [])))
+
+    # 滚动区上下留白一致（顶部固定区 / 底部固定区）。
+    window._clear_messages()
+    for lane in window._effective["pins"].values():
+        lane["enabled"] = False
+    window._effective["pins"]["gift"].update(enabled=True, position="top", max=1)
+    window._effective["pins"]["guard"].update(enabled=True, position="bottom", max=1)
+    gap_batch = []
+    for seq, kind in ((5200, "gift"), (5201, "guard"), (5202, "danmaku"), (5203, "danmaku")):
+        message = window._normalize_item(item(seq, kind))
+        if message is None:
+            continue
+        if kind == "gift":
+            message.meta["price"] = 20
+        gap_batch.append(message)
+    window._ingest(gap_batch)
+    window._relayout(snap_scroll=True)
+    scroll_items = sorted(
+        [message for message in window._messages if message.visual and message.y is not None],
+        key=lambda message: float(message.y),
+    )
+    if scroll_items:
+        top_gap = float(scroll_items[0].y) - window._scroll_clip_rect.top()
+        bottom_gap = (
+            window._scroll_clip_rect.bottom()
+            - (float(scroll_items[-1].y) + scroll_items[-1].visual.height)
+        )
+        check(abs(top_gap - bottom_gap) <= 1.0,
+              "布局：滚动区顶部与底部留白一致", (top_gap, bottom_gap))
 
     # 渲染 characterization：气泡几何、文本段、位图生成。
     window._clear_messages()

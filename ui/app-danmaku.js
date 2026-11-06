@@ -98,6 +98,7 @@
     if (type === 'super_chat') return meta.message || '发送了一条醒目留言';
     if (type === 'like') return '点赞了直播间';
     if (type === 'social') return meta.social_action || '关注了直播间';
+    if (type === 'fansclub') return meta.fansclub_action || '加入了粉丝团';
     return '';
   }
 

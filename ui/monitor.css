@@ -441,7 +441,7 @@ svg {
 .filters {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
   overflow: hidden;
   flex: 0 1 auto;
@@ -2092,7 +2092,7 @@ html[data-ui-size="large"] .tool-btn {
 }
 
 html[data-ui-size="large"] .filter-chip {
-  padding-inline: 12px;
+  padding-inline: 10px;
   font-size: 17px;
 }
 

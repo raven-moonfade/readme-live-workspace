@@ -25,7 +25,7 @@
   function wbMockTypeLabels() {
     return {
       danmaku: '弹幕', gift: '礼物', super_chat: '醒目留言', guard: '上舰',
-      enter: '入场', like: '点赞', social: '关注'
+      enter: '入场', like: '点赞', social: '关注', fansclub: '粉丝团'
     };
   }
   function wbMockActiveTypeNames() {

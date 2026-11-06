@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import sys
+from types import SimpleNamespace
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -36,6 +37,23 @@ async def run() -> None:
         lambda *args: states.append(args),
         lambda *args: errors.append(args),
     )
+
+    messages = []
+    interact = DanmakuConnection(
+        lambda kind, payload: messages.append((kind, payload)),
+        lambda *_args: None,
+        lambda *_args: None,
+    )
+    interact._handle_interact(SimpleNamespace(msg_type=1, username="进场人", uid=11))
+    interact._handle_interact(SimpleNamespace(msg_type=2, username="关注人", uid=22))
+    interact._handle_interact(SimpleNamespace(msg_type=3, username="分享人", uid=33))
+    check(messages[0][0] == "enter", "B 站 msg_type=1 映射入场", messages[0])
+    check(messages[1][0] == "social" and
+          messages[1][1]["meta"]["social_action"] == "关注了直播间",
+          "B 站 msg_type=2 映射关注", messages[1])
+    check(messages[2][0] == "social" and
+          messages[2][1]["meta"]["social_action"] == "分享了直播间",
+          "B 站 msg_type=3 映射分享", messages[2])
 
     async def fake_fetch_info(attempts: int = 3):
         return {

@@ -56,12 +56,16 @@ AUDIO_REPLAY_KEEP = 40        # 播放完成后保留最近 N 条供重播，其
 SYNTH_TIMEOUT = 60.0          # 单条合成超时（秒）
 VOICE_FETCH_TIMEOUT = 45.0    # 拉取音色列表超时（秒）
 PREVIEW_MAX_CHARS = 200       # 试听文本上限
-OVERLAY_MESSAGE_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
+OVERLAY_MESSAGE_TYPES = (
+    "danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub",
+)
 LOG_EVENT_LEVEL = logging.WARNING
 LOG_EVENT_MAX_CHARS = 400
 _LOGGER_NAMES = ("danmaku_tts", "blivedm")
 _UNSET = object()
-SESSION_MESSAGE_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
+SESSION_MESSAGE_TYPES = (
+    "danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub",
+)
 FILTER_REASONS = frozenset(
     (
         "disabled",
@@ -1134,6 +1138,7 @@ class DanmakuTTSService:
                 "guard_name": meta.get("guard_name") or "舰队",
                 "like_count": meta.get("like_count") or 1,
                 "social_action": meta.get("social_action") or "关注了直播间",
+                "fansclub_action": meta.get("fansclub_action") or "加入了粉丝团",
             }
             template = templates.get(kind, "{user}{text}")
             if kind == "enter":
@@ -1204,7 +1209,7 @@ class DanmakuTTSService:
             if value < threshold:
                 return False, "gift_min_price"
             return True, None
-        if kind in ("danmaku", "super_chat", "guard", "enter", "like", "social"):
+        if kind in ("danmaku", "super_chat", "guard", "enter", "like", "social", "fansclub"):
             if not read_cfg.get(kind, True):
                 return False, "disabled"
             return True, None
@@ -2000,7 +2005,9 @@ class DanmakuTTSService:
         return {"cursor": latest, "items": items}
 
     # ------------------------------------------------------------ 监看窗口
-    _MONITOR_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
+    _MONITOR_TYPES = (
+        "danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub",
+    )
 
     def monitor_snapshot(self, limit: int = 300) -> Dict[str, Any]:
         """返回最近 N 条消息（含最新 spoken 状态），供监看窗口整表刷新。"""
@@ -2065,6 +2072,7 @@ class DanmakuTTSService:
         "enter": ["进入直播间"],
         "like": ["点赞了直播间", "为主播点了赞"],
         "social": ["关注了直播间", "分享了直播间"],
+        "fansclub": ["加入了粉丝团", "粉丝团升级"],
     }
     _MOCK_USERS = [
         "夜色微凉", "柠檬气泡水", "三月的风", "咸鱼想翻身", "阿哲",
@@ -2119,6 +2127,9 @@ class DanmakuTTSService:
             elif kind == "social":
                 body = body or self._MOCK_SAMPLES["social"][seq_hint % len(self._MOCK_SAMPLES["social"])]
                 payload_meta.setdefault("social_action", "关注了直播间")
+            elif kind == "fansclub":
+                body = body or self._MOCK_SAMPLES["fansclub"][seq_hint % len(self._MOCK_SAMPLES["fansclub"])]
+                payload_meta.setdefault("fansclub_action", body)
             else:
                 body = body or self._MOCK_SAMPLES["danmaku"][seq_hint % len(self._MOCK_SAMPLES["danmaku"])]
 

@@ -19,7 +19,7 @@ async function openWorkbench(page) {
   await page.waitForSelector('#wbModal:not([hidden])', { timeout: 3000 });
   await page.waitForFunction(() => {
     const list = document.getElementById('wbTypeList');
-    return list && list.children.length === 5;
+    return list && list.children.length === 6;
   }, null, { timeout: 3000 });
 }
 
@@ -146,7 +146,7 @@ async function openMotion(page) {
         visible: getComputedStyle(document.getElementById('wbTypeStrip')).display !== 'none',
         count: document.querySelectorAll('#wbTypeStrip [data-wb-type]').length,
       }));
-      assert(strip.visible && strip.count === 5, '760 五类切换条可用', strip);
+      assert(strip.visible && strip.count === 6, '760 六类切换条可用', strip);
       await page.click('#wbTypeStrip [data-wb-type="danmaku"]');
       const type = await page.evaluate(() => window.__wbDebug.state.currentType);
       assert(type === 'danmaku', '760 可切换消息类型', type);

@@ -605,14 +605,33 @@ class DanmakuConnection:
 
     def _handle_interact(self, message: web_models.InteractWordV2Message) -> None:
         # msg_type: 1=进入直播间，2=关注，3=分享
-        if int(message.msg_type or 0) != 1:
+        msg_type = int(message.msg_type or 0)
+        if msg_type == 1:
+            self._on_message(
+                "enter",
+                {
+                    "user": message.username or "",
+                    "uid": int(message.uid or 0),
+                    "text": "",
+                    "meta": {"msg_type": msg_type},
+                },
+            )
             return
+        if msg_type not in (2, 3, 4, 5):
+            return
+        action = "分享了直播间" if msg_type == 3 else "关注了直播间"
         self._on_message(
-            "enter",
+            "social",
             {
                 "user": message.username or "",
                 "uid": int(message.uid or 0),
-                "text": "",
-                "meta": {"msg_type": int(message.msg_type or 0)},
+                "text": action,
+                "meta": {
+                    "msg_type": msg_type,
+                    "social_action": action,
+                    "follow_type": "special" if msg_type == 4 else (
+                        "mutual" if msg_type == 5 else "normal"
+                    ),
+                },
             },
         )

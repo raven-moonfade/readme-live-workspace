@@ -16,7 +16,7 @@ async function openWorkbench(page) {
   await page.click('[data-workspace-view="picture"]');
   await page.waitForSelector('#wbModal:not([hidden])', { timeout: 3000 });
   await page.waitForFunction(() => window.__wbDebug && window.__wbDebug.state.loadOk === true, { timeout: 5000 });
-  await page.waitForFunction(() => document.querySelectorAll('#wbTypeList [data-wb-type]').length === 5);
+  await page.waitForFunction(() => document.querySelectorAll('#wbTypeList [data-wb-type]').length === 6);
 }
 
 (async () => {
@@ -32,7 +32,7 @@ async function openWorkbench(page) {
   await page.click('[data-workspace-view="picture"]');
   await page.waitForSelector('#wbModal:not([hidden])', { timeout: 3000 });
   await page.waitForFunction(() => window.__wbDebug && window.__wbDebug.state.loadOk === true, { timeout: 5000 });
-  await page.waitForFunction(() => document.querySelectorAll('#wbTypeList [data-wb-type]').length === 5);
+  await page.waitForFunction(() => document.querySelectorAll('#wbTypeList [data-wb-type]').length === 6);
   await page.click('[data-wb-style-domain="typography"]');
   await page.waitForFunction(() => !document.getElementById('wbTypographyPanel').hidden);
 

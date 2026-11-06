@@ -659,6 +659,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .badge-enter      { color: #7FE0D2; background: rgba(80, 215, 195, .10); border-color: rgba(80, 215, 195, .24); }
 .badge-like       { color: #FFB3C8; background: rgba(255, 130, 170, .12); border-color: rgba(255, 130, 170, .28); }
 .badge-social     { color: #8BE3FF; background: rgba(90, 200, 255, .10); border-color: rgba(90, 200, 255, .26); }
+.badge-fansclub   { color: #FFD08A; background: rgba(255, 190, 90, .12); border-color: rgba(255, 190, 90, .28); }
 
 .item-meta {
   display: inline-flex;

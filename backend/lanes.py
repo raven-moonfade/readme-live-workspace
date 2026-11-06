@@ -17,9 +17,9 @@ import math
 from collections.abc import Mapping, Sequence
 from typing import Any, Dict, List
 
-LANES = ("gift", "sc", "guard", "danmaku", "enter", "like", "social")
-PRIORITY = ("sc", "gift", "guard", "social", "like", "enter", "danmaku")
-EVICTION_ORDER = ("danmaku", "enter", "like", "social", "guard", "gift", "sc")
+LANES = ("gift", "sc", "guard", "danmaku", "enter", "like", "social", "fansclub")
+PRIORITY = ("sc", "gift", "guard", "fansclub", "social", "like", "enter", "danmaku")
+EVICTION_ORDER = ("danmaku", "enter", "like", "social", "fansclub", "guard", "gift", "sc")
 GAP_CANDIDATES = (8, 6, 4)
 DEFAULT_POSITIONS = {
     "sc": "top",
@@ -29,6 +29,7 @@ DEFAULT_POSITIONS = {
     "enter": "bottom",
     "like": "bottom",
     "social": "bottom",
+    "fansclub": "bottom",
 }
 
 
@@ -56,6 +57,9 @@ def _lane_config(pins: Mapping[str, Any], lane: str) -> Dict[str, Any]:
     except (TypeError, ValueError):
         maximum = 0
     maximum = max(0, min(6, maximum))
+    if lane in ("danmaku", "enter"):
+        # UI 不提供这两类的同屏条数；按“不限”处理（仍受固定区预算约束）。
+        maximum = 0
     position = raw.get("position", DEFAULT_POSITIONS[lane])
     if position not in ("top", "bottom"):
         position = DEFAULT_POSITIONS[lane]

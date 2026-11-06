@@ -126,6 +126,11 @@ def header_badges(
         label = "分享" if "分享" in action else "关注"
         if label not in message.text:
             result.append((label, bg, fg))
+    elif message.kind == "fansclub":
+        action = str(message.meta.get("fansclub_action") or "粉丝团")
+        label = "升级" if "升级" in action else "粉丝团"
+        if label not in message.text:
+            result.append((label, bg, fg))
     return result
 
 
@@ -264,6 +269,8 @@ def display_parts(
         body = message.text or ("点赞了直播间" + (" ×" + str(count) if count > 1 else ""))
     elif message.kind == "social":
         body = message.text or str_value(meta.get("social_action"), "关注了直播间")
+    elif message.kind == "fansclub":
+        body = message.text or str_value(meta.get("fansclub_action"), "加入了粉丝团")
     else:
         body = message.text
 

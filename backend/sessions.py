@@ -68,7 +68,7 @@ from .export_store import ExportManager
 
 logger = logging.getLogger("danmaku_tts.sessions")
 
-_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
+_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub")
 _COUNTERS = ("received", "spoken", "dropped", "filtered")
 _SCOPES = ("real", "mock")
 _SCHEMA_VERSION = 4
@@ -2326,6 +2326,7 @@ class SessionStore:
                     "mock_received", "mock_spoken", "mock_dropped",
                     "unique_users", "gift_cny", "gift_silver", "gift_unknown",
                     "super_chat_cny", "danmaku", "gift", "super_chat", "guard", "enter", "like", "social",
+                    "fansclub",
                     "minutes_json",
                 ]
                 row = {
@@ -2358,6 +2359,7 @@ class SessionStore:
                     "enter": types.get("enter", 0),
                     "like": types.get("like", 0),
                     "social": types.get("social", 0),
+                    "fansclub": types.get("fansclub", 0),
                     "minutes_json": json.dumps(minutes, ensure_ascii=False, separators=(",", ":")),
                 }
                 buffer = io.StringIO(newline="")

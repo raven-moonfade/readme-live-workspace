@@ -42,8 +42,8 @@ logger = logging.getLogger("danmaku_tts.config")
 
 SCHEMA_VERSION = 3
 APPEARANCE_SCHEMA_VERSION = 1
-OVERLAY_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
-PIN_LANES = ("gift", "sc", "guard", "danmaku", "enter", "like", "social")
+OVERLAY_TYPES = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub")
+PIN_LANES = ("gift", "sc", "guard", "danmaku", "enter", "like", "social", "fansclub")
 APPEARANCE_PRESETS = ("broadcast", "cobalt")
 APPEARANCE_THEME_MODES = ("light", "dark", "system")
 APPEARANCE_PATTERN_TYPES = ("none", "dots")
@@ -72,11 +72,11 @@ _MIGRATION_ERROR = "MigrationError"
 WRITE_FAILED = "config: 写入配置失败"
 
 _READ_BOOL_KEYS = (
-    "danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "include_user",
+    "danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub", "include_user",
 )
-_TEMPLATE_KEYS = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
+_TEMPLATE_KEYS = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub")
 _MOCK_INT_RANGES = {"interval_ms": (200, 60000), "per_tick": (1, 20)}
-_MOCK_TYPE_KEYS = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social")
+_MOCK_TYPE_KEYS = ("danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub")
 
 _OVERLAY_BOOL_KEYS = (
     "enabled",
@@ -171,6 +171,7 @@ DEFAULT_LEGACY_OVERLAY: Dict[str, Any] = {
         "enter": False,
         "like": True,
         "social": True,
+        "fansclub": True,
     },
     "click_through": True,
     "always_on_top": True,
@@ -206,6 +207,7 @@ DEFAULT_LEGACY_CONFIG: Dict[str, Any] = {
         "enter": False,
         "like": False,
         "social": True,
+        "fansclub": True,
         "gift_min_price": 0,
         "include_user": True,
         "templates": {
@@ -216,6 +218,7 @@ DEFAULT_LEGACY_CONFIG: Dict[str, Any] = {
             "enter": "{user}进入直播间",
             "like": "{user}点了赞",
             "social": "{user}{social_action}",
+            "fansclub": "{user}{fansclub_action}",
         },
     },
     "filters": {
@@ -239,6 +242,7 @@ DEFAULT_LEGACY_CONFIG: Dict[str, Any] = {
             "enter": False,
             "like": False,
             "social": False,
+            "fansclub": False,
         },
     },
 }
@@ -282,10 +286,11 @@ DEFAULT_CONFIG: Dict[str, Any] = {
             },
             "sc": {"enabled": True, "position": "top", "duration_ms": 12000, "max": 2},
             "guard": {"enabled": True, "position": "bottom", "duration_ms": 6000, "max": 2},
-            "danmaku": {"enabled": False, "position": "bottom", "duration_ms": 8000, "max": 3},
-            "enter": {"enabled": False, "position": "bottom", "duration_ms": 6000, "max": 2},
+            "danmaku": {"enabled": False, "position": "bottom", "duration_ms": 8000, "max": 0},
+            "enter": {"enabled": False, "position": "bottom", "duration_ms": 6000, "max": 0},
             "like": {"enabled": False, "position": "bottom", "duration_ms": 6000, "max": 2},
             "social": {"enabled": False, "position": "bottom", "duration_ms": 6000, "max": 2},
+            "fansclub": {"enabled": False, "position": "bottom", "duration_ms": 6000, "max": 2},
         },
     },
     "monitor": {

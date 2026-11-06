@@ -322,4 +322,26 @@ def normalize_message(method: str, payload: bytes, message_id: int = 0) -> Optio
             },
         )
 
+    if method == "WebcastFansclubMessage":
+        user = parse_user(first(fields, 3)) or parse_user(first(fields, 2))
+        if not user:
+            return None
+        club_type = as_int(first(fields, 2))
+        content = as_text(first(fields, 4)).strip()
+        action = "粉丝团升级" if club_type == 2 else "加入了粉丝团"
+        return (
+            "fansclub",
+            {
+                "user": user.get("nickname") or "",
+                "uid": user.get("uid") or 0,
+                "text": content or action,
+                "meta": {
+                    **meta_common,
+                    "avatar": user.get("avatar") or "",
+                    "fansclub_type": club_type,
+                    "fansclub_action": content or action,
+                },
+            },
+        )
+
     return None

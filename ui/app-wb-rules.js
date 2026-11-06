@@ -22,13 +22,14 @@
   var WB_PIN_DEFAULTS = wb.constants.WB_PIN_DEFAULTS;
 
   var WB_PIN_META = {
-    gift: { name: '礼物', code: 'GIFT', color: 'var(--wb-gift)', icon: '#wb-i-gift', sub: '按礼物单价过滤；低于门槛进滚动流' },
+    gift: { name: '礼物', code: 'GIFT', color: 'var(--wb-gift)', icon: '#wb-i-gift', sub: '低于门槛不展示；开启后不再进入滚动流' },
     sc: { name: '醒目留言', code: 'SC', color: 'var(--wb-sc)', icon: '#wb-i-star', sub: '付费留言；固定失败不复制进滚动流' },
     guard: { name: '舰长', code: 'GUARD', color: 'var(--wb-guard)', icon: '#wb-i-crown', sub: '大航海；与礼物 / SC 共享固定预算' },
-    danmaku: { name: '弹幕', code: 'DANMAKU', color: 'var(--accent)', icon: '#wb-i-chat', sub: '普通弹幕也可以固定展示；0 = 不限' },
-    enter: { name: '入场', code: 'ENTER', color: 'var(--ok)', icon: '#wb-i-enter', sub: '进入直播间的提示；0 = 不限' },
+    danmaku: { name: '弹幕', code: 'DANMAKU', color: 'var(--accent)', icon: '#wb-i-chat', sub: '普通弹幕固定展示；不设同屏上限' },
+    enter: { name: '入场', code: 'ENTER', color: 'var(--ok)', icon: '#wb-i-enter', sub: '进入直播间的提示；不设同屏上限' },
     like: { name: '点赞', code: 'LIKE', color: 'var(--warn)', icon: '#wb-i-star', sub: '抖音点赞；高频互动建议只上屏' },
-    social: { name: '关注', code: 'SOCIAL', color: 'var(--ok)', icon: '#wb-i-enter', sub: '抖音关注 / 分享直播间' }
+    social: { name: '关注', code: 'SOCIAL', color: 'var(--ok)', icon: '#wb-i-enter', sub: '关注 / 分享直播间（B站 / 抖音）' },
+    fansclub: { name: '粉丝团', code: 'FANSCLUB', color: 'var(--warn)', icon: '#wb-i-star', sub: '抖音加入粉丝团 / 粉丝团升级' }
   };
   var wbPlatform = wb.helpers.wbPlatform;
   var wbPinLanesForPlatform = wb.helpers.wbPinLanesForPlatform;
@@ -55,6 +56,16 @@
     var pin = wbState.draft.pins[lane];
     var meta = WB_PIN_META[lane];
     var sec = Math.round(pin.duration_ms / 1000);
+    var noCount = lane === 'danmaku' || lane === 'enter';
+    var countCell = noCount
+      ? '<td><span class="wb-not-applicable" title="不设同屏上限，仍受固定区预算约束">—</span></td>'
+      : '<td><div class="wb-stepper"><button type="button" data-wb-pin-step="' + lane +
+        '" data-wb-pin-field="max" data-wb-delta="-1" aria-label="减少条数">−</button>' +
+        '<input type="number" data-wb-pin-number="' + lane + '" data-wb-pin-field="max" value="' + pin.max +
+        '" min="0" max="6" step="1" aria-label="同屏条数（0 为不限）" title="0 = 不限条数，受窗口固定区预算约束">' +
+        '<span class="suffix">条</span>' + wbZeroBadge('max', pin.max) +
+        '<button type="button" data-wb-pin-step="' + lane +
+        '" data-wb-pin-field="max" data-wb-delta="1" aria-label="增加条数">＋</button></div></td>';
     return '<tr data-wb-lane="' + lane + '">' +
       '<td><div class="wb-pin-type" style="--type:' + meta.color + '"><span class="wb-pin-icon">' +
       '<svg class="wb-icon" aria-hidden="true"><use href="' + meta.icon + '"></use></svg></span>' +
@@ -69,10 +80,7 @@
       '<input type="number" data-wb-pin-number="' + lane + '" data-wb-pin-field="duration_ms" value="' + sec + '" min="0" max="30" step="1" aria-label="停留时长（0 为不限）" title="0 = 不限时，直到被同类消息挤出">' +
       '<span class="suffix">s</span>' + wbZeroBadge('duration_ms', sec) +
       '<button type="button" data-wb-pin-step="' + lane + '" data-wb-pin-field="duration_ms" data-wb-delta="1000" aria-label="增加停留时长">＋</button></div></td>' +
-      '<td><div class="wb-stepper"><button type="button" data-wb-pin-step="' + lane + '" data-wb-pin-field="max" data-wb-delta="-1" aria-label="减少条数">−</button>' +
-      '<input type="number" data-wb-pin-number="' + lane + '" data-wb-pin-field="max" value="' + pin.max + '" min="0" max="6" step="1" aria-label="同屏条数（0 为不限）" title="0 = 不限条数，受窗口固定区预算约束">' +
-      '<span class="suffix">条</span>' + wbZeroBadge('max', pin.max) +
-      '<button type="button" data-wb-pin-step="' + lane + '" data-wb-pin-field="max" data-wb-delta="1" aria-label="增加条数">＋</button></div></td>' +
+      countCell +
       '<td>' + (lane === 'gift'
         ? '<div class="wb-price-wrap"><span class="currency">¥</span><input type="number" data-wb-pin-number="' + lane +
           '" data-wb-pin-field="min_price" value="' + pin.min_price + '" min="0" max="100000" step="1" aria-label="礼物最低价值"><span class="wb-not-applicable">起</span></div>'
@@ -84,6 +92,13 @@
     var pin = wbState.draft.pins[lane];
     var meta = WB_PIN_META[lane];
     var sec = Math.round(pin.duration_ms / 1000);
+    var noCount = lane === 'danmaku' || lane === 'enter';
+    var countField = noCount ? '' :
+      '<div class="wb-rule-field"><span>条数</span><div class="wb-stepper"><button type="button" data-wb-pin-step="' + lane +
+      '" data-wb-pin-field="max" data-wb-delta="-1">−</button><input type="number" data-wb-pin-number="' + lane +
+      '" data-wb-pin-field="max" value="' + pin.max + '" min="0" max="6" step="1" title="0 = 不限条数"><span class="suffix">条</span>' +
+      wbZeroBadge('max', pin.max) +
+      '<button type="button" data-wb-pin-step="' + lane + '" data-wb-pin-field="max" data-wb-delta="1">＋</button></div></div>';
     return '<section class="wb-rule-card" data-wb-lane="' + lane + '">' +
       '<div class="wb-rule-card-head" style="--type:' + meta.color + '"><span class="wb-pin-icon">' +
       '<svg class="wb-icon" aria-hidden="true"><use href="' + meta.icon + '"></use></svg></span>' +
@@ -100,10 +115,7 @@
       '" data-wb-pin-field="duration_ms" data-wb-delta="-1000">−</button><input type="number" data-wb-pin-number="' + lane +
       '" data-wb-pin-field="duration_ms" value="' + sec + '" min="0" max="30" step="1" title="0 = 不限时"><span class="suffix">s</span>' + wbZeroBadge('duration_ms', sec) +
       '<button type="button" data-wb-pin-step="' + lane + '" data-wb-pin-field="duration_ms" data-wb-delta="1000">＋</button></div></div>' +
-      '<div class="wb-rule-field"><span>条数</span><div class="wb-stepper"><button type="button" data-wb-pin-step="' + lane +
-      '" data-wb-pin-field="max" data-wb-delta="-1">−</button><input type="number" data-wb-pin-number="' + lane +
-      '" data-wb-pin-field="max" value="' + pin.max + '" min="0" max="6" step="1" title="0 = 不限条数"><span class="suffix">条</span>' + wbZeroBadge('max', pin.max) +
-      '<button type="button" data-wb-pin-step="' + lane + '" data-wb-pin-field="max" data-wb-delta="1">＋</button></div></div>' +
+      countField +
       (lane === 'gift'
         ? '<div class="wb-rule-field"><span>最低价值</span><span class="wb-price-wrap"><span class="currency">¥</span><input type="number" data-wb-pin-number="' +
           lane + '" data-wb-pin-field="min_price" value="' + pin.min_price + '" min="0" max="100000" step="1"></span></div>'
@@ -228,8 +240,8 @@
     var scrollMin = H * 0.4;
     var laneOrder = wbLaneOrder();
     var evictOrder = wbPlatform() === 'douyin'
-      ? ['danmaku', 'enter', 'like', 'social', 'gift']
-      : ['danmaku', 'enter', 'guard', 'gift', 'sc'];
+      ? ['danmaku', 'enter', 'like', 'social', 'fansclub', 'gift']
+      : ['danmaku', 'enter', 'social', 'guard', 'gift', 'sc'];
     var fallbackCapRows = Math.max(1, Math.floor((laneCap + 8) / (ITEM + 8)));
     var baseRows = {};
     var unlimited = {};
@@ -401,8 +413,8 @@
     }
     wbDom.laneRows.innerHTML = rowsHtml;
     var evictNames = (wbPlatform() === 'douyin'
-      ? ['danmaku', 'enter', 'like', 'social', 'gift']
-      : ['danmaku', 'enter', 'guard', 'gift', 'sc']).map(wbLaneName).join(' → ');
+      ? ['danmaku', 'enter', 'like', 'social', 'fansclub', 'gift']
+      : ['danmaku', 'enter', 'social', 'guard', 'gift', 'sc']).map(wbLaneName).join(' → ');
     wbDom.capacityNote.innerHTML = '压缩顺序：间距 8→6→4px；仍超预算时按 ' + evictNames +
       ' 淘汰。0 表示不设每类上限，但仍受固定区 50% 预算约束。固定项不复制进滚动流。当前 <b>L' +
       budget.level + ' / ' + budget.gap + 'px</b> · <b>' + wbEscape(budget.evictedText) + '</b> · 滚动下限 ' +

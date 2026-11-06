@@ -128,7 +128,7 @@ def main() -> int:
             )
             check(
                 set(defaults.get("pins") or {}) == {
-                    "gift", "sc", "guard", "danmaku", "enter", "like", "social",
+                    "gift", "sc", "guard", "danmaku", "enter", "like", "social", "fansclub",
                 },
                 "默认 pins 覆盖全部 lane",
             )
@@ -137,8 +137,8 @@ def main() -> int:
         check(LEGACY_REQUIRED.issubset(set(actual)), "运行实例 overlay legacy 投影字段齐全")
         check(
             set((actual.get("types") or {}).keys()) ==
-            {"danmaku", "gift", "super_chat", "guard", "enter", "like", "social"},
-            "types 包含 7 个消息类型",
+            {"danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub"},
+            "types 包含 8 个消息类型",
             repr(sorted((actual.get("types") or {}).keys())),
         )
         check(
@@ -149,13 +149,13 @@ def main() -> int:
         )
         check(
             set((actual.get("resolved_motion") or {}).keys()) ==
-            {"danmaku", "gift", "super_chat", "guard", "enter", "like", "social"},
-            "resolved_motion 覆盖七类",
+            {"danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub"},
+            "resolved_motion 覆盖八类",
         )
         check(
             (actual.get("typography") or {}).get("schema_version") == 1 and
             set((actual.get("resolved_typography") or {}).keys()) ==
-            {"danmaku", "gift", "super_chat", "guard", "enter", "like", "social"},
+            {"danmaku", "gift", "super_chat", "guard", "enter", "like", "social", "fansclub"},
             "typography / resolved_typography 投影齐全",
         )
 
