@@ -240,8 +240,6 @@
     els.historyBaselineList = $("wsHistoryBaselineList");
     els.historyBaselineMore = $("wsHistoryBaselineMore");
     els.historyBaselineStatus = $("wsHistoryBaselineStatus");
-    els.settingsAccount = $("settingsAccountState");
-    els.settingsAccountTitle = $("settingsAccountTitle");
     els.settingsCredentialSecurity = $("settingsCredentialSecurity");
     els.settingsHost = $("settingsControlsHost");
     els.settingsNav = document.querySelector(".settings-nav");
@@ -1798,14 +1796,6 @@
     }
     safeText(els.railState, connectionLabel(snap.connection));
     safeText(els.railQueue, "队列 " + (snap.queue_len || 0));
-    var platformAccount = snap.platform === "douyin" && snap.account && snap.account.douyin
-      ? snap.account.douyin
-      : (snap.account || {});
-    var platformName = snap.platform === "douyin" ? "抖音" : "B站";
-    safeText(els.settingsAccountTitle, platformName + "登录态");
-    safeText(els.settingsAccount, platformAccount.logged_in
-      ? "已登录 · " + (platformAccount.uname || platformName + "账号")
-      : "未登录 · 用户名可能显示为星号");
     var monitorVisible = !!(window.MutaiApp && window.MutaiApp.state &&
       window.MutaiApp.state.monitorVisible);
     if (els.monitorBtn) {

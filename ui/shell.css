@@ -4241,10 +4241,51 @@ button.workspace-state:hover {
 }
 
 .settings-account-state {
-  margin: 12px 0;
+  margin: 0;
   color: var(--text);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.settings-account-list {
+  display: grid;
+  gap: 0;
+  margin-top: 12px;
+}
+
+.settings-account-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.settings-account-row:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.settings-account-row:last-child {
+  padding-bottom: 0;
+}
+
+.settings-account-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.settings-account-platform {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
+.settings-account-row .btn {
+  flex: 0 0 auto;
 }
 
 .settings-security-note {

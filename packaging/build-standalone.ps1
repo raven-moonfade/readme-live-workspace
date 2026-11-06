@@ -6,6 +6,11 @@ $python = if ($env:README_BUILD_PYTHON) {
 } else {
     Join-Path $root ".venv\Scripts\python.exe"
 }
+$iscc = if ($env:README_ISCC) {
+    $env:README_ISCC
+} else {
+    "D:\AppPath\InnoSetup\ISCC.exe"
+}
 $spec = Join-Path $root "packaging\ReadMe.spec"
 
 if (-not (Test-Path -LiteralPath $python)) {
@@ -26,6 +31,15 @@ try {
     $archive = Join-Path $root "dist\ReadMe-v$version-standalone.zip"
     Compress-Archive -LiteralPath $dist -DestinationPath $archive -CompressionLevel Optimal -Force
     Write-Host "Standalone archive: $archive"
+    if (Test-Path -LiteralPath $iscc) {
+        & $iscc "/DMyAppVersion=$version" (Join-Path $root "packaging\ReadMe.iss")
+        if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup 构建失败，退出码 $LASTEXITCODE"
+        }
+        Write-Host "Installer: $(Join-Path $root "dist\ReadMe-Setup-$version.exe")"
+    } else {
+        Write-Warning "未找到 ISCC.exe，跳过安装程序构建：$iscc"
+    }
 } finally {
     Pop-Location
 }

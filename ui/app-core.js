@@ -192,6 +192,10 @@
     accountBtn: $('accountBtn'),
     accountText: $('accountText'),
     accountShort: $('accountShort'),
+    settingsBiliAccountState: $('settingsBiliAccountState'),
+    settingsBiliAccountBtn: $('settingsBiliAccountBtn'),
+    settingsDouyinAccountState: $('settingsDouyinAccountState'),
+    settingsDouyinAccountBtn: $('settingsDouyinAccountBtn'),
     loginModal: $('loginModal'),
     qrBox: $('qrBox'),
     qrImg: $('qrImg'),
@@ -1038,6 +1042,12 @@
     if (els.loginCloseBtn) els.loginCloseBtn.addEventListener('click', closeLoginModal);
     if (els.qrRefreshBtn) els.qrRefreshBtn.addEventListener('click', refreshQrCode);
     if (els.logoutBtn) els.logoutBtn.addEventListener('click', doLogout);
+    if (els.settingsBiliAccountBtn) {
+      els.settingsBiliAccountBtn.addEventListener('click', openLoginModal);
+    }
+    if (els.settingsDouyinAccountBtn) {
+      els.settingsDouyinAccountBtn.addEventListener('click', openDouyinLoginModal);
+    }
     if (els.douyinLoginCloseBtn) els.douyinLoginCloseBtn.addEventListener('click', closeDouyinLoginModal);
     if (els.douyinLoginStartBtn) els.douyinLoginStartBtn.addEventListener('click', startDouyinLogin);
     if (els.douyinLogoutBtn) els.douyinLogoutBtn.addEventListener('click', doDouyinLogout);
@@ -1088,6 +1098,14 @@
       if (res.state === 'success') {
         stopDouyinLoginPolling();
         state.douyinLoginOpening = false;
+        state.account = state.account || {};
+        state.account.douyin = res.account || {
+          logged_in: true,
+          uname: '抖音账号',
+          uid: null
+        };
+        renderAccount(state.account);
+        renderDouyinLoginModal(state.account.douyin);
         return;
       }
       if (res.state === 'closed' || res.state === 'timeout') {
@@ -1107,7 +1125,6 @@
   }
 
   function renderAccount(acc) {
-    if (!els.accountBtn) return;
     var douyin = state.platform === 'douyin';
     acc = acc || {};
     var current = douyin
@@ -1115,23 +1132,39 @@
       : acc;
     var on = !!current.logged_in;
     var uname = on ? (current.uname || (douyin ? '抖音账号' : 'B站账号')) : '';
-    els.accountBtn.hidden = false;
-    els.accountBtn.classList.toggle('is-on', on);
-    els.accountBtn.classList.toggle('is-off', !on);
-    els.accountBtn.title = on
-      ? ('已登录：' + uname + '（点击查看/退出）')
-      : (douyin ? '登录抖音账号' : '登录B站账号（扫码）');
-    els.accountBtn.setAttribute('aria-label', on
-      ? ('账号：' + uname + '，点击管理')
-      : (douyin ? '登录抖音账号' : '登录B站账号'));
+    if (els.accountBtn) {
+      els.accountBtn.hidden = false;
+      els.accountBtn.classList.toggle('is-on', on);
+      els.accountBtn.classList.toggle('is-off', !on);
+      els.accountBtn.title = on
+        ? ('已登录：' + uname + '（点击查看/退出）')
+        : (douyin ? '登录抖音账号' : '登录B站账号（扫码）');
+      els.accountBtn.setAttribute('aria-label', on
+        ? ('账号：' + uname + '，点击管理')
+        : (douyin ? '登录抖音账号' : '登录B站账号'));
+    }
     if (els.accountText) {
       els.accountText.textContent = on ? uname : (douyin ? '抖音登录' : '扫码登录');
     }
     if (els.accountShort) {
       els.accountShort.textContent = on ? '账号' : (douyin ? '抖音' : '登录');
     }
+    renderSettingsAccount(els.settingsBiliAccountState, els.settingsBiliAccountBtn, acc, 'B站');
+    renderSettingsAccount(
+      els.settingsDouyinAccountState,
+      els.settingsDouyinAccountBtn,
+      acc.douyin && typeof acc.douyin === 'object' ? acc.douyin : {},
+      '抖音'
+    );
     if (douyin) renderDouyinLoginModal(current);
     else stopDouyinLoginPolling();
+  }
+
+  function renderSettingsAccount(stateEl, buttonEl, account, label) {
+    var on = !!(account && account.logged_in);
+    var name = on ? (account.uname || label + '账号') : '';
+    if (stateEl) stateEl.textContent = on ? ('已登录 · ' + name) : '未登录';
+    if (buttonEl) buttonEl.textContent = on ? '管理' : '登录';
   }
 
   function stopLoginPolling() {
@@ -1210,6 +1243,11 @@
       } else if (res.status === 'success') {
         stopLoginPolling();
         var suffix = res.persisted === false ? '（仅本次运行，配置未写入）' : '';
+        state.account = Object.assign({}, state.account || {}, {
+          logged_in: true,
+          uname: res.uname || (state.account && state.account.uname) || null
+        });
+        renderAccount(state.account);
         setLoginStatus('登录成功' + (res.uname ? '：' + res.uname : '') + suffix, false);
         setLog('登录成功' + (res.uname ? '：' + res.uname : '') +
           '，弹幕用户名不再打码' + (suffix ? '；登录态仅本次运行' : ''));
@@ -1227,7 +1265,11 @@
         setLog('退出登录失败：' + ((res && res.error) || '未知原因'), 'error');
         return;
       }
-      state.account = { logged_in: false, uname: null, mid: null };
+      state.account = Object.assign({}, state.account || {}, {
+        logged_in: false,
+        uname: null,
+        mid: null
+      });
       renderAccount(state.account);
       setLog(res && res.persisted === false
         ? '已清除本次登录态：配置未能写入磁盘，重启后可能恢复登录'

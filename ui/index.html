@@ -722,7 +722,22 @@
         <aside class="settings-side">
           <section class="card settings-summary" id="settingsAccountCard" data-settings-pane="account">
             <div class="workspace-card-head"><div><span class="workspace-eyebrow">账号</span><h2 id="settingsAccountTitle">账号登录态</h2></div></div>
-            <p class="settings-account-state" id="settingsAccountState">未登录 · 用户名可能显示为星号</p>
+            <div class="settings-account-list">
+              <div class="settings-account-row">
+                <div class="settings-account-copy">
+                  <span class="settings-account-platform">B 站</span>
+                  <span class="settings-account-state" id="settingsBiliAccountState">未登录</span>
+                </div>
+                <button class="btn btn-ghost btn-sm" id="settingsBiliAccountBtn" type="button">登录</button>
+              </div>
+              <div class="settings-account-row">
+                <div class="settings-account-copy">
+                  <span class="settings-account-platform">抖音</span>
+                  <span class="settings-account-state" id="settingsDouyinAccountState">未登录</span>
+                </div>
+                <button class="btn btn-ghost btn-sm" id="settingsDouyinAccountBtn" type="button">登录</button>
+              </div>
+            </div>
           </section>
           <section class="card settings-summary" id="settingsPrivacyCard" data-settings-pane="privacy">
             <div class="workspace-card-head"><div><span class="workspace-eyebrow">本机</span><h2>数据与隐私</h2></div></div>
