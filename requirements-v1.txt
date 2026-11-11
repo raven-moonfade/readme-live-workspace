@@ -1,4 +1,4 @@
-# ReadMe v1.0.0 runtime environment
+# ReadMe v1.0.1 runtime environment
 # Python 3.11.9 (the project venv interpreter)
 # Install from the repository root:
 #   python -m pip install -r requirements-v1.txt

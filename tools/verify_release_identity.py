@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""核对 v1.0.0 版本身份、发布说明和固定依赖清单。"""
+"""核对 v1.0.1 版本身份、发布说明和固定依赖清单。"""
 
 from __future__ import annotations
 
@@ -31,15 +31,15 @@ def check(condition: bool, label: str, detail: str = "") -> None:
 
 def main() -> int:
     info = app_module.JsApi(None).get_app_info()
-    check(__version__ == "1.0.0", "backend.__version__ 为 1.0.0", __version__)
+    check(__version__ == "1.0.1", "backend.__version__ 为 1.0.1", __version__)
     check(info.get("version") == __version__, "get_app_info 与 backend 版本一致", info)
     check(info.get("name") == "ReadMe" and app_module.APP_TITLE == "ReadMe",
           "应用身份为 ReadMe", info)
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    check("v1.0.0" in readme, "README 标记 v1.0.0")
-    check((ROOT / "docs" / "release" / "v1.0.0.md").is_file(),
-          "发布说明 docs/release/v1.0.0.md 存在")
+    check("v1.0.1" in readme, "README 标记 v1.0.1")
+    check((ROOT / "docs" / "release" / "v1.0.1.md").is_file(),
+          "发布说明 docs/release/v1.0.1.md 存在")
 
     stale = []
     version_pattern = re.compile(r"""(?:"version"\s*:\s*["']|版本[^\n]{0,24})0\.1\.0""")
@@ -68,7 +68,7 @@ def main() -> int:
               any(line.startswith("PySide6==") for line in pinned),
               "依赖清单覆盖桌面运行组件")
 
-    release = (ROOT / "docs" / "release" / "v1.0.0.md")
+    release = (ROOT / "docs" / "release" / "v1.0.1.md")
     if release.is_file():
         notes = release.read_text(encoding="utf-8")
         check(("B站" in notes or "B 站" in notes) and "抖音" in notes and "已知限制" in notes,

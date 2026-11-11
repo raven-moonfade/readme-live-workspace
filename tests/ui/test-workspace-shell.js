@@ -1136,7 +1136,7 @@ async function probeTopbarGeometry(page) {
   const checks = {
     noErrors: errors.length === 0 && smallErrors.length === 0,
     fourViews: base.navItems.join(',') === 'danmaku,picture,data,settings',
-    versionIdentity: base.versionLabel === 'v1.0.0',
+    versionIdentity: base.versionLabel === 'v1.0.1',
     railDesktop: base.railWidth === 204,
     statusStripPlaced: base.statusAboveWorkspace,
     settingsMoved: base.settingsMoved && base.settingsHidden === false,

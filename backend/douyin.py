@@ -264,8 +264,21 @@ async def resolve_web_rid(
     # 页面内带有真正的 webRid，可直接用于房间接口。
     reflow_web_rid = web_rid_from_reflow_html(html)
     if reflow_web_rid:
+        logger.info(
+            "抖音短链解析成功：web_rid=%s（来源=reflow 页面，页面 %d 字节）",
+            reflow_web_rid,
+            len(html),
+        )
         return reflow_web_rid
-    return parse_room_input(final_url)["web_rid"]
+    fallback = parse_room_input(final_url)["web_rid"]
+    logger.warning(
+        "抖音短链解析：reflow 页面未找到 webRid，回退按链接取号 -> web_rid=%s"
+        "（页面 %d 字节，final=%s）",
+        fallback or "(空)",
+        len(html),
+        final_url.split("?")[0],
+    )
+    return fallback
 
 
 async def fetch_room_info(
@@ -321,25 +334,47 @@ async def fetch_room_info(
             headers=headers,
             timeout=aiohttp.ClientTimeout(total=timeout),
         ) as response:
+            http_status = response.status
             raw = await response.read()
-            if response.status != 200:
-                result["error"] = "HTTP %s" % response.status
+            if http_status != 200:
+                result["error"] = "HTTP %s" % http_status
+                logger.warning(
+                    "抖音房间接口 HTTP %s：web_rid=%s（解析已成功，是接口请求失败）",
+                    http_status,
+                    web_rid,
+                )
                 return result
     except asyncio.TimeoutError:
         result["error"] = "请求超时"
+        logger.warning("抖音房间接口超时：web_rid=%s", web_rid)
         return result
     except Exception as exc:  # noqa: BLE001
         result["error"] = "%s: %s" % (type(exc).__name__, exc)
+        logger.warning("抖音房间接口异常：web_rid=%s %s: %s", web_rid, type(exc).__name__, exc)
         return result
 
     if not raw:
         result["fatal"] = True
         result["error"] = "抖音房间接口返回空响应（可能触发风控）"
+        logger.warning(
+            "抖音房间接口返回空响应：web_rid=%s http=%s ttwid=%s cookie=%s"
+            "（web_rid 已解析成功，说明卡在房间接口请求，不是房间号问题）",
+            web_rid,
+            http_status,
+            "有" if ttwid else "无",
+            "有" if cookie else "无",
+        )
         return result
     try:
         payload = json.loads(raw.decode("utf-8"))
     except Exception as exc:  # noqa: BLE001
         result["error"] = "抖音房间接口返回非 JSON：%s" % exc
+        logger.warning(
+            "抖音房间接口返回非 JSON：web_rid=%s 长度=%d %s",
+            web_rid,
+            len(raw),
+            exc,
+        )
         return result
     status_code = payload.get("status_code") if isinstance(payload, dict) else None
     if not isinstance(payload, dict) or str(status_code) not in ("None", "0", ""):
@@ -357,6 +392,12 @@ async def fetch_room_info(
             "：%s" % detail if detail else
             ("（status_code=%s）" % status_code if status_code is not None else "")
         )
+        logger.warning(
+            "抖音房间接口返回异常：web_rid=%s status_code=%s detail=%s",
+            web_rid,
+            status_code,
+            detail or "-",
+        )
         return result
     data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
     rooms = data.get("data") if isinstance(data.get("data"), list) else []
@@ -364,6 +405,13 @@ async def fetch_room_info(
     if not isinstance(room, dict):
         result["fatal"] = True
         result["error"] = "抖音直播间不存在或已关闭"
+        logger.warning(
+            "抖音直播间不存在：web_rid=%s status_code=%s rooms=%d"
+            "（web_rid 格式合法但查不到房间，多为链接解析到了错误的号）",
+            web_rid,
+            status_code,
+            len(rooms),
+        )
         return result
 
     status = room.get("status")
@@ -378,6 +426,14 @@ async def fetch_room_info(
         live_status=status_int,
         room_live=status_int == 2,
         user_count=str(room.get("user_count_str") or "").strip() or None,
+    )
+    logger.info(
+        "抖音房间就绪：web_rid=%s internal=%s live=%s title=%s online=%s",
+        web_rid,
+        result["internal_room_id"],
+        result["room_live"],
+        result["title"],
+        result["user_count"],
     )
     return result
 

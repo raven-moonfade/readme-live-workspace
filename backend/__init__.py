@@ -18,4 +18,4 @@
 from .core import DanmakuTTSService
 
 __all__ = ["DanmakuTTSService"]
-__version__ = "1.0.0"
+__version__ = "1.0.1"

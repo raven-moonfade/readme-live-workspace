@@ -3401,7 +3401,7 @@
       },
 
       get_app_info: function () {
-        return { name: 'ReadMe', version: '1.0.0', base_dir: '' };
+        return { name: 'ReadMe', version: '1.0.1', base_dir: '' };
       },
 
       login_qr: function () {

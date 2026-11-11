@@ -2,13 +2,13 @@
 
 ![ReadMe](assets/brand/readme-lockup-horizontal.svg)
 
-> 当前版本：**v1.0.0** · [下载](https://github.com/raven-moonfade/readme-live-workspace/releases/latest) · [发布说明](docs/release/v1.0.0.md)
+> 当前版本：**v1.0.1** · [下载](https://github.com/raven-moonfade/readme-live-workspace/releases/latest) · [发布说明](docs/release/v1.0.1.md)
 
 B 站 / 抖音直播弹幕实时语音朗读工具。输入直播间号或抖音直播间链接，即可把弹幕、礼物、入场消息实时转成语音播报；桌面工作台支持晨光 / 夜航 / 跟随系统主题。
 
 ## 下载
 
-前往 [Releases](https://github.com/raven-moonfade/readme-live-workspace/releases/latest) 下载最新的 `ReadMe-v1.0.0-standalone.zip`，解压后双击 `ReadMe.exe`。**不需要安装 Python、pip 或 `.venv`。**
+前往 [Releases](https://github.com/raven-moonfade/readme-live-workspace/releases/latest) 下载最新的 `ReadMe-v1.0.1-standalone.zip`，解压后双击 `ReadMe.exe`。**不需要安装 Python、pip 或 `.venv`。**
 
 运行环境：Windows 10/11、WebView2；语音合成需要联网。
 
@@ -36,7 +36,7 @@ B 站 / 抖音直播弹幕实时语音朗读工具。输入直播间号或抖音
 
 ## 快速开始
 
-1. 解压 `ReadMe-v1.0.0-standalone.zip` 后双击 `ReadMe.exe`
+1. 解压 `ReadMe-v1.0.1-standalone.zip` 后双击 `ReadMe.exe`
 2. 顶部选择「B 站」或「抖音」，输入直播间号；抖音也支持 `live.douyin.com/...` / `v.douyin.com/...` 链接
 3. 点「连接」；弹幕开始朗读
 
@@ -189,7 +189,7 @@ $env:README_BUILD_PYTHON = "C:\path\to\python-3.11\python.exe"
 .\packaging\build-standalone.ps1
 ```
 
-输出为 `dist\ReadMe\ReadMe.exe` 和 `dist\ReadMe-v1.0.0-standalone.zip`。
+输出为 `dist\ReadMe\ReadMe.exe` 和 `dist\ReadMe-v1.0.1-standalone.zip`。
 
 ## 弹幕浮窗（窗口捕获）
 

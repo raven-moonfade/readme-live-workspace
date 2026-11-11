@@ -797,7 +797,14 @@ class DanmakuTTSService:
             note=_STATE_NOTES.get(state, state),
         )
         if state == STATE_CONNECTED:
-            logger.info("room=%s 已连接（%s，live=%s）", room_id, room_title, room_live)
+            logger.info(
+                "room=%s 已连接（%s，live=%s）来源=%s room_key=%s",
+                room_id,
+                room_title,
+                room_live,
+                getattr(self, "_source_platform", "bilibili"),
+                getattr(self, "_source_room_key", "") or str(room_id),
+            )
             if getattr(self, "_source_platform", "bilibili") == "bilibili":
                 self._notify_login_state()
             else:
